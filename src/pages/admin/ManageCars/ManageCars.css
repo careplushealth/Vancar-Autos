@@ -1,0 +1,102 @@
+.manage-cars__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.manage-cars__header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+}
+
+.manage-cars__table-container {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow-x: auto;
+}
+
+.manage-cars__table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.manage-cars__table th {
+    text-align: left;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--color-bg-tertiary);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.manage-cars__table td {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+}
+
+.manage-cars__table tr:last-child td {
+    border-bottom: none;
+}
+
+.manage-cars__table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.manage-cars__thumb {
+    width: 60px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+}
+
+.manage-cars__info {
+    display: flex;
+    flex-direction: column;
+}
+
+.manage-cars__title {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+}
+
+.manage-cars__subtitle {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
+.manage-cars__status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    text-transform: capitalize;
+}
+
+.manage-cars__status--available {
+    background: rgba(76, 175, 80, 0.15);
+    color: #66bb6a;
+    border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.manage-cars__status--sold {
+    background: rgba(244, 67, 54, 0.15);
+    color: #ef5350;
+    border: 1px solid rgba(244, 67, 54, 0.2);
+}
+
+.manage-cars__actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.manage-cars__delete:hover {
+    border-color: var(--color-error);
+    color: var(--color-error);
+}

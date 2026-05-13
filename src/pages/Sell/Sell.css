@@ -1,0 +1,190 @@
+.sell {
+    padding: var(--spacing-3xl) 0 var(--spacing-5xl);
+}
+
+.sell__header {
+    text-align: center;
+    margin-bottom: var(--spacing-3xl);
+}
+
+.sell__title {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-sm);
+}
+
+.sell__subtitle {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+}
+
+.sell__steps {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-2xl);
+    margin-bottom: var(--spacing-3xl);
+}
+
+.sell__step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+    opacity: 0.4;
+    transition: opacity var(--transition-base);
+}
+
+.sell__step--active {
+    opacity: 1;
+}
+
+.sell__step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-circle);
+    background: var(--color-bg-tertiary);
+    border: 2px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-base);
+}
+
+.sell__step--active .sell__step-number {
+    border-color: var(--color-text-primary);
+    background: var(--color-text-primary);
+    color: var(--color-text-dark);
+}
+
+.sell__step--done .sell__step-number {
+    border-color: var(--color-success);
+    background: var(--color-success);
+    color: white;
+}
+
+.sell__step-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.sell__form {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.sell__panel {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-2xl);
+}
+
+.sell__panel h2 {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.sell__form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+}
+
+.sell__form-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: flex-end;
+    margin-top: var(--spacing-xl);
+}
+
+.sell__option-group {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.sell__option {
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-sm);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.sell__option:hover {
+    background: var(--color-surface-light);
+    color: var(--color-text-primary);
+}
+
+.sell__option--active {
+    background: var(--color-text-primary);
+    color: var(--color-text-dark);
+    border-color: var(--color-text-primary);
+}
+
+.sell__confirmation {
+    text-align: center;
+}
+
+.sell__confirmation-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-circle);
+    background: var(--color-success);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-2xl);
+    margin: 0 auto var(--spacing-xl);
+}
+
+.sell__confirmation p {
+    color: var(--color-text-secondary);
+    max-width: 480px;
+    margin: var(--spacing-md) auto var(--spacing-xl);
+    line-height: var(--line-height-relaxed);
+}
+
+.sell__confirmation-summary {
+    text-align: left;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+}
+
+.sell__confirmation-summary h4 {
+    margin-bottom: var(--spacing-md);
+}
+
+.sell__confirmation-summary ol {
+    padding-left: var(--spacing-xl);
+    counter-reset: step;
+}
+
+.sell__confirmation-summary li {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    list-style: decimal;
+}
+
+@media (max-width: 768px) {
+    .sell__steps {
+        gap: var(--spacing-md);
+    }
+
+    .sell__step-label {
+        display: none;
+    }
+
+    .sell__form-grid {
+        grid-template-columns: 1fr;
+    }
+}

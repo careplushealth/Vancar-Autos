@@ -1,0 +1,382 @@
+[
+    {
+        "id": "car-001",
+        "title": "2023 Range Rover Sport HSE",
+        "make": "Land Rover",
+        "model": "Range Rover Sport",
+        "trim": "HSE Dynamic",
+        "year": 2023,
+        "price": 62995,
+        "mileage": 8500,
+        "fuel": "Diesel",
+        "transmission": "Automatic",
+        "bodyType": "SUV",
+        "colour": "Santorini Black",
+        "engine": "3.0L V6 Diesel",
+        "doors": 5,
+        "seats": 5,
+        "description": "Stunning Range Rover Sport in Santorini Black with full leather interior. One owner from new with full service history. Loaded with extras including panoramic roof, heated seats, and premium sound system.",
+        "features": [
+            "Panoramic Roof",
+            "Heated Seats",
+            "Sat Nav",
+            "Parking Sensors",
+            "Cruise Control",
+            "Leather Interior",
+            "Premium Sound",
+            "360° Camera"
+        ],
+        "images": [
+            "/images/car-suv.png"
+        ],
+        "status": "available",
+        "featured": true
+    },
+    {
+        "id": "car-002",
+        "title": "2022 Mercedes-Benz S-Class S500",
+        "make": "Mercedes-Benz",
+        "model": "S-Class",
+        "trim": "S500 AMG Line",
+        "year": 2022,
+        "price": 78950,
+        "mileage": 12000,
+        "fuel": "Petrol",
+        "transmission": "Automatic",
+        "bodyType": "Saloon",
+        "colour": "Obsidian Black",
+        "engine": "3.0L I6 Turbo",
+        "doors": 4,
+        "seats": 5,
+        "description": "Exceptional S-Class in pristine condition. Features the latest MBUX infotainment, executive rear seating, and advanced driver assistance package.",
+        "features": [
+            "MBUX",
+            "Executive Rear Seats",
+            "Burmester Sound",
+            "Night Vision",
+            "Air Suspension",
+            "Heated & Cooled Seats",
+            "Head-Up Display"
+        ],
+        "images": [
+            "/images/car-sedan.png"
+        ],
+        "status": "available",
+        "featured": true
+    },
+    {
+        "id": "car-003",
+        "title": "2024 BMW X5 xDrive40d M Sport",
+        "make": "BMW",
+        "model": "X5",
+        "trim": "xDrive40d M Sport",
+        "year": 2024,
+        "price": 71500,
+        "mileage": 3200,
+        "fuel": "Diesel",
+        "transmission": "Automatic",
+        "bodyType": "SUV",
+        "colour": "Arctic Grey",
+        "engine": "3.0L I6 Diesel",
+        "doors": 5,
+        "seats": 7,
+        "description": "Nearly new X5 M Sport with delivery mileage. Features 7-seat configuration, M Sport Plus pack, and every conceivable option.",
+        "features": [
+            "M Sport Plus",
+            "7 Seats",
+            "Panoramic Roof",
+            "Harman Kardon",
+            "Adaptive Suspension",
+            "Laser Lights",
+            "Parking Assistant"
+        ],
+        "images": [
+            "/images/car-suv.png"
+        ],
+        "status": "available",
+        "featured": true
+    },
+    {
+        "id": "car-004",
+        "title": "2023 Porsche 911 Carrera S",
+        "make": "Porsche",
+        "model": "911",
+        "trim": "Carrera S",
+        "year": 2023,
+        "price": 105000,
+        "mileage": 5600,
+        "fuel": "Petrol",
+        "transmission": "Automatic",
+        "bodyType": "Sport",
+        "colour": "Jet Black Metallic",
+        "engine": "3.0L Flat-6 Twin Turbo",
+        "doors": 2,
+        "seats": 4,
+        "description": "Immaculate 911 Carrera S with Sport Chrono package. PASM sport suspension, sport exhaust, and gorgeous specification throughout.",
+        "features": [
+            "Sport Chrono",
+            "PASM",
+            "Sport Exhaust",
+            "Bose Sound",
+            "Adaptive Cruise",
+            "Lane Keep Assist",
+            "Carbon Interior Trim"
+        ],
+        "images": [
+            "/images/car-sport.png"
+        ],
+        "status": "available",
+        "featured": false
+    },
+    {
+        "id": "car-005",
+        "title": "2023 Volkswagen Golf R",
+        "make": "Volkswagen",
+        "model": "Golf",
+        "trim": "R 2.0 TSI",
+        "year": 2023,
+        "price": 38500,
+        "mileage": 11000,
+        "fuel": "Petrol",
+        "transmission": "Automatic",
+        "bodyType": "Hatchback",
+        "colour": "Tornado Red",
+        "engine": "2.0L TSI",
+        "doors": 5,
+        "seats": 5,
+        "description": "The ultimate hot hatchback. Golf R with 320bhp, all-wheel drive, and stunning performance. Full Volkswagen service history.",
+        "features": [
+            "4MOTION AWD",
+            "DCC Adaptive Dampers",
+            "Digital Cockpit Pro",
+            "Akrapovič Exhaust",
+            "19\" Alloys",
+            "Heated Seats"
+        ],
+        "images": [
+            "/images/car-hatchback.png"
+        ],
+        "status": "available",
+        "featured": false
+    },
+    {
+        "id": "car-006",
+        "title": "2022 Mercedes-Benz E-Class Estate",
+        "make": "Mercedes-Benz",
+        "model": "E-Class Estate",
+        "trim": "E300d AMG Line",
+        "year": 2022,
+        "price": 42750,
+        "mileage": 28000,
+        "fuel": "Diesel",
+        "transmission": "Automatic",
+        "bodyType": "Estate",
+        "colour": "Polar White",
+        "engine": "2.0L I4 Diesel",
+        "doors": 5,
+        "seats": 5,
+        "description": "Practical luxury at its finest. The E-Class Estate combines elegant design with incredible versatility. AMG Line with full spec.",
+        "features": [
+            "AMG Line",
+            "Panoramic Roof",
+            "Electric Tailgate",
+            "Sat Nav",
+            "Heated Seats",
+            "Parking Assist",
+            "LED Headlights"
+        ],
+        "images": [
+            "/images/car-estate.png"
+        ],
+        "status": "available",
+        "featured": false
+    },
+    {
+        "id": "car-007",
+        "title": "2024 Audi Q7 S Line",
+        "make": "Audi",
+        "model": "Q7",
+        "trim": "50 TDI S Line",
+        "year": 2024,
+        "price": 69990,
+        "mileage": 1800,
+        "fuel": "Diesel",
+        "transmission": "Automatic",
+        "bodyType": "SUV",
+        "colour": "Mythos Black",
+        "engine": "3.0L V6 TDI",
+        "doors": 5,
+        "seats": 7,
+        "description": "Brand new condition Q7 with S Line specification. Features Matrix LED headlights, virtual cockpit, and premium leather.",
+        "features": [
+            "S Line",
+            "Matrix LED",
+            "Virtual Cockpit",
+            "B&O Sound",
+            "7 Seats",
+            "Air Suspension",
+            "Tow Bar"
+        ],
+        "images": [
+            "/images/car-suv.png"
+        ],
+        "status": "available",
+        "featured": true
+    },
+    {
+        "id": "car-008",
+        "title": "2023 Ford Focus ST",
+        "make": "Ford",
+        "model": "Focus",
+        "trim": "ST-3 2.3T",
+        "year": 2023,
+        "price": 32000,
+        "mileage": 9500,
+        "fuel": "Petrol",
+        "transmission": "Manual",
+        "bodyType": "Hatchback",
+        "colour": "Mean Green",
+        "engine": "2.3L EcoBoost",
+        "doors": 5,
+        "seats": 5,
+        "description": "The thrilling Focus ST in Mean Green. Full ST-3 specification with Recaro seats, performance pack, and premium B&O sound system.",
+        "features": [
+            "Recaro Seats",
+            "Performance Pack",
+            "B&O Sound",
+            "Sync 3",
+            "LED Lights",
+            "Rev Matching"
+        ],
+        "images": [
+            "/images/car-hatchback.png"
+        ],
+        "status": "available",
+        "featured": false
+    },
+    {
+        "id": "car-009",
+        "title": "2021 Tesla Model 3 Long Range",
+        "make": "Tesla",
+        "model": "Model 3",
+        "trim": "Long Range AWD",
+        "year": 2021,
+        "price": 35500,
+        "mileage": 35000,
+        "fuel": "Electric",
+        "transmission": "Automatic",
+        "bodyType": "Saloon",
+        "colour": "Pearl White",
+        "engine": "Dual Motor Electric",
+        "doors": 4,
+        "seats": 5,
+        "description": "Long Range Model 3 with dual motor AWD. Full self-driving capability, premium interior, and exceptional range of 360+ miles.",
+        "features": [
+            "Full Self-Driving",
+            "Premium Interior",
+            "Glass Roof",
+            "15\" Touchscreen",
+            "Autopilot",
+            "Supercharger Access"
+        ],
+        "images": [
+            "/images/car-sedan.png"
+        ],
+        "status": "available",
+        "featured": false
+    },
+    {
+        "id": "car-010",
+        "title": "2023 Audi RS6 Avant",
+        "make": "Audi",
+        "model": "RS6 Avant",
+        "trim": "TFSI quattro",
+        "year": 2023,
+        "price": 98500,
+        "mileage": 7800,
+        "fuel": "Petrol",
+        "transmission": "Automatic",
+        "bodyType": "Estate",
+        "colour": "Nardo Grey",
+        "engine": "4.0L V8 Twin Turbo",
+        "doors": 5,
+        "seats": 5,
+        "description": "The ultimate super estate. RS6 Avant in the iconic Nardo Grey with full carbon pack, sport exhaust, and dynamic package plus.",
+        "features": [
+            "Carbon Pack",
+            "Sport Exhaust",
+            "Dynamic Package Plus",
+            "B&O 3D Sound",
+            "Carbon Ceramics",
+            "Night Vision"
+        ],
+        "images": [
+            "/images/car-estate.png"
+        ],
+        "status": "available",
+        "featured": true
+    },
+    {
+        "id": "car-011",
+        "title": "2022 Volkswagen Transporter T6.1",
+        "make": "Volkswagen",
+        "model": "Transporter",
+        "trim": "T6.1 Highline",
+        "year": 2022,
+        "price": 39995,
+        "mileage": 22000,
+        "fuel": "Diesel",
+        "transmission": "Automatic",
+        "bodyType": "Van",
+        "colour": "Reflex Silver",
+        "engine": "2.0L TDI",
+        "doors": 5,
+        "seats": 5,
+        "description": "Versatile Transporter Kombi in Highline spec. Perfect for business or leisure with comfortable seating and ample cargo space.",
+        "features": [
+            "Highline",
+            "DSG Auto",
+            "Air Con",
+            "Sat Nav",
+            "Parking Sensors",
+            "Cruise Control",
+            "Comfort Dash"
+        ],
+        "images": [
+            "/images/car-suv.png"
+        ],
+        "status": "available",
+        "featured": false
+    },
+    {
+        "id": "car-012",
+        "title": "2024 Jaguar F-Type R75 Coupe",
+        "make": "Jaguar",
+        "model": "F-Type",
+        "trim": "R75 V8 S/C",
+        "year": 2024,
+        "price": 112000,
+        "mileage": 950,
+        "fuel": "Petrol",
+        "transmission": "Automatic",
+        "bodyType": "Sport",
+        "colour": "British Racing Green",
+        "engine": "5.0L V8 Supercharged",
+        "doors": 2,
+        "seats": 2,
+        "description": "The final edition F-Type R75. Limited production run celebrating 75 years of Jaguar sports cars. Delivery mileage only.",
+        "features": [
+            "Limited Edition",
+            "Active Exhaust",
+            "Carbon Fibre Pack",
+            "Meridian 3D",
+            "SVR Seats",
+            "Track Mode"
+        ],
+        "images": [
+            "/images/car-sport.png"
+        ],
+        "status": "available",
+        "featured": true
+    }
+]

@@ -1,0 +1,114 @@
+.contact {
+    padding: var(--spacing-3xl) 0 var(--spacing-5xl);
+}
+
+.contact__header {
+    text-align: center;
+    margin-bottom: var(--spacing-3xl);
+}
+
+.contact__title {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-sm);
+}
+
+.contact__subtitle {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+}
+
+.contact__grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: var(--spacing-3xl);
+}
+
+.contact__form-wrap {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-2xl);
+}
+
+.contact__form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.contact__success {
+    text-align: center;
+    padding: var(--spacing-3xl);
+}
+
+.contact__success-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-circle);
+    background: var(--color-success);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xl);
+    margin: 0 auto var(--spacing-lg);
+}
+
+.contact__success h3 {
+    margin-bottom: var(--spacing-sm);
+}
+
+.contact__success p {
+    color: var(--color-text-secondary);
+}
+
+.contact__info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.contact__info-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+}
+
+.contact__info-card h4 {
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-base);
+}
+
+.contact__info-card p {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+}
+
+.contact__map {
+    margin-top: var(--spacing-3xl);
+}
+
+.contact__map-placeholder {
+    height: 300px;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-lg);
+}
+
+@media (max-width: 768px) {
+    .contact__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .contact__form-row {
+        grid-template-columns: 1fr;
+    }
+}

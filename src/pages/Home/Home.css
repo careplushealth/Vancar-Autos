@@ -1,0 +1,273 @@
+/* Hero - Full Bleed Background */
+.home__hero {
+    position: relative;
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+}
+
+.home__hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top,
+            rgba(0, 0, 0, 0.65) 20%,
+            rgba(0, 0, 0, 0.3) 40%,
+            rgba(0, 0, 0, 0.05) 70%,
+            transparent 100%);
+    z-index: 1;
+}
+
+.home__hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    padding-bottom: 15%;
+    padding-top: var(--spacing-3xl);
+}
+
+.home__hero-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: var(--font-weight-bold);
+    color: #ffffff;
+    line-height: var(--line-height-tight);
+    margin-bottom: var(--spacing-md);
+    letter-spacing: -0.02em;
+}
+
+.home__hero-text {
+    font-size: var(--font-size-md);
+    color: rgba(255, 255, 255, 0.8);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--spacing-xl);
+}
+
+.home__hero-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.home__hero-actions .btn--primary {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: var(--radius-pill);
+    padding: var(--spacing-sm) var(--spacing-xl);
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transition-base);
+}
+
+.home__hero-actions .btn--primary:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.home__hero-actions .btn--secondary {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-pill);
+    padding: var(--spacing-sm) var(--spacing-xl);
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transition-base);
+}
+
+.home__hero-actions .btn--secondary:hover {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Available Cars */
+.home__available-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-xl);
+}
+
+.home__available-title {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+}
+
+.home__available-count {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.home__category-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-2xl);
+}
+
+.home__category-card {
+    background: var(--gradient-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transition: all var(--transition-base);
+    text-decoration: none;
+    color: var(--color-text-primary);
+}
+
+.home__category-card:hover {
+    border-color: var(--color-border-hover);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.home__category-card:hover .home__category-image {
+    transform: scale(1.05);
+}
+
+.home__category-image-wrap {
+    height: 180px;
+    overflow: hidden;
+    background: var(--color-bg-tertiary);
+}
+
+.home__category-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+}
+
+.home__category-info {
+    padding: var(--spacing-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.home__category-name {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+}
+
+.home__category-count {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+}
+
+/* Tiles Grid */
+.home__tiles-grid,
+.home__featured-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-lg);
+}
+
+/* News Grid */
+.home__news-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-xl);
+}
+
+.home__news-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transition: all var(--transition-base);
+    text-decoration: none;
+    color: var(--color-text-primary);
+}
+
+.home__news-card:hover {
+    border-color: var(--color-border-hover);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.home__news-card:hover .home__news-image {
+    transform: scale(1.03);
+}
+
+.home__news-image-wrap {
+    height: 260px;
+    overflow: hidden;
+}
+
+.home__news-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+}
+
+.home__news-content {
+    padding: var(--spacing-xl);
+}
+
+.home__news-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-sm);
+    line-height: var(--line-height-snug);
+}
+
+.home__news-excerpt {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-normal);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .home__category-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .home__hero {
+        min-height: 60vh;
+    }
+
+    .home__hero-content {
+        max-width: 100%;
+    }
+
+    .home__hero-title {
+        font-size: var(--font-size-3xl);
+    }
+
+    .home__hero-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .home__tiles-grid,
+    .home__featured-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .home__news-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .home__category-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .home__available-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+}

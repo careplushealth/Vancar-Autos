@@ -1,0 +1,102 @@
+.blog-list {
+    padding: var(--spacing-3xl) 0 var(--spacing-5xl);
+}
+
+.blog-list__header {
+    text-align: center;
+    margin-bottom: var(--spacing-3xl);
+}
+
+.blog-list__title {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-sm);
+}
+
+.blog-list__subtitle {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+}
+
+.blog-list__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-xl);
+}
+
+.blog-list__card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transition: all var(--transition-base);
+    text-decoration: none;
+    color: var(--color-text-primary);
+}
+
+.blog-list__card:hover {
+    border-color: var(--color-border-hover);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.blog-list__card:hover .blog-list__card-image {
+    transform: scale(1.03);
+}
+
+.blog-list__card-image-wrap {
+    height: 240px;
+    overflow: hidden;
+}
+
+.blog-list__card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+}
+
+.blog-list__card-body {
+    padding: var(--spacing-xl);
+}
+
+.blog-list__card-tags {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.blog-list__tag {
+    font-size: var(--font-size-xs);
+    padding: 0.25rem 0.75rem;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-pill);
+    color: var(--color-text-tertiary);
+}
+
+.blog-list__card-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-sm);
+    line-height: var(--line-height-snug);
+}
+
+.blog-list__card-excerpt {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-lg);
+    line-height: var(--line-height-normal);
+}
+
+.blog-list__card-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+@media (max-width: 768px) {
+    .blog-list__grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,124 @@
+.car-editor {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.car-editor__header {
+    margin-bottom: var(--spacing-2xl);
+}
+
+.car-editor__header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+}
+
+.car-editor__section {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+}
+
+.car-editor__section h2 {
+    font-size: var(--font-size-lg);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 0.5rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    cursor: pointer;
+}
+
+.car-editor__images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.car-editor__image-preview {
+    position: relative;
+    width: 120px;
+    height: 90px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+}
+
+.car-editor__image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.car-editor__remove-image {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.car-editor__add-image {
+    width: 120px;
+    height: 90px;
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--color-border);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    font-size: var(--font-size-xs);
+    gap: 4px;
+}
+
+.car-editor__add-image:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-text-primary);
+    color: var(--color-text-primary);
+}
+
+.car-editor__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-2xl);
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+}
