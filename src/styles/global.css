@@ -24,11 +24,18 @@ html {
 body {
     font-family: var(--font-family);
     font-size: var(--font-size-base);
-    font-weight: var(--font-weight-normal);
+    font-weight: 200; /* Extralight to match KarmaHero */
     line-height: var(--line-height-normal);
     color: var(--color-text-primary);
     background-color: var(--color-bg-primary);
     overflow-x: hidden;
+    letter-spacing: 0.05em; /* Subtle wide tracking for body text */
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-family);
+    font-weight: 200; /* Extralight to match KarmaHero */
+    letter-spacing: 0.1em; /* Wide tracking (tracking-widest) */
 }
 
 a {
@@ -81,10 +88,10 @@ select {
 
 .section-title {
     font-size: var(--font-size-3xl);
-    font-weight: var(--font-weight-bold);
+    font-weight: 200; /* Match Karma style */
     text-align: center;
     margin-bottom: var(--spacing-2xl);
-    letter-spacing: -0.02em;
+    letter-spacing: 0.1em; /* Wide tracking */
 }
 
 .sr-only {
