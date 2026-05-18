@@ -9,9 +9,9 @@ export default function Login() {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const result = login(username, password);
+        const result = await login(username, password);
         if (result.success) {
             navigate('/admin');
         } else {
@@ -36,12 +36,10 @@ export default function Login() {
                     </div>
                     <div className="form-group">
                         <label className="form-label">Password</label>
-                        <input className="form-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="admin123" required />
+                        <input className="form-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="********" required />
                     </div>
                     <button type="submit" className="btn btn--primary btn--lg" style={{ width: '100%' }}>Sign In</button>
                 </form>
-
-                <p className="admin-login__hint">Demo: admin / admin123</p>
             </div>
         </div>
     );

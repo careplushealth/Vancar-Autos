@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { getBlogById, createBlog, updateBlog } from '../../../services/dataService';
 import './BlogEditor.css';
 
@@ -41,6 +41,29 @@ export default function BlogEditor() {
     const handleTagsChange = (e) => {
         const tags = e.target.value.split(',').map(t => t.trim()).filter(t => t);
         setForm(prev => ({ ...prev, tags }));
+    };
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'ml_default');
+
+        try {
+            const res = await fetch('https://api.cloudinary.com/v1_1/dns07iokn/image/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.secure_url) {
+                setForm(prev => ({ ...prev, coverImage: data.secure_url }));
+            }
+        } catch (err) {
+            console.error('Image upload failed:', err);
+            alert('Upload failed. Please try again.');
+        }
     };
 
     const handleSubmit = (e) => {
@@ -114,6 +137,10 @@ export default function BlogEditor() {
                         <div className="form-group">
                             <label className="form-label">Cover Image URL</label>
                             <input name="coverImage" className="form-input" value={form.coverImage} onChange={handleChange} placeholder="/images/..." />
+                            <label className="btn btn--outline" style={{ cursor: 'pointer', display: 'block', marginTop: 'var(--spacing-sm)', textAlign: 'center' }}>
+                                Upload Cover Image
+                                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
+                            </label>
                         </div>
                         {form.coverImage && (
                             <div className="blog-editor__cover-preview">
@@ -122,7 +149,7 @@ export default function BlogEditor() {
                         )}
                         <div className="form-group">
                             <label className="form-label">Tags (comma separated)</label>
-                            <input name="tags" className="form-input" value={form.tags.join(', ')} onChange={handleTagsChange} />
+                            <input name="tags" className="form-input" value={(form.tags || []).join(', ')} onChange={handleTagsChange} />
                         </div>
                     </div>
                 </div>

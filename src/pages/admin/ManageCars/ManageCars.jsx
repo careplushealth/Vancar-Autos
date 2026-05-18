@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { getCars, deleteCar } from '../../../services/dataService';
+import { getCars, deleteCar, updateCar } from '../../../services/dataService';
 import './ManageCars.css';
 
 export default function ManageCars() {
@@ -12,6 +12,12 @@ export default function ManageCars() {
             deleteCar(id);
             setRefresh(prev => prev + 1);
         }
+    };
+
+    const handleToggleStatus = (car) => {
+        const newStatus = car.status === 'sold' ? 'available' : 'sold';
+        updateCar(car.id, { status: newStatus });
+        setRefresh(prev => prev + 1);
     };
 
     return (
@@ -52,6 +58,13 @@ export default function ManageCars() {
                                 </td>
                                 <td>
                                     <div className="manage-cars__actions">
+                                        <button 
+                                            onClick={() => handleToggleStatus(car)} 
+                                            className={`btn btn--sm ${car.status === 'sold' ? 'btn--primary' : 'btn--outline'}`}
+                                            style={{ marginRight: '8px' }}
+                                        >
+                                            {car.status === 'sold' ? 'Mark Available' : 'Mark Sold'}
+                                        </button>
                                         <Link to={`/admin/cars/${car.id}/edit`} className="btn btn--sm btn--secondary">Edit</Link>
                                         <button onClick={() => handleDelete(car.id)} className="btn btn--sm btn--outline manage-cars__delete">Delete</button>
                                     </div>

@@ -4,6 +4,7 @@ import TileCard from '../../components/TileCard/TileCard';
 import CarCard from '../../components/CarCard/CarCard';
 import FilterPills from '../../components/FilterPills/FilterPills';
 import { getAvailableCars, getCarStats, getPublishedBlogs } from '../../services/dataService';
+import KarmaHero from '../../components/KarmaHero/KarmaHero';
 import './Home.css';
 
 export default function Home() {
@@ -26,22 +27,9 @@ export default function Home() {
     }));
 
     return (
-        <div className="home">
-            {/* Hero Section */}
-            <section className="home__hero" style={{ backgroundImage: 'url(/images/hero-banner.jpg)' }}>
-                <div className="home__hero-overlay"></div>
-                <div className="home__hero-content container">
-                    <h1 className="home__hero-title">Stop whatever you're doing.</h1>
-                    <p className="home__hero-text">
-                        Discover incredible savings on premium used cars at VANCAR AUTOS —
-                        quality vehicles, fair prices, and exceptional service. Now's the time.
-                    </p>
-                    <div className="home__hero-actions">
-                        <Link to="/buy" className="btn btn--primary btn--lg">View latest offers</Link>
-                        <Link to="/buy" className="btn btn--secondary btn--lg">Search available cars</Link>
-                    </div>
-                </div>
-            </section>
+        <div className="home relative">
+            {/* Karma Premium Hero Showcase */}
+            <KarmaHero />
 
             {/* Available Cars Section */}
             <section className="home__available section">
