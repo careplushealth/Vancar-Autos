@@ -3,6 +3,15 @@ import blogsData from '../data/blogs.json';
 
 const CARS_KEY = 'vancar_cars';
 const BLOGS_KEY = 'vancar_blogs';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
+const syncNeon = (endpoint, method, data = null) => {
+    fetch(`${API_URL}${endpoint}`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: data ? JSON.stringify(data) : null
+    }).catch(err => console.error("Neon DB Sync Error:", err));
+};
 
 function initData(key, defaultData) {
   const stored = localStorage.getItem(key);
@@ -52,7 +61,8 @@ export function getSimilarCars(carId, limit = 4) {
 }
 
 export function searchCars(filters = {}) {
-  let cars = getAvailableCars();
+  // Use all cars so we can display sold ones too
+  let cars = getCars();
 
   if (filters.search) {
     const q = filters.search.toLowerCase();
@@ -110,6 +120,13 @@ export function searchCars(filters = {}) {
     }
   }
 
+  // Always push sold cars to the bottom regardless of filters
+  cars.sort((a, b) => {
+    if (a.status === 'sold' && b.status !== 'sold') return 1;
+    if (a.status !== 'sold' && b.status === 'sold') return -1;
+    return 0; // maintain existing order
+  });
+
   return cars;
 }
 
@@ -118,6 +135,7 @@ export function createCar(carData) {
   const newCar = { ...carData, id: generateId() };
   cars.push(newCar);
   saveData(CARS_KEY, cars);
+  syncNeon('/cars', 'POST', newCar);
   return newCar;
 }
 
@@ -127,12 +145,14 @@ export function updateCar(id, carData) {
   if (idx === -1) return null;
   cars[idx] = { ...cars[idx], ...carData, id };
   saveData(CARS_KEY, cars);
+  syncNeon(`/cars/${id}`, 'PUT', cars[idx]);
   return cars[idx];
 }
 
 export function deleteCar(id) {
   const cars = getCars().filter(c => c.id !== id);
   saveData(CARS_KEY, cars);
+  syncNeon(`/cars/${id}`, 'DELETE');
 }
 
 export function getBodyTypes() {
@@ -181,6 +201,7 @@ export function createBlog(blogData) {
   const newBlog = { ...blogData, id: generateId() };
   blogs.push(newBlog);
   saveData(BLOGS_KEY, blogs);
+  syncNeon('/blogs', 'POST', newBlog);
   return newBlog;
 }
 
@@ -190,10 +211,12 @@ export function updateBlog(id, blogData) {
   if (idx === -1) return null;
   blogs[idx] = { ...blogs[idx], ...blogData, id };
   saveData(BLOGS_KEY, blogs);
+  syncNeon(`/blogs/${id}`, 'PUT', blogs[idx]);
   return blogs[idx];
 }
 
 export function deleteBlog(id) {
   const blogs = getBlogs().filter(b => b.id !== id);
   saveData(BLOGS_KEY, blogs);
+  syncNeon(`/blogs/${id}`, 'DELETE');
 }

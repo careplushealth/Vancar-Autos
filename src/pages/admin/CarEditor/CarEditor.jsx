@@ -32,9 +32,27 @@ export default function CarEditor() {
         }));
     };
 
-    const handleImageChange = (e) => {
-        // In a real app, this would upload to server. Here we just take the URL directly or base64
-        // For simplicity in this demo, we'll just ask for a URL string in a prompt or input
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'ml_default');
+
+        try {
+            const res = await fetch('https://api.cloudinary.com/v1_1/dns07iokn/image/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.secure_url) {
+                setForm(prev => ({ ...prev, images: [...prev.images, data.secure_url] }));
+            }
+        } catch (err) {
+            console.error('Image upload failed:', err);
+            alert('Upload failed. Please try again.');
+        }
     };
 
     const addImageUrl = () => {
@@ -194,8 +212,12 @@ export default function CarEditor() {
                                     <button type="button" onClick={() => removeImage(i)} className="car-editor__remove-image">×</button>
                                 </div>
                             ))}
-                            <button type="button" onClick={addImageUrl} className="car-editor__add-image">
-                                + Add Image URL
+                            <label className="car-editor__add-image" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                + Upload Image
+                                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
+                            </label>
+                            <button type="button" onClick={addImageUrl} className="car-editor__add-image" style={{ marginLeft: '10px' }}>
+                                + Add URL
                             </button>
                         </div>
                     </div>

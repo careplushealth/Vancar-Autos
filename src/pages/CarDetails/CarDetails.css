@@ -1,6 +1,6 @@
 .car-details__hero {
     position: relative;
-    height: 450px;
+    height: 520px;
     overflow: hidden;
     background: var(--color-bg-tertiary);
 }
@@ -9,12 +9,99 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: opacity var(--transition-slow);
 }
 
 .car-details__hero-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(0deg, var(--color-bg-primary) 0%, transparent 50%);
+    background: linear-gradient(0deg, var(--color-bg-primary) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Image Gallery Navigation Buttons */
+.car-details__nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--color-text-primary);
+    font-size: 1.75rem;
+    font-weight: 200;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 25;
+    transition: all var(--transition-base);
+    user-select: none;
+}
+
+.car-details__nav-btn:hover {
+    background: var(--color-text-primary);
+    color: var(--color-text-dark);
+    border-color: var(--color-text-primary);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
+}
+
+.car-details__nav-btn--prev {
+    left: var(--spacing-xl);
+}
+
+.car-details__nav-btn--next {
+    right: var(--spacing-xl);
+}
+
+/* Thumbnails Strip Overlay */
+.car-details__thumbnails {
+    position: absolute;
+    bottom: var(--spacing-xl);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: var(--spacing-sm);
+    z-index: 25;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(16px);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: var(--shadow-lg);
+}
+
+.car-details__thumb-btn {
+    width: 82px;
+    height: 54px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    opacity: 0.5;
+    background: transparent;
+    padding: 0;
+    transition: all var(--transition-base);
+}
+
+.car-details__thumb-btn:hover {
+    opacity: 0.85;
+}
+
+.car-details__thumb-btn--active {
+    opacity: 1;
+    border-color: var(--color-text-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.car-details__thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .car-details__breadcrumb {
@@ -226,7 +313,40 @@
 
 @media (max-width: 768px) {
     .car-details__hero {
-        height: 280px;
+        height: 320px;
+    }
+
+    .car-details__nav-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 1.25rem;
+    }
+
+    .car-details__nav-btn--prev {
+        left: var(--spacing-sm);
+    }
+
+    .car-details__nav-btn--next {
+        right: var(--spacing-sm);
+    }
+
+    .car-details__thumbnails {
+        bottom: var(--spacing-sm);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        gap: 6px;
+        border-radius: var(--radius-lg);
+    }
+
+    .car-details__thumb-btn {
+        width: 52px;
+        height: 35px;
+    }
+
+    .car-details__zoom-indicator-btn {
+        top: var(--spacing-sm) !important;
+        right: var(--spacing-sm) !important;
+        padding: 4px var(--spacing-sm) !important;
+        font-size: 10px !important;
     }
 
     .car-details__title {
@@ -253,4 +373,171 @@
     .car-details__features-grid {
         grid-template-columns: 1fr;
     }
+
+    .car-details__lightbox-nav {
+        width: 44px !important;
+        height: 44px !important;
+    }
+    
+    .car-details__lightbox-nav--prev {
+        left: var(--spacing-sm) !important;
+    }
+    
+    .car-details__lightbox-nav--next {
+        right: var(--spacing-sm) !important;
+    }
+    
+    .car-details__lightbox-close {
+        top: var(--spacing-md) !important;
+        right: var(--spacing-md) !important;
+    }
+}
+
+/* Lightbox Modal & Zoom Features */
+.car-details__hero-img--zoomable {
+    cursor: zoom-in;
+}
+
+.car-details__zoom-indicator-btn {
+    position: absolute;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    z-index: 25;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--color-text-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-light);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.car-details__zoom-indicator-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+.car-details__lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+}
+
+.car-details__lightbox-content {
+    position: relative;
+    max-width: 90%;
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    z-index: 10001;
+}
+
+.car-details__lightbox-img {
+    max-width: 100%;
+    max-height: 72vh;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+}
+
+.car-details__lightbox-caption {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-light);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 var(--spacing-xs);
+}
+
+/* Lightbox close button */
+.car-details__lightbox-close {
+    position: absolute;
+    top: var(--spacing-2xl);
+    right: var(--spacing-2xl);
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    z-index: 10002;
+    padding: var(--spacing-xs);
+    transition: all var(--transition-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.car-details__lightbox-close:hover {
+    color: var(--color-text-primary);
+    transform: scale(1.15);
+}
+
+/* Lightbox Navigation Chevrons */
+.car-details__lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.5);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10002;
+    transition: all var(--transition-base);
+    user-select: none;
+}
+
+.car-details__lightbox-nav:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: var(--color-text-primary);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.06);
+}
+
+.car-details__lightbox-nav--prev {
+    left: var(--spacing-2xl);
+}
+
+.car-details__lightbox-nav--next {
+    right: var(--spacing-2xl);
+}
+
+/* Animations */
+@keyframes scaleUp {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-scale-up {
+    animation: scaleUp var(--transition-slow) cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

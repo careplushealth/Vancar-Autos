@@ -1,18 +1,28 @@
 const AUTH_KEY = 'vancar_auth';
-const ADMIN_USER = 'admin';
-const ADMIN_PASS = 'admin123';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-export function login(username, password) {
-    if (username === ADMIN_USER && password === ADMIN_PASS) {
-        const session = {
-            user: username,
-            loggedIn: true,
-            timestamp: Date.now()
-        };
-        sessionStorage.setItem(AUTH_KEY, JSON.stringify(session));
-        return { success: true, user: username };
+export async function login(username, password) {
+    try {
+        const res = await fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            const session = {
+                user: data.user,
+                loggedIn: true,
+                timestamp: Date.now()
+            };
+            sessionStorage.setItem(AUTH_KEY, JSON.stringify(session));
+            return { success: true, user: data.user };
+        }
+        return { success: false, error: data.error || 'Invalid credentials' };
+    } catch (err) {
+        return { success: false, error: 'Server connection failed' };
     }
-    return { success: false, error: 'Invalid username or password' };
 }
 
 export function logout() {
