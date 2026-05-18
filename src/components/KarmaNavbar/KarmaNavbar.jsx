@@ -49,7 +49,7 @@ export default function KarmaNavbar() {
               className="hover:opacity-80 transition-opacity duration-300 flex items-center"
             >
               <img 
-                src="/images/logo.png" 
+                src={`/images/logo.png?v=${Date.now()}`} 
                 alt="Vancar Autos Logo" 
                 className="h-8 md:h-10 w-auto object-contain" 
               />
