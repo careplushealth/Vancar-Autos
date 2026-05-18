@@ -86,6 +86,19 @@ const router = createBrowserRouter(
   )
 );
 
+import { useEffect, useState } from 'react';
+import { syncDataFromServer } from './services/dataService';
+
 export default function App() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    syncDataFromServer().then(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return <div style={{ height: '100vh', background: 'var(--color-bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{color: 'white'}}>Loading...</div></div>;
+  }
+
   return <RouterProvider router={router} />;
 }

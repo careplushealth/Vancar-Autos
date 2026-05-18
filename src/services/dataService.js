@@ -13,6 +13,25 @@ const syncNeon = (endpoint, method, data = null) => {
     }).catch(err => console.error("Neon DB Sync Error:", err));
 };
 
+export async function syncDataFromServer() {
+    try {
+        const [carsRes, blogsRes] = await Promise.all([
+            fetch(`${API_URL}/cars`),
+            fetch(`${API_URL}/blogs`)
+        ]);
+        if (carsRes.ok) {
+            const cars = await carsRes.json();
+            if (cars && cars.length > 0) saveData(CARS_KEY, cars);
+        }
+        if (blogsRes.ok) {
+            const blogs = await blogsRes.json();
+            if (blogs && blogs.length > 0) saveData(BLOGS_KEY, blogs);
+        }
+    } catch (err) {
+        console.error("Failed to sync from server:", err);
+    }
+}
+
 function initData(key, defaultData) {
   const stored = localStorage.getItem(key);
   if (!stored) {
