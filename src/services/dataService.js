@@ -3,6 +3,7 @@ import blogsData from '../data/blogs.json';
 
 const CARS_KEY = 'vancar_cars';
 const BLOGS_KEY = 'vancar_blogs';
+const EXPENSES_KEY = 'vancar_vehicle_expenses';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const syncNeon = (endpoint, method, data = null) => {
@@ -15,9 +16,10 @@ const syncNeon = (endpoint, method, data = null) => {
 
 export async function syncDataFromServer() {
     try {
-        const [carsRes, blogsRes] = await Promise.all([
+        const [carsRes, blogsRes, expensesRes] = await Promise.all([
             fetch(`${API_URL}/cars`),
-            fetch(`${API_URL}/blogs`)
+            fetch(`${API_URL}/blogs`),
+            fetch(`${API_URL}/vehicle-expenses`)
         ]);
         if (carsRes.ok) {
             const cars = await carsRes.json();
@@ -26,6 +28,10 @@ export async function syncDataFromServer() {
         if (blogsRes.ok) {
             const blogs = await blogsRes.json();
             if (blogs && blogs.length > 0) saveData(BLOGS_KEY, blogs);
+        }
+        if (expensesRes.ok) {
+            const expenses = await expensesRes.json();
+            if (Array.isArray(expenses)) saveData(EXPENSES_KEY, expenses);
         }
     } catch (err) {
         console.error("Failed to sync from server:", err);
@@ -238,4 +244,51 @@ export function deleteBlog(id) {
   const blogs = getBlogs().filter(b => b.id !== id);
   saveData(BLOGS_KEY, blogs);
   syncNeon(`/blogs/${id}`, 'DELETE');
+}
+
+// === Vehicle Expenses ===
+export function getVehicleExpenses() {
+  return initData(EXPENSES_KEY, []);
+}
+
+export function createVehicleExpense(expenseData) {
+  const expenses = getVehicleExpenses();
+  const nowStr = new Date().toISOString();
+  const newExpense = { 
+    ...expenseData, 
+    id: generateId(),
+    created_at: nowStr,
+    updated_at: nowStr
+  };
+  expenses.push(newExpense);
+  saveData(EXPENSES_KEY, expenses);
+  syncNeon('/vehicle-expenses', 'POST', newExpense);
+  return newExpense;
+}
+
+export function updateVehicleExpense(id, expenseData) {
+  const expenses = getVehicleExpenses();
+  const idx = expenses.findIndex(e => e.id === id);
+  if (idx === -1) return null;
+  const nowStr = new Date().toISOString();
+  expenses[idx] = { 
+    ...expenses[idx], 
+    ...expenseData, 
+    id,
+    updated_at: nowStr
+  };
+  saveData(EXPENSES_KEY, expenses);
+  syncNeon(`/vehicle-expenses/${id}`, 'PUT', expenses[idx]);
+  return expenses[idx];
+}
+
+export function deleteVehicleExpense(id) {
+  const expenses = getVehicleExpenses().filter(e => e.id !== id);
+  saveData(EXPENSES_KEY, expenses);
+  syncNeon(`/vehicle-expenses/${id}`, 'DELETE');
+}
+
+export function getModelsByMake(make) {
+  const cars = getCars();
+  return [...new Set(cars.filter(c => c.make === make).map(c => c.model))].sort();
 }

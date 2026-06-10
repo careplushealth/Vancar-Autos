@@ -20,6 +20,7 @@ import CarEditor from './pages/admin/CarEditor/CarEditor';
 import ManageBlogs from './pages/admin/ManageBlogs/ManageBlogs';
 import BlogEditor from './pages/admin/BlogEditor/BlogEditor';
 import Settings from './pages/admin/Settings/Settings';
+import ExpenseTracker from './pages/admin/ExpenseTracker/ExpenseTracker';
 
 // Auth Guard
 import { isAuthenticated } from './services/authService';
@@ -71,6 +72,7 @@ const router = createBrowserRouter(
         <Route path="blogs" element={<ManageBlogs />} />
         <Route path="blogs/new" element={<BlogEditor />} />
         <Route path="blogs/:id/edit" element={<BlogEditor />} />
+        <Route path="expenses" element={<ExpenseTracker />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 

@@ -1,0 +1,571 @@
+.expense-tracker {
+    animation: fadeIn var(--transition-slow) ease forwards;
+}
+
+.expense-tracker__header {
+    margin-bottom: var(--spacing-xl);
+}
+
+.expense-tracker__header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-primary);
+}
+
+.expense-tracker__header p {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+/* Statistics Grid */
+.expense-tracker__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.expense-tracker__stat-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    transition: transform var(--transition-base), border-color var(--transition-base);
+}
+
+.expense-tracker__stat-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-border-hover);
+}
+
+.expense-tracker__stat-number {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    font-family: 'Outfit', sans-serif;
+}
+
+.expense-tracker__stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Profit and Loss Highlight Stats */
+.expense-tracker__stat-card--profit .expense-tracker__stat-number {
+    color: var(--color-success);
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+}
+
+.expense-tracker__stat-card--loss .expense-tracker__stat-number {
+    color: var(--color-error);
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.1);
+}
+
+/* Main Layout Stacking */
+.expense-tracker__layout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+}
+
+.expense-tracker__form-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.expense-tracker__table-container {
+    width: 100%;
+}
+
+/* Premium Card Wrapper */
+.expense-tracker__card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    box-shadow: var(--shadow-md);
+}
+
+.expense-tracker__card h2 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    margin-bottom: var(--spacing-lg);
+    letter-spacing: 0.05em;
+}
+
+/* Forms */
+.expense-tracker__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.expense-tracker__divider {
+    border: 0;
+    height: 1px;
+    background: var(--color-border);
+    margin: var(--spacing-sm) 0;
+}
+
+/* Expense Sub-section */
+.expense-tracker__expense-section h3 {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-md);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.expense-tracker__expense-input-row {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: flex-end;
+    margin-bottom: var(--spacing-md);
+}
+
+.expense-tracker__add-expense-btn {
+    height: 48px; /* Match standard input height */
+    padding: 0 var(--spacing-lg);
+}
+
+.expense-tracker__no-expenses {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+    text-align: center;
+    padding: var(--spacing-md);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+}
+
+/* Temporary Expenses Table */
+.expense-tracker__temp-table-container {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: var(--spacing-sm);
+}
+
+.expense-tracker__temp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-xs);
+}
+
+.expense-tracker__temp-table th {
+    background: var(--color-bg-tertiary);
+    text-align: left;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+}
+
+.expense-tracker__temp-table td {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.expense-tracker__temp-table tr:last-child td {
+    border-bottom: none;
+}
+
+.expense-tracker__temp-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.expense-tracker__text-btn {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    transition: color var(--transition-fast);
+}
+
+.expense-tracker__text-btn:hover {
+    color: var(--color-text-primary);
+}
+
+.expense-tracker__text-btn--danger:hover {
+    color: var(--color-error);
+}
+
+.expense-tracker__temp-total {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-tertiary);
+    border-top: 1px solid var(--color-border);
+    font-size: var(--font-size-xs);
+}
+
+.expense-tracker__temp-total span {
+    color: var(--color-text-secondary);
+}
+
+/* Calculations Live Card */
+.expense-tracker__calculations-summary {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.expense-tracker__calculations-summary h4 {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    margin-bottom: var(--spacing-sm);
+    letter-spacing: 0.05em;
+}
+
+.expense-tracker__calc-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.expense-tracker__calc-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+.expense-tracker__calc-item strong {
+    color: var(--color-text-primary);
+}
+
+.expense-tracker__calc-item--total {
+    border-top: 1px solid var(--color-border);
+    padding-top: 8px;
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+.expense-tracker__calc-item--pL {
+    border-top: 1px dashed var(--color-border);
+    padding-top: 8px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+}
+
+.expense-tracker__calc-item--profit strong {
+    color: var(--color-success);
+}
+
+.expense-tracker__calc-item--loss strong {
+    color: var(--color-error);
+}
+
+.expense-tracker__form-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+    margin-top: var(--spacing-sm);
+}
+
+/* Tracked Vehicles Table & Header */
+.expense-tracker__table-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+@media (min-width: 768px) {
+    .expense-tracker__table-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+.expense-tracker__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.expense-tracker__search {
+    width: 200px;
+    font-size: var(--font-size-xs);
+    padding: 0.6rem 0.8rem;
+}
+
+.expense-tracker__filter-select {
+    width: 140px;
+    font-size: var(--font-size-xs);
+    padding: 0.6rem 0.8rem;
+    padding-right: 2rem;
+}
+
+/* Records List Table styling */
+.expense-tracker__table-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+}
+
+.expense-tracker__table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 850px;
+}
+
+.expense-tracker__table th {
+    background: var(--color-bg-tertiary);
+    text-align: left;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.expense-tracker__table td {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+    font-size: var(--font-size-sm);
+}
+
+.expense-tracker__table tr:last-child td {
+    border-bottom: none;
+}
+
+.expense-tracker__table tr:hover td {
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.expense-tracker__vehicle-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.expense-tracker__vehicle-title {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+}
+
+.expense-tracker__vehicle-date {
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+}
+
+/* Badges */
+.expense-tracker__status-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-pill);
+    font-size: 10px;
+    font-weight: var(--font-weight-medium);
+    text-transform: capitalize;
+}
+
+.expense-tracker__status-badge--in-stock {
+    background: rgba(16, 185, 129, 0.12);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.expense-tracker__status-badge--sold {
+    background: rgba(239, 68, 68, 0.12);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.expense-tracker__pL-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: var(--font-weight-semibold);
+}
+
+.expense-tracker__pL-badge--profit {
+    color: var(--color-success);
+    background: rgba(16, 185, 129, 0.08);
+}
+
+.expense-tracker__pL-badge--loss {
+    color: var(--color-error);
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.expense-tracker__pL-badge--pending {
+    color: var(--color-text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.expense-tracker__actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.expense-tracker__delete-action:hover {
+    border-color: var(--color-error);
+    color: var(--color-error);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.expense-tracker__empty-records {
+    text-align: center;
+    color: var(--color-text-tertiary);
+    padding: var(--spacing-2xl);
+    font-size: var(--font-size-sm);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+}
+
+/* Premium Confirmation Modal Overlay */
+.expense-tracker__modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: var(--z-modal);
+    animation: fadeIn var(--transition-fast) ease forwards;
+}
+
+.expense-tracker__modal {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    max-width: 450px;
+    width: 90%;
+    box-shadow: var(--shadow-xl);
+    animation: slideUp var(--transition-base) ease forwards;
+}
+
+.expense-tracker__modal h3 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    margin-bottom: var(--spacing-md);
+    color: var(--color-text-primary);
+}
+
+.expense-tracker__modal p {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-md);
+    line-height: var(--line-height-normal);
+}
+
+.expense-tracker__modal-warning {
+    color: var(--color-error) !important;
+    font-size: var(--font-size-xs) !important;
+    font-weight: var(--font-weight-medium);
+}
+
+.expense-tracker__modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-lg);
+}
+
+.expense-tracker__modal-delete-btn {
+    background-color: var(--color-error);
+    border-color: var(--color-error);
+    color: #ffffff;
+}
+
+.expense-tracker__modal-delete-btn:hover {
+    background-color: #dc2626;
+    border-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+/* Large Modal for details view */
+.expense-tracker__modal--large {
+    max-width: 650px;
+}
+
+/* Detail info grid inside details modal */
+.expense-tracker__details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+}
+
+.expense-tracker__details-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.expense-tracker__details-item span {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.expense-tracker__details-item strong {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+}
+
+.expense-tracker__details-expenses {
+    margin-bottom: var(--spacing-lg);
+}
+
+.expense-tracker__details-expenses h4 {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    margin-bottom: var(--spacing-md);
+    letter-spacing: 0.05em;
+}
+
+.expense-tracker__vehicle-reg {
+    display: inline-block;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-warning); /* yellow license plate style */
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 1px 6px;
+    margin: 4px 0;
+    width: fit-content;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}

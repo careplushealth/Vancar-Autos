@@ -59,6 +59,27 @@ const initDB = async () => {
                 password VARCHAR(255)
             );
         `);
+
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS vehicle_expenses (
+                id VARCHAR(50) PRIMARY KEY,
+                make VARCHAR(100) NOT NULL,
+                model VARCHAR(100) NOT NULL,
+                registration VARCHAR(50),
+                buying_price NUMERIC NOT NULL,
+                status VARCHAR(50) NOT NULL,
+                selling_price NUMERIC DEFAULT 0,
+                profit_loss NUMERIC NOT NULL,
+                expenses JSONB DEFAULT '[]',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // Migration query to add registration column if the table already exists
+        await db.query(`
+            ALTER TABLE vehicle_expenses ADD COLUMN IF NOT EXISTS registration VARCHAR(50);
+        `);
         
         const adminCheck = await db.query(`SELECT * FROM admins WHERE username = 'admin'`);
         if (adminCheck.rows.length === 0) {
@@ -192,6 +213,61 @@ app.post('/api/login', async (req, res) => {
         if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
         
         res.json({ success: true, user: username });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// --- VEHICLE EXPENSES API ---
+
+app.get('/api/vehicle-expenses', async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM vehicle_expenses ORDER BY created_at DESC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/vehicle-expenses', async (req, res) => {
+    const { id, make, model, registration, buying_price, status, selling_price, profit_loss, expenses } = req.body;
+    try {
+        const result = await db.query(
+            `INSERT INTO vehicle_expenses (id, make, model, registration, buying_price, status, selling_price, profit_loss, expenses, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()) RETURNING *`,
+            [id, make, model, registration, buying_price, status, selling_price, profit_loss, JSON.stringify(expenses)]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.put('/api/vehicle-expenses/:id', async (req, res) => {
+    const { id } = req.params;
+    const { make, model, registration, buying_price, status, selling_price, profit_loss, expenses } = req.body;
+    try {
+        const result = await db.query(
+            `UPDATE vehicle_expenses 
+             SET make=$1, model=$2, registration=$3, buying_price=$4, status=$5, selling_price=$6, profit_loss=$7, expenses=$8, updated_at=NOW()
+             WHERE id=$9 RETURNING *`,
+            [make, model, registration, buying_price, status, selling_price, profit_loss, JSON.stringify(expenses), id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.delete('/api/vehicle-expenses/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.query('DELETE FROM vehicle_expenses WHERE id=$1', [id]);
+        res.json({ message: 'Vehicle expense record deleted successfully' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
