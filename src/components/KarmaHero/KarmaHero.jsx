@@ -33,7 +33,7 @@ export default function KarmaHero() {
 
             {/* Large Spacious Headline */}
             <h1 className="karma-hero__title">
-              <span style={{ color: 'var(--color-info)' }}>Find Your Perfect Drive.</span><br />
+              Find Your Perfect Drive.<br />
               <span>Quality Used Cars, Built to Last.</span>
             </h1>
 
