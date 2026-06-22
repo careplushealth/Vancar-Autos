@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { submitInquiry } from '../../services/dataService';
 import './Sell.css';
 
 const STEPS = ['Vehicle Info', 'Condition', 'Contact Details', 'Confirmation'];
@@ -10,15 +11,44 @@ export default function Sell() {
         condition: '', serviceHistory: '', accidents: '',
         name: '', email: '', phone: '', message: ''
     });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     const update = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
     const nextStep = () => setStep(prev => Math.min(prev + 1, 3));
     const prevStep = () => setStep(prev => Math.max(prev - 1, 0));
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        nextStep();
+        setLoading(true);
+        setError(null);
+        try {
+            await submitInquiry({
+                type: 'sell_valuation',
+                name: form.name,
+                email: form.email,
+                phone: form.phone,
+                subject: `Valuation Request: ${form.make} ${form.model}`,
+                message: form.message,
+                vehicle_details: {
+                    registration: form.registration,
+                    make: form.make,
+                    model: form.model,
+                    year: form.year,
+                    mileage: form.mileage,
+                    condition: form.condition,
+                    serviceHistory: form.serviceHistory,
+                    accidents: form.accidents
+                }
+            });
+            nextStep();
+        } catch (err) {
+            console.error(err);
+            setError('Failed to submit valuation request. Please check your connection and try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -131,9 +161,16 @@ export default function Sell() {
                                     <textarea className="form-input" placeholder="Any other details about your vehicle..." value={form.message} onChange={e => update('message', e.target.value)} />
                                 </div>
                             </div>
+                            {error && (
+                                <div style={{ color: 'var(--color-error)', width: '100%', marginBottom: '1rem', fontWeight: 'bold' }}>
+                                    {error}
+                                </div>
+                            )}
                             <div className="sell__form-actions">
-                                <button type="button" className="btn btn--outline btn--lg" onClick={prevStep}>Back</button>
-                                <button type="submit" className="btn btn--primary btn--lg">Submit Valuation Request</button>
+                                <button type="button" className="btn btn--outline btn--lg" onClick={prevStep} disabled={loading}>Back</button>
+                                <button type="submit" className="btn btn--primary btn--lg" disabled={loading}>
+                                    {loading ? 'Submitting...' : 'Submit Valuation Request'}
+                                </button>
                             </div>
                         </div>
                     )}

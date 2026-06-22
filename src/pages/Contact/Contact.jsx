@@ -1,11 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { submitInquiry } from '../../services/dataService';
 import './Contact.css';
 
 export default function Contact() {
+    const location = useLocation();
     const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
+    const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [error, setError] = useState(null);
 
-    const handleSubmit = (e) => { e.preventDefault(); setSubmitted(true); };
+    useEffect(() => {
+        if (location.state) {
+            const { carTitle, carId, action } = location.state;
+            if (carTitle) {
+                const subject = action === 'reserve' ? 'Purchase Enquiry' : 'General Enquiry';
+                const message = action === 'reserve'
+                    ? `I would like to reserve the vehicle: ${carTitle} (ID: ${carId}). Please let me know the next steps.`
+                    : `I am interested in inquiring about the vehicle: ${carTitle} (ID: ${carId}). Please provide more details.`;
+                setForm(prev => ({
+                    ...prev,
+                    subject,
+                    message
+                }));
+            }
+        }
+    }, [location.state]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        try {
+            await submitInquiry({
+                type: 'contact',
+                name: form.name,
+                email: form.email,
+                phone: form.phone,
+                subject: form.subject || 'General Enquiry',
+                message: form.message
+            });
+            setSubmitted(true);
+        } catch (err) {
+            console.error(err);
+            setError('Failed to send message. Please try again or call us directly.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     return (
         <div className="contact">
@@ -56,7 +99,14 @@ export default function Contact() {
                                     <label className="form-label">Message</label>
                                     <textarea className="form-input" rows={5} placeholder="Your message..." value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} required />
                                 </div>
-                                <button type="submit" className="btn btn--primary btn--lg">Send Message</button>
+                                {error && (
+                                    <div style={{ color: 'var(--color-error)', marginBottom: '1rem', fontWeight: 'bold' }}>
+                                        {error}
+                                    </div>
+                                )}
+                                <button type="submit" className="btn btn--primary btn--lg" disabled={loading}>
+                                    {loading ? 'Sending...' : 'Send Message'}
+                                </button>
                             </form>
                         )}
                     </div>

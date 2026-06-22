@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { submitInquiry } from '../../services/dataService';
 import './CarCard.css';
 
 export default function CarCard({ car }) {
@@ -10,6 +11,8 @@ export default function CarCard({ car }) {
     // Quick Enquiry Form State
     const [enquiry, setEnquiry] = useState({ name: '', phone: '', email: '' });
     const [enquirySuccess, setEnquirySuccess] = useState(false);
+    const [enquiryError, setEnquiryError] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Sync saved and compared states from localStorage
     const syncStates = () => {
@@ -89,12 +92,36 @@ export default function CarCard({ car }) {
         setIsQuickViewOpen(true);
     };
 
-    const handleEnquirySubmit = (e) => {
+    const handleEnquirySubmit = async (e) => {
         e.preventDefault();
-        setTimeout(() => {
+        setIsSubmitting(true);
+        setEnquiryError(null);
+        try {
+            await submitInquiry({
+                type: 'vehicle_inquiry',
+                name: enquiry.name,
+                email: enquiry.email,
+                phone: enquiry.phone,
+                subject: `Quick Enquiry: ${car.title}`,
+                message: `Customer enquired about this vehicle via quick view enquiry form.`,
+                vehicle_details: {
+                    title: car.title,
+                    price: car.price,
+                    mileage: car.mileage,
+                    year: car.year,
+                    make: car.make,
+                    model: car.model,
+                    id: car.id
+                }
+            });
             setEnquirySuccess(true);
             setEnquiry({ name: '', phone: '', email: '' });
-        }, 600);
+        } catch (err) {
+            console.error(err);
+            setEnquiryError('Failed to submit enquiry. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const formatPrice = (price) => {
@@ -300,8 +327,13 @@ export default function CarCard({ car }) {
                                                 value={enquiry.email} 
                                                 onChange={e => setEnquiry(prev => ({...prev, email: e.target.value}))}
                                             />
-                                            <button type="submit" className="btn btn--primary w-full text-center py-2 text-sm">
-                                                Enquire Now
+                                            {enquiryError && (
+                                                <div className="p-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-md">
+                                                    {enquiryError}
+                                                </div>
+                                            )}
+                                            <button type="submit" className="btn btn--primary w-full text-center py-2 text-sm" disabled={isSubmitting}>
+                                                {isSubmitting ? 'Sending...' : 'Enquire Now'}
                                             </button>
                                         </form>
                                     )}

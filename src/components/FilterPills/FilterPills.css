@@ -38,12 +38,13 @@
 }
 
 .filter-pills__pill--active {
-    background: var(--color-text-primary);
-    color: var(--color-text-dark);
-    border-color: var(--color-text-primary);
+    background: var(--color-accent);
+    color: var(--color-text-light);
+    border-color: var(--color-accent);
 }
 
 .filter-pills__pill--active:hover {
-    background: #e0e0e0;
-    color: var(--color-text-dark);
+    background: var(--color-accent-secondary);
+    color: var(--color-text-light);
+    border-color: var(--color-accent-secondary);
 }

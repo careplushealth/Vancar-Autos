@@ -292,3 +292,67 @@ export function getModelsByMake(make) {
   const cars = getCars();
   return [...new Set(cars.filter(c => c.make === make).map(c => c.model))].sort();
 }
+
+// === Contact Submissions ===
+export async function submitInquiry(inquiryData) {
+    try {
+        const response = await fetch(`${API_URL}/contact`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(inquiryData)
+        });
+        if (!response.ok) {
+            throw new Error('Failed to submit enquiry');
+        }
+        return await response.json();
+    } catch (err) {
+        console.error('Error submitting enquiry:', err);
+        throw err;
+    }
+}
+
+export async function getInquiries() {
+    try {
+        const response = await fetch(`${API_URL}/contact-submissions`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch enquiries');
+        }
+        return await response.json();
+    } catch (err) {
+        console.error('Error fetching enquiries:', err);
+        return [];
+    }
+}
+
+export async function updateInquiryStatus(id, status) {
+    try {
+        const response = await fetch(`${API_URL}/contact-submissions/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        if (!response.ok) {
+            throw new Error('Failed to update enquiry status');
+        }
+        return await response.json();
+    } catch (err) {
+        console.error('Error updating enquiry status:', err);
+        throw err;
+    }
+}
+
+export async function deleteInquiry(id) {
+    try {
+        const response = await fetch(`${API_URL}/contact-submissions/${id}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            throw new Error('Failed to delete enquiry');
+        }
+        return await response.json();
+    } catch (err) {
+        console.error('Error deleting enquiry:', err);
+        throw err;
+    }
+}
+
