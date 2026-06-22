@@ -33,7 +33,7 @@ export default function KarmaHero() {
 
             {/* Large Spacious Headline */}
             <h1 className="karma-hero__title">
-              Find Your Perfect Drive.<br />
+              <span style={{ color: 'var(--color-info)' }}>Find Your Perfect Drive.</span><br />
               <span>Quality Used Cars, Built to Last.</span>
             </h1>
 
@@ -57,7 +57,7 @@ export default function KarmaHero() {
           {/* Right Column: Code-Split 3D Canvas Showcase */}
           <Suspense fallback={
             <div className="karma-hero__visual flex items-center justify-center">
-              <div className="w-12 h-12 border-4 border-red-600/20 border-t-red-600 rounded-full animate-spin" />
+              <div className="w-12 h-12 border-4 border-[var(--color-accent)]/20 border-t-[var(--color-accent)] rounded-full animate-spin" />
             </div>
           }>
             <ThreeShowroom />

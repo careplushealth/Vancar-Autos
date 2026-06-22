@@ -64,7 +64,7 @@ export default function ThreeShowroom() {
 
     // Premium Materials (Physical clearcoat shaders)
     const paintMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xdc2626, // Red Metallic Car Paint
+      color: 0x0653A5, // Royal Blue Metallic Car Paint
       metalness: 0.95,
       roughness: 0.08,
       clearcoat: 1.0,
@@ -342,8 +342,8 @@ export default function ThreeShowroom() {
     carGroup.position.y = 0.38;
     scene.add(carGroup);
 
-    // 11. Red Neon Under-Car Glow Light
-    const underGlow = new THREE.PointLight(0xdc2626, 4, 3.5, 1.5);
+    // 11. Royal Blue Neon Under-Car Glow Light
+    const underGlow = new THREE.PointLight(0x0653A5, 4, 3.5, 1.5);
     underGlow.position.set(0, -0.22, 0); // Position underneath car
     carGroup.add(underGlow);
 
@@ -364,7 +364,7 @@ export default function ThreeShowroom() {
     const ringGeo = new THREE.RingGeometry(2.22, 2.25, 64);
     ringGeo.rotateX(-Math.PI / 2);
     const ringMaterial = new THREE.MeshBasicMaterial({
-      color: 0xdc2626,
+      color: 0x0653A5,
       side: THREE.DoubleSide
     });
     const ring = new THREE.Mesh(ringGeo, ringMaterial);
@@ -379,7 +379,7 @@ export default function ThreeShowroom() {
     floor.receiveShadow = true;
     scene.add(floor);
 
-    const gridHelper = new THREE.GridHelper(10, 10, 0xdc2626, 0xe2e8f0);
+    const gridHelper = new THREE.GridHelper(10, 10, 0x0653A5, 0xe2e8f0);
     gridHelper.position.y = -0.03;
     gridHelper.material.opacity = 0.28;
     gridHelper.material.transparent = true;

@@ -187,7 +187,7 @@ export default function CarCard({ car }) {
                             {car.status !== 'sold' && (
                                 <div className="car-card__value-badge text-right flex flex-col justify-center">
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Guarantee</span>
-                                    <span className="text-red-600 font-bold text-xs flex items-center gap-1 justify-end mt-1">
+                                    <span className="text-[var(--color-accent)] font-bold text-xs flex items-center gap-1 justify-end mt-1">
                                         🛡️ 12M Warranty
                                     </span>
                                 </div>
@@ -202,12 +202,12 @@ export default function CarCard({ car }) {
                                     type="checkbox" 
                                     checked={isCompared} 
                                     onChange={toggleCompare} 
-                                    className="car-card__compare-checkbox w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                                    className="car-card__compare-checkbox w-4 h-4 rounded border-slate-300 text-[var(--color-accent)] focus:ring-[var(--color-accent-secondary)]"
                                 />
                                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Compare</span>
                             </label>
                             
-                            <span className="car-card__cta text-xs font-bold uppercase text-red-600 tracking-wider flex items-center gap-1 hover:text-red-700 transition-colors">
+                            <span className="car-card__cta text-xs font-bold uppercase text-[var(--color-accent)] tracking-wider flex items-center gap-1 hover:text-[var(--color-accent-secondary)] transition-colors">
                                 View Details &rsaquo;
                             </span>
                         </div>

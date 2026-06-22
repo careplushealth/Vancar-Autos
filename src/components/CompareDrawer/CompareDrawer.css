@@ -68,7 +68,7 @@
     position: absolute;
     top: -6px;
     right: 4px;
-    background: #ef4444;
+    background: var(--color-accent);
     color: white;
     width: 16px;
     height: 16px;

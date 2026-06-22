@@ -86,9 +86,9 @@
 }
 
 .manage-cars__status--sold {
-    background: rgba(244, 67, 54, 0.15);
-    color: #ef5350;
-    border: 1px solid rgba(244, 67, 54, 0.2);
+    background: rgba(6, 83, 165, 0.15);
+    color: #0653A5;
+    border: 1px solid rgba(6, 83, 165, 0.2);
 }
 
 .manage-cars__actions {

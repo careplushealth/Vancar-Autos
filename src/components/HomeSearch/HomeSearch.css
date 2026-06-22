@@ -63,7 +63,7 @@
 
 .home-search__select:focus {
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
+    box-shadow: 0 0 0 3px rgba(6, 83, 165, 0.08);
 }
 
 .home-search__select:disabled {

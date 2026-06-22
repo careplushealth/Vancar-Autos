@@ -134,7 +134,7 @@ select {
     background-color: var(--color-accent-secondary);
     border-color: var(--color-accent-secondary);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+    box-shadow: 0 4px 12px rgba(6, 83, 165, 0.25);
 }
 
 .btn--secondary {

@@ -74,11 +74,11 @@ export default function KarmaNavbar() {
                   key={link.label}
                   to={link.path}
                   className={`relative font-semibold text-sm tracking-wide py-2 transition-colors duration-300 group ${
-                    isActive ? 'text-red-600' : 'text-slate-800 hover:text-red-600'
+                    isActive ? 'text-[var(--color-accent)]' : 'text-slate-800 hover:text-[var(--color-accent)]'
                   }`}
                 >
                   <span>{link.label}</span>
-                  <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-red-600 transition-transform duration-300 origin-left ease-out ${
+                  <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-[var(--color-accent)] transition-transform duration-300 origin-left ease-out ${
                     isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
                   }`}></span>
                 </Link>
@@ -102,7 +102,7 @@ export default function KarmaNavbar() {
             </Link>
             <Link
               to="/contact"
-              className="btn btn--secondary btn--sm shadow-sm"
+              className="btn btn--sm shadow-sm bg-[var(--color-info)] text-slate-900 border border-[var(--color-info)] hover:bg-[#e6c200] hover:border-[#e6c200] hover:-translate-y-[2px]"
             >
               Contact Us
             </Link>
@@ -112,7 +112,7 @@ export default function KarmaNavbar() {
           <div className="flex lg:hidden items-center space-x-4 z-50">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-slate-800 hover:text-red-600 focus:outline-none p-2"
+              className="text-slate-800 hover:text-[var(--color-accent)] focus:outline-none p-2"
               aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={isMobileMenuOpen}
             >
@@ -163,7 +163,7 @@ export default function KarmaNavbar() {
                 to={link.path}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`text-xl font-bold tracking-wide uppercase transition-all duration-500 ${
-                  isActive ? 'text-red-600' : 'text-slate-800 hover:text-red-600'
+                  isActive ? 'text-[var(--color-accent)]' : 'text-slate-800 hover:text-[var(--color-accent)]'
                 } ${
                   isMobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
                 }`}

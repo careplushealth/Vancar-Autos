@@ -47,7 +47,7 @@
     background: var(--color-accent);
     color: white;
     border-color: var(--color-accent);
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+    box-shadow: 0 4px 12px rgba(6, 83, 165, 0.2);
 }
 
 .car-details__nav-btn--prev {

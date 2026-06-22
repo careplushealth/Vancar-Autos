@@ -87,12 +87,12 @@
 
 .car-card__favorite-btn:hover {
     transform: scale(1.1);
-    color: #ef4444;
+    color: #0653A5;
     background: #ffffff;
 }
 
 .car-card__favorite-btn--active {
-    color: #ef4444 !important;
+    color: #0653A5 !important;
     background: #ffffff;
 }
 
@@ -338,7 +338,7 @@
 
 .quick-view-modal__input:focus {
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.05);
+    box-shadow: 0 0 0 3px rgba(6, 83, 165, 0.05);
 }
 
 @media (max-width: 768px) {

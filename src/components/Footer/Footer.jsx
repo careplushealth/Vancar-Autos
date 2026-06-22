@@ -58,7 +58,7 @@ export default function Footer() {
                                 <li><span>Monday - Friday:</span> <span>09:00 - 18:00</span></li>
                                 <li><span>Saturday:</span> <span>09:00 - 17:00</span></li>
                                 <li><span>Sunday:</span> <span>10:00 - 16:00</span></li>
-                                <li className="text-red-600 font-medium"><span>Bank Holidays:</span> <span>Closed</span></li>
+                                <li className="text-[var(--color-accent)] font-medium"><span>Bank Holidays:</span> <span>Closed</span></li>
                             </ul>
                         </div>
 

@@ -103,10 +103,10 @@ export default function Home() {
                 <div className="container">
                     <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
                         <div>
-                            <span className="text-red-600 font-bold text-xs uppercase tracking-wider block mb-2">Curated Showroom</span>
+                            <span className="text-[var(--color-accent)] font-bold text-xs uppercase tracking-wider block mb-2">Curated Showroom</span>
                             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">Featured Vehicles</h2>
                         </div>
-                        <Link to="/buy" className="link-arrow text-slate-800 hover:text-red-600 font-semibold mt-4 md:mt-0">
+                        <Link to="/buy" className="link-arrow text-slate-800 hover:text-[var(--color-accent)] font-semibold mt-4 md:mt-0">
                             Browse All Stock
                         </Link>
                     </div>
@@ -122,7 +122,7 @@ export default function Home() {
             {/* 4. Why Choose Us (Trust Badges Grid) */}
             <section className="section bg-slate-50 border-y border-slate-100 home__why-choose">
                 <div className="container text-center">
-                    <span className="text-red-600 font-bold text-xs uppercase tracking-wider block mb-2">Our Promise</span>
+                    <span className="text-[var(--color-accent)] font-bold text-xs uppercase tracking-wider block mb-2">Our Promise</span>
                     <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 mb-4">Why Choose Vancar Autos?</h2>
                     <p className="text-slate-500 max-w-xl mx-auto mb-12 font-medium">We pride ourselves on offering a simple, transparent, and premium car buying experience.</p>
                     
@@ -151,7 +151,7 @@ export default function Home() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                         {/* Info Block */}
                         <div>
-                            <span className="text-red-600 font-bold text-xs uppercase tracking-wider block mb-2">Value & Affordability</span>
+                            <span className="text-[var(--color-accent)] font-bold text-xs uppercase tracking-wider block mb-2">Value & Affordability</span>
                             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 mb-6">Smart Ownership Made Simple</h2>
                             <p className="text-slate-600 mb-6 leading-relaxed">
                                 We believe that driving a high-quality, reliable car shouldn't cost a fortune. Vancar Autos is dedicated to providing high-value used vehicles that fit your budget perfectly, with transparent cash pricing and zero hidden dealer fees.
@@ -168,7 +168,7 @@ export default function Home() {
                         {/* Interactive Calculator Block */}
                         <div className="home__calc-box shadow-xl border border-slate-100 rounded-2xl">
                             <div className="home__calc-header bg-slate-900 text-white">
-                                <h3 className="text-xl font-bold">Affordability Planner</h3>
+                                <h3 className="text-xl font-bold text-[var(--color-info)]">Affordability Planner</h3>
                                 <p className="text-slate-400 text-xs">Plan your budget & purchase options</p>
                             </div>
                             
@@ -302,7 +302,7 @@ export default function Home() {
                         </div>
 
                         <div>
-                            <span className="text-red-600 font-bold text-xs uppercase tracking-wider block mb-2">Our Dealership</span>
+                            <span className="text-[var(--color-accent)] font-bold text-xs uppercase tracking-wider block mb-2">Our Dealership</span>
                             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 mb-6">About Vancar Autos</h2>
                             <p className="text-slate-600 mb-6 leading-relaxed">
                                 Vancar Autos is a leading independent used car dealership in Manchester. Over the last 15 years, we have built our reputation on providing high-quality, pre-owned vehicles backed by honest advice and absolute transparency.
@@ -313,15 +313,15 @@ export default function Home() {
                             
                             <div className="grid grid-cols-3 gap-6 text-center border-t border-slate-100 pt-6">
                                 <div>
-                                    <span className="block text-2xl font-bold text-red-600">15+</span>
+                                    <span className="block text-2xl font-bold text-[var(--color-accent)]">15+</span>
                                     <span className="text-xs font-semibold text-slate-500 uppercase">Years Experience</span>
                                 </div>
                                 <div>
-                                    <span className="block text-2xl font-bold text-red-600">5k+</span>
+                                    <span className="block text-2xl font-bold text-[var(--color-accent)]">5k+</span>
                                     <span className="text-xs font-semibold text-slate-500 uppercase">Happy Clients</span>
                                 </div>
                                 <div>
-                                    <span className="block text-2xl font-bold text-red-600">200+</span>
+                                    <span className="block text-2xl font-bold text-[var(--color-accent)]">200+</span>
                                     <span className="text-xs font-semibold text-slate-500 uppercase">Premium Cars</span>
                                 </div>
                             </div>
