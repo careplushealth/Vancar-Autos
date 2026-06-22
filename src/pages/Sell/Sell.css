@@ -53,9 +53,9 @@
 }
 
 .sell__step--active .sell__step-number {
-    border-color: var(--color-text-primary);
-    background: var(--color-text-primary);
-    color: var(--color-text-dark);
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: white;
 }
 
 .sell__step--done .sell__step-number {
@@ -118,14 +118,14 @@
 }
 
 .sell__option:hover {
-    background: var(--color-surface-light);
+    background: var(--color-border-hover);
     color: var(--color-text-primary);
 }
 
 .sell__option--active {
-    background: var(--color-text-primary);
-    color: var(--color-text-dark);
-    border-color: var(--color-text-primary);
+    background: var(--color-accent) !important;
+    color: var(--color-text-light) !important;
+    border-color: var(--color-accent) !important;
 }
 
 .sell__confirmation {

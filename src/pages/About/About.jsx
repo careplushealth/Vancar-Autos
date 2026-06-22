@@ -78,9 +78,9 @@ export default function About() {
                             <p>We take pride in providing friendly, professional guidance tailored to your needs.</p>
                         </div>
                         <div className="about__value-card">
-                            <div className="about__value-icon">💰</div>
-                            <h3>Affordable Finance</h3>
-                            <p>Flexible finance solutions designed to make owning your next car simple and accessible.</p>
+                            <div className="about__value-icon">🛡️</div>
+                            <h3>Worry-Free Warranty</h3>
+                            <p>Every vehicle comes with a comprehensive warranty package so you can drive away with peace of mind.</p>
                         </div>
                         <div className="about__value-card">
                             <div className="about__value-icon">⭐</div>

@@ -89,21 +89,21 @@
 }
 
 .buy__filter-chip:hover {
-    background: var(--color-surface-light);
+    background: var(--color-border-hover);
     color: var(--color-text-primary);
 }
 
 .buy__filter-chip--active {
-    background: var(--color-text-primary);
-    color: var(--color-text-dark);
-    border-color: var(--color-text-primary);
+    background: var(--color-accent) !important;
+    color: var(--color-text-light) !important;
+    border-color: var(--color-accent) !important;
 }
 
 .buy__grid {
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: var(--spacing-lg);
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-xl);
     align-content: start;
 }
 
@@ -130,6 +130,10 @@
 
     .buy__filter-toggle {
         display: flex;
+    }
+
+    .buy__grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 

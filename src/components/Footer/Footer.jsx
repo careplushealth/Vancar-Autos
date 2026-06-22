@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import './Footer.css';
 
 export default function Footer() {
@@ -7,70 +8,86 @@ export default function Footer() {
         <footer className="footer">
             <div className="container">
                 <div className="footer__top">
-                    <button className="footer__back-top" onClick={scrollToTop}>Back to top ↑</button>
+                    <Link to="/" className="footer__logo">
+                        <img src="/images/logo.png" alt="Vancar Autos" className="h-10 w-auto" />
+                    </Link>
+                    <button className="footer__back-top" onClick={scrollToTop}>
+                        Back to top 
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ml-1.5 inline"><polyline points="18 15 12 9 6 15"/></svg>
+                    </button>
                 </div>
 
                 <div className="footer__main">
                     <div className="footer__grid">
                         <div className="footer__col">
-                            <h4 className="footer__heading">Models</h4>
+                            <h4 className="footer__heading">Browse Vehicles</h4>
                             <ul className="footer__list">
-                                <li><a href="/buy?bodyType=SUV">SUVs</a></li>
-                                <li><a href="/buy?bodyType=Saloon">Saloons</a></li>
-                                <li><a href="/buy?bodyType=Sport">Sport</a></li>
-                                <li><a href="/buy?bodyType=Electric">Electric</a></li>
+                                <li><Link to="/buy?bodyType=SUV">Used SUVs</Link></li>
+                                <li><Link to="/buy?bodyType=Saloon">Used Saloons</Link></li>
+                                <li><Link to="/buy?bodyType=Hatchback">Used Hatchbacks</Link></li>
+                                <li><Link to="/buy?bodyType=Estate">Used Estates</Link></li>
+                                <li><Link to="/buy?bodyType=Sport">Performance Cars</Link></li>
                             </ul>
                         </div>
+                        
                         <div className="footer__col">
-                            <h4 className="footer__heading">Buying & Selling</h4>
+                            <h4 className="footer__heading">Buying Options</h4>
                             <ul className="footer__list">
-                                <li><a href="/buy">Find a Car</a></li>
-                                <li><a href="/sell">Sell Your Car</a></li>
-                                <li><a href="/buy">Finance Calculator</a></li>
-                                <li><a href="/buy">Part Exchange</a></li>
+                                <li><Link to="/buy">Search Used Stock</Link></li>
+                                <li><Link to="/sell">Value Your Vehicle</Link></li>
+                                <li><Link to="/about">Our Quality Standards</Link></li>
+                                <li><Link to="/buy">Affordable Used Cars</Link></li>
+                                <li><Link to="/contact">Part Exchange Enquiry</Link></li>
                             </ul>
                         </div>
+
                         <div className="footer__col">
-                            <h4 className="footer__heading">About Us</h4>
+                            <h4 className="footer__heading">Customer Care</h4>
                             <ul className="footer__list">
-                                <li><a href="/about">Our Story</a></li>
-                                <li><a href="/blog">News & Reviews</a></li>
-                                <li><a href="/contact">Contact Us</a></li>
-                                <li><a href="/about">Careers</a></li>
+                                <li><Link to="/about">Our Story</Link></li>
+                                <li><Link to="/blog">Dealership News</Link></li>
+                                <li><Link to="/contact">Get in Touch</Link></li>
+                                <li><Link to="/contact">Location & Directions</Link></li>
+                                <li><Link to="/admin">Staff Login</Link></li>
                             </ul>
                         </div>
+
                         <div className="footer__col">
-                            <h4 className="footer__heading">Follow Us</h4>
-                            <div className="footer__social">
-                                <a href="#" className="footer__social-link">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>
-                                </a>
-                                <a href="#" className="footer__social-link">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="20" height="20" rx="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg>
-                                </a>
-                                <a href="#" className="footer__social-link">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z" /></svg>
-                                </a>
-                                <a href="#" className="footer__social-link">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.35 29 29 0 0 0-.46-5.33z" /><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" /></svg>
-                                </a>
-                            </div>
+                            <h4 className="footer__heading">Opening Hours</h4>
+                            <ul className="footer__hours-list">
+                                <li><span>Monday - Friday:</span> <span>09:00 - 18:00</span></li>
+                                <li><span>Saturday:</span> <span>09:00 - 17:00</span></li>
+                                <li><span>Sunday:</span> <span>10:00 - 16:00</span></li>
+                                <li className="text-red-600 font-medium"><span>Bank Holidays:</span> <span>Closed</span></li>
+                            </ul>
                         </div>
+
                         <div className="footer__col">
-                            <h4 className="footer__heading">Visit Us</h4>
-                            <p className="footer__text">
-                                14 MIDLAND STREET<br />
-                                MANCHESTER<br />
-                                M12 6LB<br />
-                                Reg. No: 16593644
+                            <h4 className="footer__heading">Contact & Location</h4>
+                            <p className="footer__contact-text">
+                                <strong>Vancar Autos Showroom</strong><br/>
+                                14 Midland Street<br/>
+                                Manchester, M12 6LB
+                            </p>
+                            <p className="footer__contact-info">
+                                <span>Phone: <a href="tel:01611234567">0161 123 4567</a></span><br/>
+                                <span>Email: <a href="mailto:info@vancarautos.co.uk">info@vancarautos.co.uk</a></span>
                             </p>
                         </div>
                     </div>
                 </div>
 
+                <div className="footer__legal-disclaimer">
+                    <p>
+                        Vancar Autos Limited is authorised and regulated by the Financial Conduct Authority (FCA Registered Number: 16593644). We act as a credit broker and not a lender. We can introduce you to a limited number of finance providers who may be able to offer you finance facilities for your purchase. We may receive a commission payment or other benefits from finance providers should you decide to enter into an agreement with them.
+                    </p>
+                </div>
+
                 <div className="footer__bottom">
                     <div className="footer__bottom-inner">
-                        <p className="footer__copyright">© {new Date().getFullYear()} VANCAR AUTOS LIMITED. Reg. No 16593644. All rights reserved.</p>
+                        <p className="footer__copyright">
+                            © {new Date().getFullYear()} Vancar Autos Limited. All rights reserved. Registered in England & Wales. Company Reg No: 16593644.
+                        </p>
                         <div className="footer__legal">
                             <a href="#">Privacy Policy</a>
                             <a href="#">Terms & Conditions</a>

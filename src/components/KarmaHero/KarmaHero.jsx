@@ -1,11 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
+import './KarmaHero.css';
+
+// Lazy-load the Three.js canvas showroom to keep the main bundle light and optimize performance
+const ThreeShowroom = lazy(() => import('./ThreeShowroom'));
 
 export default function KarmaHero() {
   const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
-    // Trigger animations on load
+    // Fade-in animation trigger
     const timer = setTimeout(() => {
       setAnimate(true);
     }, 100);
@@ -13,98 +17,51 @@ export default function KarmaHero() {
   }, []);
 
   return (
-    <section
-      className="relative w-full h-screen overflow-hidden bg-black flex items-center"
-      aria-label="Cinematic Showcase"
-    >
-      {/* Background Autoplay Video */}
-      <div className="absolute inset-0 w-full h-full">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className={`w-full h-full object-cover transition-transform duration-[8000ms] ease-out ${animate ? 'scale-105' : 'scale-100'
+    <section className="karma-hero" aria-label="Premium Dealership Showcase">
+      <div className="container">
+        <div className="karma-hero__grid">
+          {/* Left Column: Spacious Conversion-Focused Text Content */}
+          <div
+            className={`karma-hero__content transition-all duration-[1000ms] ease-out ${
+              animate ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
             }`}
-          poster="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1920&q=80"
-        >
-          <source
-            src="/hero.mp4"
-            type="video/mp4"
-          />
-        </video>
-      </div>
+          >
+            {/* Badge */}
+            <span className="karma-hero__badge">
+              Premium Independent Dealership
+            </span>
 
-      {/* Subtle Dark Luxury Gradient Overlay */}
-      <div
-        className="absolute inset-0 bg-gradient-to-tr from-black via-black/40 to-black/70 pointer-events-none z-10"
-        aria-hidden="true"
-      />
+            {/* Large Spacious Headline */}
+            <h1 className="karma-hero__title">
+              Find Your Perfect Drive.<br />
+              <span>Quality Used Cars, Built to Last.</span>
+            </h1>
 
-      {/* Decorative Lines (Karma Style) */}
-      <div className="absolute inset-0 w-full h-full pointer-events-none z-20 overflow-hidden" aria-hidden="true">
-        {/* Left Decorative Line */}
-        <svg
-          className="absolute left-0 top-[35%] w-[35%] h-[40px] text-white/25 hidden md:block"
-          viewBox="0 0 400 40"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M 0 30 L 150 30 L 180 10 L 400 10"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
+            {/* Value Proposition Paragraph */}
+            <p className="karma-hero__desc">
+              Explore our curated showroom of reliable, economical, and thoroughly inspected used vehicles. 
+              Every car comes with a comprehensive warranty, history guarantee, and nationwide delivery.
+            </p>
 
-        {/* Right Decorative Line */}
-        <svg
-          className="absolute right-0 top-[35%] w-[35%] h-[40px] text-white/25 hidden md:block"
-          viewBox="0 0 400 40"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M 400 30 L 250 30 L 220 10 L 0 10"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
-      </div>
-
-      {/* Hero Content Area */}
-      <div className="relative z-30 max-w-[1400px] mx-auto w-full px-6 md:px-12 lg:px-20 h-full flex flex-col justify-end pb-[12vh]">
-        <div
-          className={`max-w-2xl text-left transition-all duration-[1200ms] ease-out ${animate ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-            }`}
-        >
-          {/* Small Heading */}
-          <span className="block text-white text-sm md:text-base font-light tracking-[0.4em] uppercase mb-4 opacity-90">
-            Luxury Looks
-          </span>
-
-          {/* Large Heading */}
-          <h1 className="text-white font-extralight tracking-widest text-[clamp(1.75rem,5.5vw,4.5rem)] leading-[1.15] mb-8 font-luxury">
-            Affordable Prices
-          </h1>
-
-          {/* Call to Actions - Seamlessly integrated */}
-          <div className="flex flex-wrap gap-6 pt-2">
-            <Link
-              to="/buy"
-              className="px-8 py-3.5 bg-white text-black text-xs font-light tracking-[0.2em] uppercase hover:bg-black hover:text-white hover:border-white/50 border border-transparent transition-all duration-500 rounded-sm"
-            >
-              View Latest Offers
-            </Link>
-            <Link
-              to="/contact"
-              className="px-8 py-3.5 bg-transparent text-white border border-white/20 text-xs font-light tracking-[0.2em] uppercase hover:bg-white hover:text-black transition-all duration-500 rounded-sm"
-            >
-              Get in Touch
-            </Link>
+            {/* CTAs */}
+            <div className="karma-hero__actions">
+              <Link to="/buy" className="btn btn--primary btn--lg shadow-md">
+                Browse Vehicles
+              </Link>
+              <Link to="/about" className="btn btn--outline btn--lg shadow-md">
+                Why Choose Us
+              </Link>
+            </div>
           </div>
+
+          {/* Right Column: Code-Split 3D Canvas Showcase */}
+          <Suspense fallback={
+            <div className="karma-hero__visual flex items-center justify-center">
+              <div className="w-12 h-12 border-4 border-red-600/20 border-t-red-600 rounded-full animate-spin" />
+            </div>
+          }>
+            <ThreeShowroom />
+          </Suspense>
         </div>
       </div>
     </section>

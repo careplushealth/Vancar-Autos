@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import KarmaNavbar from '../components/KarmaNavbar/KarmaNavbar';
 import Footer from '../components/Footer/Footer';
 import StickyActionBar from '../components/StickyActionBar/StickyActionBar';
+import CompareDrawer from '../components/CompareDrawer/CompareDrawer';
 
 const SHOW_ACTION_BAR = ['/', '/buy'];
 
@@ -19,6 +20,7 @@ export default function PublicLayout() {
             </main>
             <Footer />
             {showActionBar && <StickyActionBar />}
+            <CompareDrawer />
         </div>
     );
 }

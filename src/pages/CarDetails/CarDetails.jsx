@@ -51,7 +51,6 @@ export default function CarDetails() {
     const formatPrice = (price) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 0 }).format(price);
     const formatMileage = (m) => new Intl.NumberFormat('en-GB').format(m);
 
-    const monthlyPayment = Math.round(car.price / 48);
 
     return (
         <div className="car-details">
@@ -133,7 +132,9 @@ export default function CarDetails() {
 
                         <div className="car-details__price-row">
                             <span className="car-details__price">{formatPrice(car.price)}</span>
-                            <span className="car-details__monthly">From ~{formatPrice(monthlyPayment)}/mo (PCP est.)</span>
+                            <span className="car-details__monthly-badge bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
+                                ✓ 12-Month Warranty Included
+                            </span>
                         </div>
 
                         {/* Specs Grid */}
@@ -207,22 +208,23 @@ export default function CarDetails() {
                         </div>
 
                         <div className="car-details__finance-card">
-                            <h4>Finance Estimate</h4>
-                            <div className="car-details__finance-detail">
-                                <span>Monthly from</span>
-                                <strong>{formatPrice(monthlyPayment)}/mo</strong>
+                            <h4>Vancar Quality Promise</h4>
+                            <div className="car-details__finance-detail" style={{ borderBottom: '1px solid var(--color-border-primary)', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold' }}>🛡️ Warranty</span>
+                                <strong style={{ color: 'var(--color-accent-primary)' }}>12 Months Included</strong>
                             </div>
-                            <div className="car-details__finance-detail">
-                                <span>Deposit (10%)</span>
-                                <strong>{formatPrice(Math.round(car.price * 0.1))}</strong>
+                            <div className="car-details__finance-detail" style={{ borderBottom: '1px solid var(--color-border-primary)', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold' }}>🔍 Inspection</span>
+                                <strong>150-Point Checked</strong>
                             </div>
-                            <div className="car-details__finance-detail">
-                                <span>Term</span>
-                                <strong>48 months</strong>
+                            <div className="car-details__finance-detail" style={{ borderBottom: '1px solid var(--color-border-primary)', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold' }}>📜 History</span>
+                                <strong>HPI Cleared</strong>
                             </div>
-                            <small className="car-details__finance-disclaimer">
-                                Representative example. Subject to status. T&Cs apply.
-                            </small>
+                            <div className="car-details__finance-detail" style={{ paddingBottom: '0.25rem' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold' }}>🚚 Delivery</span>
+                                <strong>Nationwide Available</strong>
+                            </div>
                         </div>
                     </aside>
                 </div>

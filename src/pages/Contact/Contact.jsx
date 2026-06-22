@@ -46,7 +46,7 @@ export default function Contact() {
                                             <option value="">Select a subject</option>
                                             <option>General Enquiry</option>
                                             <option>Book a Test Drive</option>
-                                            <option>Finance Enquiry</option>
+                                            <option>Purchase Enquiry</option>
                                             <option>Sell My Car</option>
                                             <option>Complaint</option>
                                         </select>

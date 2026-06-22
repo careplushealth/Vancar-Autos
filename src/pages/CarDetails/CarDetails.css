@@ -25,12 +25,12 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.45);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(15, 23, 42, 0.1);
     color: var(--color-text-primary);
     font-size: 1.75rem;
-    font-weight: 200;
+    font-weight: 300;
     width: 52px;
     height: 52px;
     border-radius: 50%;
@@ -44,10 +44,10 @@
 }
 
 .car-details__nav-btn:hover {
-    background: var(--color-text-primary);
-    color: var(--color-text-dark);
-    border-color: var(--color-text-primary);
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
 }
 
 .car-details__nav-btn--prev {
@@ -67,11 +67,11 @@
     display: flex;
     gap: var(--spacing-sm);
     z-index: 25;
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(16px);
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--radius-xl);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(15, 23, 42, 0.1);
     box-shadow: var(--shadow-lg);
 }
 
@@ -94,7 +94,7 @@
 
 .car-details__thumb-btn--active {
     opacity: 1;
-    border-color: var(--color-text-primary);
+    border-color: var(--color-accent);
     box-shadow: var(--shadow-sm);
 }
 
@@ -406,7 +406,7 @@
     background: rgba(0, 0, 0, 0.55);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    color: var(--color-text-primary);
+    color: var(--color-text-light);
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--radius-sm);
     font-size: var(--font-size-xs);
@@ -458,7 +458,7 @@
 }
 
 .car-details__lightbox-caption {
-    color: var(--color-text-primary);
+    color: var(--color-text-light);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-light);
     letter-spacing: 0.08em;
