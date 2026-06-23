@@ -22,6 +22,8 @@ import BlogEditor from './pages/admin/BlogEditor/BlogEditor';
 import Settings from './pages/admin/Settings/Settings';
 import ExpenseTracker from './pages/admin/ExpenseTracker/ExpenseTracker';
 import Enquiries from './pages/admin/Enquiries/Enquiries';
+import BannerGenerator from './pages/admin/BannerGenerator/BannerGenerator';
+
 
 
 // Auth Guard
@@ -76,6 +78,7 @@ const router = createBrowserRouter(
         <Route path="blogs/:id/edit" element={<BlogEditor />} />
         <Route path="expenses" element={<ExpenseTracker />} />
         <Route path="enquiries" element={<Enquiries />} />
+        <Route path="banner-generator" element={<BannerGenerator />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 
