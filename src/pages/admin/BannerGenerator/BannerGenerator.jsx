@@ -24,8 +24,18 @@ export default function BannerGenerator() {
 
     const [uploadedImage, setUploadedImage] = useState(null);
     const [imageObj, setImageObj] = useState(null);
+    const [logoObj, setLogoObj] = useState(null);
     const [exportFormat, setExportFormat] = useState('widescreen'); // 'widescreen' (1920x1080), 'medium' (1200x675), 'instagram' (1080x1080), 'autotrader' (1200x900)
     const [triggerRedraw, setTriggerRedraw] = useState(0);
+
+    // Load Vancar Autos logo
+    useEffect(() => {
+        const img = new Image();
+        img.src = '/images/logo.png';
+        img.onload = () => {
+            setLogoObj(img);
+        };
+    }, []);
 
     // Redraw when fonts load
     useEffect(() => {
@@ -108,7 +118,7 @@ export default function BannerGenerator() {
     };
 
     // Canvas drawing function
-    const drawBanner = (canvas, width, height, data, imgObj) => {
+    const drawBanner = (canvas, width, height, data, imgObj, logoObj) => {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
@@ -121,7 +131,7 @@ export default function BannerGenerator() {
         const scale = width / baseWidth;
 
         // Clear canvas
-        ctx.fillStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, width, height);
 
         // Draw car image in top 75%
@@ -158,10 +168,10 @@ export default function BannerGenerator() {
             ctx.fillText('UPLOAD VEHICLE IMAGE', width / 2, imageAreaHeight / 2);
         }
 
-        // Draw bottom black info panel (starts at 75% of height)
+        // Draw bottom white info panel (starts at 75% of height)
         const panelY = imageAreaHeight;
         const panelHeight = height - panelY;
-        ctx.fillStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, panelY, width, panelHeight);
 
         // Compute vertical coordinates based on 270px ideal height on 1920 base scale
@@ -170,8 +180,8 @@ export default function BannerGenerator() {
         const topOffsetY = panelY + verticalOffset; // base Y position for contents
 
         // Colors
-        const redColor = '#E10600';
-        const whiteColor = '#ffffff';
+        const blueColor = '#0653A5';
+        const blackColor = '#000000';
 
         // Column grid percentages to match reference image exactly
         const colWidths = [0.248, 0.165, 0.132, 0.157, 0.130, 0.168];
@@ -182,8 +192,8 @@ export default function BannerGenerator() {
             currentX += width * colWidths[i];
         }
 
-        // Draw vertical red dividers in top row
-        ctx.strokeStyle = redColor;
+        // Draw vertical blue dividers in top row
+        ctx.strokeStyle = blueColor;
         ctx.lineWidth = Math.max(2, Math.round(3.5 * scale));
         for (let i = 1; i < colXPositions.length; i++) {
             const divX = colXPositions[i];
@@ -223,7 +233,7 @@ export default function BannerGenerator() {
             75 * scale, 
             topOffsetY + 44 * scale, 
             { style: 'bold', size: 28 }, 
-            whiteColor, 
+            blackColor, 
             'left', 
             colXPositions[1] - 90 * scale,
             '2px'
@@ -233,7 +243,7 @@ export default function BannerGenerator() {
             75 * scale, 
             topOffsetY + 130 * scale, 
             { style: 'bold', size: 95 }, 
-            whiteColor, 
+            blackColor, 
             'left', 
             colXPositions[1] - 90 * scale
         );
@@ -245,7 +255,7 @@ export default function BannerGenerator() {
             col2CenterX, 
             topOffsetY + 72 * scale, 
             { style: 'bold', size: 64 }, 
-            redColor, 
+            blueColor, 
             'center', 
             colXPositions[2] - colXPositions[1] - 10 * scale
         );
@@ -254,7 +264,7 @@ export default function BannerGenerator() {
             col2CenterX, 
             topOffsetY + 128 * scale, 
             { style: 'bold', size: 28 }, 
-            whiteColor, 
+            blackColor, 
             'center', 
             colXPositions[2] - colXPositions[1] - 10 * scale,
             '0.5px'
@@ -263,8 +273,8 @@ export default function BannerGenerator() {
         // Helper: Draw icon on canvas
         const drawIcon = (type, cx, cy, iconSize) => {
             ctx.save();
-            ctx.strokeStyle = redColor;
-            ctx.fillStyle = redColor;
+            ctx.strokeStyle = blueColor;
+            ctx.fillStyle = blueColor;
             ctx.lineWidth = Math.max(1.5, 3.5 * scale);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
@@ -383,7 +393,7 @@ export default function BannerGenerator() {
             col3CenterX, 
             topOffsetY + 124 * scale, 
             { style: 'bold', size: 22 }, 
-            whiteColor, 
+            blackColor, 
             'center', 
             colXPositions[3] - colXPositions[2] - 10 * scale,
             '0.5px'
@@ -397,7 +407,7 @@ export default function BannerGenerator() {
             col4CenterX, 
             topOffsetY + 124 * scale, 
             { style: 'bold', size: 22 }, 
-            whiteColor, 
+            blackColor, 
             'center', 
             colXPositions[4] - colXPositions[3] - 10 * scale,
             '0.5px'
@@ -411,7 +421,7 @@ export default function BannerGenerator() {
             col5CenterX, 
             topOffsetY + 124 * scale, 
             { style: 'bold', size: 22 }, 
-            whiteColor, 
+            blackColor, 
             'center', 
             colXPositions[5] - colXPositions[4] - 10 * scale,
             '0.5px'
@@ -425,14 +435,14 @@ export default function BannerGenerator() {
             col6CenterX, 
             topOffsetY + 124 * scale, 
             { style: 'bold', size: 22 }, 
-            whiteColor, 
+            blackColor, 
             'center', 
             width - colXPositions[5] - 10 * scale,
             '0.5px'
         );
 
-        // --- HORIZONTAL RED DIVIDER ---
-        ctx.strokeStyle = redColor;
+        // --- HORIZONTAL BLUE DIVIDER ---
+        ctx.strokeStyle = blueColor;
         ctx.lineWidth = Math.max(2, Math.round(3.5 * scale));
         ctx.beginPath();
         ctx.moveTo(80 * scale, topOffsetY + 142 * scale);
@@ -448,7 +458,7 @@ export default function BannerGenerator() {
             conditionCenterX, 
             topOffsetY + 200 * scale, 
             { style: 'bold', size: 36 }, 
-            redColor, 
+            blueColor, 
             'center', 
             width * 0.45,
             '1px'
@@ -458,26 +468,35 @@ export default function BannerGenerator() {
             conditionCenterX, 
             topOffsetY + 248 * scale, 
             { style: 'italic bold', size: 36 }, 
-            whiteColor, 
+            blackColor, 
             'center', 
             width * 0.45,
             '1px'
         );
 
-        // Right: Price tag (Very Large Red text)
+        // Right: Price tag (Very Large Blue text)
         const formattedPrice = `£${Number(data.price || 0).toLocaleString('en-GB')}`;
         fillTextWithScaleLimit(
             formattedPrice, 
             width - 80 * scale, 
             topOffsetY + 262 * scale, 
             { style: 'bold', size: 115 }, 
-            redColor, 
+            blueColor, 
             'right', 
             width * 0.40
         );
+
+        // Draw small Vancar Autos logo below the horizontal divider
+        if (logoObj) {
+            const logoHeight = 60 * scale;
+            const logoWidth = (logoObj.width / logoObj.height) * logoHeight;
+            const logoX = 75 * scale;
+            const logoY = topOffsetY + (206 * scale) - (logoHeight / 2);
+            ctx.drawImage(logoObj, logoX, logoY, logoWidth, logoHeight);
+        }
     };
 
-    // Redraw whenever inputs, image, or format changes
+    // Redraw whenever inputs, image, logo, or format changes
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -499,8 +518,8 @@ export default function BannerGenerator() {
             height = 900;
         }
 
-        drawBanner(canvas, width, height, formData, imageObj);
-    }, [formData, imageObj, exportFormat, triggerRedraw]);
+        drawBanner(canvas, width, height, formData, imageObj, logoObj);
+    }, [formData, imageObj, exportFormat, triggerRedraw, logoObj]);
 
     // Handle canvas downloads
     const handleDownload = (type) => {
@@ -538,7 +557,7 @@ export default function BannerGenerator() {
 
         // Create temporary canvas of exact export size to render high quality
         const tempCanvas = document.createElement('canvas');
-        drawBanner(tempCanvas, w, h, formData, imageObj);
+        drawBanner(tempCanvas, w, h, formData, imageObj, logoObj);
 
         // Download via virtual link click
         const link = document.createElement('a');
@@ -617,11 +636,11 @@ export default function BannerGenerator() {
                     <h3 className="banner-generator__section-title mb-4 border-b pb-2 text-slate-700 font-semibold text-sm">Marketing Headlines</h3>
                     <div className="banner-generator__form-grid mb-6">
                         <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                            <label className="form-label">Condition Headline (Red)</label>
+                            <label className="form-label">Condition Headline (Blue)</label>
                             <input name="condition" value={formData.condition} onChange={handleInputChange} className="form-input" placeholder="e.g. Great Condition" />
                         </div>
                         <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                            <label className="form-label">Secondary Subtitle (White Italic)</label>
+                            <label className="form-label">Secondary Subtitle (Black Italic)</label>
                             <input name="subtitle" value={formData.subtitle} onChange={handleInputChange} className="form-input" placeholder="e.g. Drives Perfect" />
                         </div>
                         <div className="form-group">
