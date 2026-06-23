@@ -13,14 +13,26 @@ export default function BannerGenerator() {
         model: 'Polo',
         year: '2012',
         trim: '1.4 Match',
-        mileage: '156000 Miles',
-        mot: '12 Months MOT',
-        keys: 'V5 Present',
-        hpi: 'HPI Clear',
         condition: 'Great Condition',
         subtitle: 'Drives Perfect',
         price: '2600'
     });
+
+    const [badges, setBadges] = useState([
+        { id: 1, icon: 'speedometer', heading: 'Mileage', value: '156000 Miles' },
+        { id: 2, icon: 'document', heading: 'MOT', value: '12 Months MOT' },
+        { id: 3, icon: 'key', heading: 'Keys', value: 'V5 Present' },
+        { id: 4, icon: 'shield', heading: 'HPI Status', value: 'HPI Clear' }
+    ]);
+
+    const handleBadgeChange = (id, field, value) => {
+        setBadges(prev => prev.map(badge => {
+            if (badge.id === id) {
+                return { ...badge, [field]: value };
+            }
+            return badge;
+        }));
+    };
 
     const [uploadedImage, setUploadedImage] = useState(null);
     const [imageObj, setImageObj] = useState(null);
@@ -72,14 +84,17 @@ export default function BannerGenerator() {
                 model: car.model || '',
                 year: car.year?.toString() || '',
                 trim: car.trim || '',
-                mileage: `${car.mileage?.toLocaleString('en-GB') || ''} Miles`,
-                mot: '12 Months MOT', // default fallback
-                keys: 'V5 Present',   // default fallback
-                hpi: 'HPI Clear',     // default fallback
                 condition: 'Great Condition',
                 subtitle: 'Drives Perfect',
                 price: car.price?.toString() || ''
             });
+
+            setBadges([
+                { id: 1, icon: 'speedometer', heading: 'Mileage', value: car.mileage ? `${car.mileage.toLocaleString('en-GB')} Miles` : '' },
+                { id: 2, icon: 'document', heading: 'MOT', value: '12 Months MOT' },
+                { id: 3, icon: 'key', heading: 'Keys', value: 'V5 Present' },
+                { id: 4, icon: 'shield', heading: 'HPI Status', value: 'HPI Clear' }
+            ]);
 
             // Set vehicle image if available
             if (car.images && car.images.length > 0) {
@@ -118,7 +133,7 @@ export default function BannerGenerator() {
     };
 
     // Canvas drawing function
-    const drawBanner = (canvas, width, height, data, imgObj, logoObj) => {
+    const drawBanner = (canvas, width, height, data, imgObj, logoObj, badgesList) => {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
@@ -381,65 +396,138 @@ export default function BannerGenerator() {
                 ctx.lineTo(cx + w * 0.22, cy - h * 0.15);
                 ctx.stroke();
             }
+            else if (type === 'calendar') {
+                const w = iconSize * 0.9;
+                const h = iconSize * 0.9;
+                const x = cx - w / 2;
+                const y = cy - h / 2 + 2 * scale;
+                // outline box
+                ctx.beginPath();
+                ctx.rect(x, y + 4 * scale, w, h - 4 * scale);
+                ctx.stroke();
+                // top binder bar
+                ctx.beginPath();
+                ctx.moveTo(x, y + 4 * scale);
+                ctx.lineTo(x + w, y + 4 * scale);
+                ctx.stroke();
+                // rings / binders
+                ctx.beginPath();
+                ctx.moveTo(x + w * 0.25, y); ctx.lineTo(x + w * 0.25, y + 6 * scale);
+                ctx.moveTo(x + w * 0.75, y); ctx.lineTo(x + w * 0.75, y + 6 * scale);
+                ctx.stroke();
+            }
+            else if (type === 'user') {
+                const r = iconSize * 0.35;
+                // Head
+                ctx.beginPath();
+                ctx.arc(cx, cy - r + 2 * scale, r, 0, Math.PI * 2);
+                ctx.stroke();
+                // Shoulders
+                ctx.beginPath();
+                ctx.arc(cx, cy + r * 1.8 + 2 * scale, r * 1.5, Math.PI, 0);
+                ctx.stroke();
+            }
+            else if (type === 'star') {
+                const r = iconSize * 0.6;
+                ctx.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    ctx.lineTo(cx + Math.cos((18 + i * 72) * Math.PI / 180 - Math.PI / 2) * r,
+                               cy + Math.sin((18 + i * 72) * Math.PI / 180 - Math.PI / 2) * r);
+                    ctx.lineTo(cx + Math.cos((54 + i * 72) * Math.PI / 180 - Math.PI / 2) * (r * 0.4),
+                               cy + Math.sin((54 + i * 72) * Math.PI / 180 - Math.PI / 2) * (r * 0.4));
+                }
+                ctx.closePath();
+                ctx.stroke();
+            }
+            else if (type === 'gear') {
+                const r = iconSize * 0.5;
+                // outer circle
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.stroke();
+                // inner circle
+                ctx.beginPath();
+                ctx.arc(cx, cy, r * 0.3, 0, Math.PI * 2);
+                ctx.stroke();
+                // gear teeth
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i * Math.PI) / 4;
+                    ctx.beginPath();
+                    ctx.moveTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+                    ctx.lineTo(cx + Math.cos(angle) * (r * 1.25), cy + Math.sin(angle) * (r * 1.25));
+                    ctx.stroke();
+                }
+            }
+            else if (type === 'bolt') {
+                const w = iconSize * 0.8;
+                const h = iconSize * 1.2;
+                ctx.beginPath();
+                ctx.moveTo(cx + w * 0.1, cy - h * 0.5);
+                ctx.lineTo(cx - w * 0.4, cy + h * 0.05);
+                ctx.lineTo(cx + w * 0.05, cy + h * 0.05);
+                ctx.lineTo(cx - w * 0.1, cy + h * 0.5);
+                ctx.lineTo(cx + w * 0.4, cy - h * 0.05);
+                ctx.lineTo(cx - w * 0.05, cy - h * 0.05);
+                ctx.closePath();
+                ctx.stroke();
+            }
 
             ctx.restore();
         };
 
-        // Col 3: Mileage
-        const col3CenterX = (colXPositions[2] + colXPositions[3]) / 2;
-        drawIcon('speedometer', col3CenterX, topOffsetY + 50 * scale, 34 * scale);
-        fillTextWithScaleLimit(
-            data.mileage.toUpperCase(), 
-            col3CenterX, 
-            topOffsetY + 124 * scale, 
-            { style: 'bold', size: 22 }, 
-            blackColor, 
-            'center', 
-            colXPositions[3] - colXPositions[2] - 10 * scale,
-            '0.5px'
-        );
+        // Draw the 4 customizable badges (Col 3 to Col 6)
+        const badgeSlots = badgesList || [
+            { icon: 'speedometer', heading: 'Mileage', value: '156,000 Miles' },
+            { icon: 'document', heading: 'MOT', value: '12 Months MOT' },
+            { icon: 'key', heading: 'Keys', value: 'V5 Present' },
+            { icon: 'shield', heading: 'HPI Status', value: 'HPI Clear' }
+        ];
 
-        // Col 4: MOT
-        const col4CenterX = (colXPositions[3] + colXPositions[4]) / 2;
-        drawIcon('document', col4CenterX, topOffsetY + 50 * scale, 32 * scale);
-        fillTextWithScaleLimit(
-            data.mot.toUpperCase(), 
-            col4CenterX, 
-            topOffsetY + 124 * scale, 
-            { style: 'bold', size: 22 }, 
-            blackColor, 
-            'center', 
-            colXPositions[4] - colXPositions[3] - 10 * scale,
-            '0.5px'
-        );
+        badgeSlots.forEach((badge, index) => {
+            const colIndex = index + 2;
+            const colLeftX = colXPositions[colIndex];
+            const colRightX = (colIndex + 1 < colXPositions.length) ? colXPositions[colIndex + 1] : width;
+            let colCenterX = (colLeftX + colRightX) / 2;
+            let maxColWidth = colRightX - colLeftX - 10 * scale;
 
-        // Col 5: Keys
-        const col5CenterX = (colXPositions[4] + colXPositions[5]) / 2;
-        drawIcon('key', col5CenterX, topOffsetY + 50 * scale, 32 * scale);
-        fillTextWithScaleLimit(
-            data.keys.toUpperCase(), 
-            col5CenterX, 
-            topOffsetY + 124 * scale, 
-            { style: 'bold', size: 22 }, 
-            blackColor, 
-            'center', 
-            colXPositions[5] - colXPositions[4] - 10 * scale,
-            '0.5px'
-        );
+            // Move the last slot (Col 6 / HPI) a little to the left
+            if (index === 3) {
+                colCenterX -= 45 * scale;
+                maxColWidth = 240 * scale;
+            }
 
-        // Col 6: HPI
-        const col6CenterX = (colXPositions[5] + width) / 2;
-        drawIcon('shield', col6CenterX, topOffsetY + 50 * scale, 32 * scale);
-        fillTextWithScaleLimit(
-            data.hpi.toUpperCase(), 
-            col6CenterX, 
-            topOffsetY + 124 * scale, 
-            { style: 'bold', size: 22 }, 
-            blackColor, 
-            'center', 
-            width - colXPositions[5] - 10 * scale,
-            '0.5px'
-        );
+            // Draw badge heading if it exists
+            const hasHeading = badge.heading && badge.heading.trim().length > 0;
+            if (hasHeading) {
+                fillTextWithScaleLimit(
+                    badge.heading.toUpperCase(), 
+                    colCenterX, 
+                    topOffsetY + 96 * scale, 
+                    { style: 'normal', size: 13 }, 
+                    blackColor, 
+                    'center', 
+                    maxColWidth,
+                    '1px'
+                );
+            }
+
+            // Draw icon
+            const iconY = topOffsetY + 50 * scale;
+            const iconSize = 32 * scale;
+            drawIcon(badge.icon, colCenterX, iconY, iconSize);
+
+            // Draw value
+            fillTextWithScaleLimit(
+                badge.value.toUpperCase(), 
+                colCenterX, 
+                topOffsetY + 124 * scale, 
+                { style: 'bold', size: 22 }, 
+                blackColor, 
+                'center', 
+                maxColWidth,
+                '0.5px'
+            );
+        });
 
         // --- HORIZONTAL BLUE DIVIDER ---
         ctx.strokeStyle = blueColor;
@@ -518,8 +606,8 @@ export default function BannerGenerator() {
             height = 900;
         }
 
-        drawBanner(canvas, width, height, formData, imageObj, logoObj);
-    }, [formData, imageObj, exportFormat, triggerRedraw, logoObj]);
+        drawBanner(canvas, width, height, formData, imageObj, logoObj, badges);
+    }, [formData, imageObj, exportFormat, triggerRedraw, logoObj, badges]);
 
     // Handle canvas downloads
     const handleDownload = (type) => {
@@ -557,7 +645,7 @@ export default function BannerGenerator() {
 
         // Create temporary canvas of exact export size to render high quality
         const tempCanvas = document.createElement('canvas');
-        drawBanner(tempCanvas, w, h, formData, imageObj, logoObj);
+        drawBanner(tempCanvas, w, h, formData, imageObj, logoObj, badges);
 
         // Download via virtual link click
         const link = document.createElement('a');
@@ -615,22 +703,52 @@ export default function BannerGenerator() {
                             <label className="form-label">Trim / Variant</label>
                             <input name="trim" value={formData.trim} onChange={handleInputChange} className="form-input" placeholder="e.g. 1.4 Match" />
                         </div>
-                        <div className="form-group">
-                            <label className="form-label">Mileage</label>
-                            <input name="mileage" value={formData.mileage} onChange={handleInputChange} className="form-input" placeholder="e.g. 156000 Miles" />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">MOT Status</label>
-                            <input name="mot" value={formData.mot} onChange={handleInputChange} className="form-input" placeholder="e.g. 12 Months MOT" />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Keys Info</label>
-                            <input name="keys" value={formData.keys} onChange={handleInputChange} className="form-input" placeholder="e.g. V5 Present" />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">HPI Status</label>
-                            <input name="hpi" value={formData.hpi} onChange={handleInputChange} className="form-input" placeholder="e.g. HPI Clear" />
-                        </div>
+                    </div>
+
+                    <h3 className="banner-generator__section-title mb-4 border-b pb-2 text-slate-700 font-semibold text-sm">Banner Badges</h3>
+                    <div className="banner-generator__badges-container space-y-4 mb-6">
+                        {badges.map((badge, idx) => (
+                            <div key={badge.id} className="badge-editor-row p-3 rounded-lg border border-slate-100 bg-slate-50/50 flex flex-wrap gap-3 items-end">
+                                <div className="badge-editor-field flex-1 min-w-[120px]">
+                                    <label className="form-label text-xs mb-1 font-semibold text-slate-500">Badge {idx + 1} Icon</label>
+                                    <select 
+                                        value={badge.icon} 
+                                        onChange={(e) => handleBadgeChange(badge.id, 'icon', e.target.value)} 
+                                        className="form-select text-xs py-1.5"
+                                    >
+                                        <option value="speedometer">Speedometer</option>
+                                        <option value="document">Document</option>
+                                        <option value="key">Key</option>
+                                        <option value="shield">Shield</option>
+                                        <option value="calendar">Calendar</option>
+                                        <option value="user">User / Owner</option>
+                                        <option value="star">Star</option>
+                                        <option value="gear">Gear</option>
+                                        <option value="bolt">Bolt / Electric</option>
+                                    </select>
+                                </div>
+                                <div className="badge-editor-field flex-1 min-w-[120px]">
+                                    <label className="form-label text-xs mb-1 font-semibold text-slate-500">Heading</label>
+                                    <input 
+                                        type="text" 
+                                        value={badge.heading} 
+                                        onChange={(e) => handleBadgeChange(badge.id, 'heading', e.target.value)} 
+                                        className="form-input text-xs py-1.5" 
+                                        placeholder="e.g. Mileage" 
+                                    />
+                                </div>
+                                <div className="badge-editor-field flex-1 min-w-[150px]">
+                                    <label className="form-label text-xs mb-1 font-semibold text-slate-500">Value</label>
+                                    <input 
+                                        type="text" 
+                                        value={badge.value} 
+                                        onChange={(e) => handleBadgeChange(badge.id, 'value', e.target.value)} 
+                                        className="form-input text-xs py-1.5" 
+                                        placeholder="e.g. 156k Miles" 
+                                    />
+                                </div>
+                            </div>
+                        ))}
                     </div>
 
                     <h3 className="banner-generator__section-title mb-4 border-b pb-2 text-slate-700 font-semibold text-sm">Marketing Headlines</h3>
