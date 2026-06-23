@@ -4,6 +4,7 @@ import blogsData from '../data/blogs.json';
 const CARS_KEY = 'vancar_cars';
 const BLOGS_KEY = 'vancar_blogs';
 const EXPENSES_KEY = 'vancar_vehicle_expenses';
+const INVOICES_KEY = 'vancar_invoices';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const syncNeon = (endpoint, method, data = null) => {
@@ -16,10 +17,11 @@ const syncNeon = (endpoint, method, data = null) => {
 
 export async function syncDataFromServer() {
     try {
-        const [carsRes, blogsRes, expensesRes] = await Promise.all([
+        const [carsRes, blogsRes, expensesRes, invoicesRes] = await Promise.all([
             fetch(`${API_URL}/cars`),
             fetch(`${API_URL}/blogs`),
-            fetch(`${API_URL}/vehicle-expenses`)
+            fetch(`${API_URL}/vehicle-expenses`),
+            fetch(`${API_URL}/invoices`).catch(err => ({ ok: false, error: err }))
         ]);
         if (carsRes.ok) {
             const cars = await carsRes.json();
@@ -32,6 +34,10 @@ export async function syncDataFromServer() {
         if (expensesRes.ok) {
             const expenses = await expensesRes.json();
             if (Array.isArray(expenses)) saveData(EXPENSES_KEY, expenses);
+        }
+        if (invoicesRes && invoicesRes.ok) {
+            const invoices = await invoicesRes.json();
+            if (Array.isArray(invoices)) saveData(INVOICES_KEY, invoices);
         }
     } catch (err) {
         console.error("Failed to sync from server:", err);
@@ -354,5 +360,52 @@ export async function deleteInquiry(id) {
         console.error('Error deleting enquiry:', err);
         throw err;
     }
+}
+
+// === Invoices ===
+export function getInvoices() {
+    return initData(INVOICES_KEY, []);
+}
+
+export function getInvoiceById(id) {
+    const invoices = getInvoices();
+    return invoices.find(inv => inv.id === id) || null;
+}
+
+export function createInvoice(invoiceData) {
+    const invoices = getInvoices();
+    const nowStr = new Date().toISOString();
+    const newInvoice = { 
+        ...invoiceData, 
+        id: generateId(),
+        created_at: nowStr,
+        updated_at: nowStr
+    };
+    invoices.push(newInvoice);
+    saveData(INVOICES_KEY, invoices);
+    syncNeon('/invoices', 'POST', newInvoice);
+    return newInvoice;
+}
+
+export function updateInvoice(id, invoiceData) {
+    const invoices = getInvoices();
+    const idx = invoices.findIndex(inv => inv.id === id);
+    if (idx === -1) return null;
+    const nowStr = new Date().toISOString();
+    invoices[idx] = { 
+        ...invoices[idx], 
+        ...invoiceData, 
+        id,
+        updated_at: nowStr
+    };
+    saveData(INVOICES_KEY, invoices);
+    syncNeon(`/invoices/${id}`, 'PUT', invoices[idx]);
+    return invoices[idx];
+}
+
+export function deleteInvoice(id) {
+    const invoices = getInvoices().filter(inv => inv.id !== id);
+    saveData(INVOICES_KEY, invoices);
+    syncNeon(`/invoices/${id}`, 'DELETE');
 }
 

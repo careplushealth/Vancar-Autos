@@ -39,6 +39,11 @@ export default function BannerGenerator() {
     const [logoObj, setLogoObj] = useState(null);
     const [exportFormat, setExportFormat] = useState('widescreen'); // 'widescreen' (1920x1080), 'medium' (1200x675), 'instagram' (1080x1080), 'autotrader' (1200x900)
     const [triggerRedraw, setTriggerRedraw] = useState(0);
+    const [downloadModalData, setDownloadModalData] = useState({
+        isOpen: false,
+        imgSrc: '',
+        filename: ''
+    });
 
     // Load Vancar Autos logo
     useEffect(() => {
@@ -645,15 +650,88 @@ export default function BannerGenerator() {
 
         // Create temporary canvas of exact export size to render high quality
         const tempCanvas = document.createElement('canvas');
-        drawBanner(tempCanvas, w, h, formData, imageObj, logoObj, badges);
+        
+        try {
+            drawBanner(tempCanvas, w, h, formData, imageObj, logoObj, badges);
 
-        // Download via virtual link click
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = tempCanvas.toDataURL(mimeType, 0.95);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+            // Check if mobile device
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+
+            const triggerStandardDownload = (dataUrlOrBlobUrl) => {
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = dataUrlOrBlobUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            const showMobileFallback = (imgSrc) => {
+                setDownloadModalData({
+                    isOpen: true,
+                    imgSrc: imgSrc,
+                    filename: filename
+                });
+            };
+
+            if (isMobile) {
+                // On mobile, try Web Share API first
+                tempCanvas.toBlob((blob) => {
+                    if (!blob) {
+                        // Fallback to dataURL if toBlob returns null
+                        try {
+                            const dataUrl = tempCanvas.toDataURL(mimeType, 0.95);
+                            showMobileFallback(dataUrl);
+                        } catch (e) {
+                            alert("Failed to export the banner. If you are using a stock image, the external server might have blocked saving it due to security (CORS) restrictions. Try uploading the image manually using 'Upload Custom Image'.");
+                        }
+                        return;
+                    }
+
+                    const file = new File([blob], filename, { type: mimeType });
+                    const shareData = {
+                        files: [file],
+                    };
+
+                    if (navigator.canShare && navigator.canShare(shareData)) {
+                        navigator.share(shareData).catch((err) => {
+                            if (err.name !== 'AbortError') {
+                                console.error('Share failed:', err);
+                                // Fallback to modal if sharing fails and was not aborted
+                                const blobUrl = URL.createObjectURL(blob);
+                                showMobileFallback(blobUrl);
+                            }
+                        });
+                    } else {
+                        // Web Share API not supported for files, use fallback modal
+                        const blobUrl = URL.createObjectURL(blob);
+                        showMobileFallback(blobUrl);
+                    }
+                }, mimeType, 0.95);
+            } else {
+                // On desktop, use standard download using blob URL (more reliable for large sizes)
+                tempCanvas.toBlob((blob) => {
+                    if (!blob) {
+                        // Fallback to dataUrl
+                        try {
+                            const dataUrl = tempCanvas.toDataURL(mimeType, 0.95);
+                            triggerStandardDownload(dataUrl);
+                        } catch (e) {
+                            alert("Failed to export the banner. If you are using a stock image, the external server might have blocked saving it due to security (CORS) restrictions. Try uploading the image manually using 'Upload Custom Image'.");
+                        }
+                        return;
+                    }
+                    const blobUrl = URL.createObjectURL(blob);
+                    triggerStandardDownload(blobUrl);
+                    
+                    // Clean up the blob URL after a short delay
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+                }, mimeType, 0.95);
+            }
+        } catch (err) {
+            console.error('Error during canvas download export:', err);
+            alert("Failed to export the banner. If you are using a stock image, the external server might have blocked saving it due to security (CORS) restrictions. Try uploading the image manually using 'Upload Custom Image'.");
+        }
     };
 
     return (
@@ -835,6 +913,46 @@ export default function BannerGenerator() {
                     </div>
                 </div>
             </div>
+            
+            {downloadModalData.isOpen && (
+                <div className="banner-modal-overlay" onClick={() => setDownloadModalData(prev => ({ ...prev, isOpen: false }))}>
+                    <div className="banner-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="banner-modal__header">
+                            <h3 className="banner-modal__title">Save Promotional Banner</h3>
+                            <button 
+                                className="banner-modal__close-btn" 
+                                onClick={() => setDownloadModalData(prev => ({ ...prev, isOpen: false }))}
+                                aria-label="Close modal"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="banner-modal__body">
+                            <p className="banner-modal__instruction">
+                                Tap and hold the banner image below to save it directly to your Photos or Files.
+                            </p>
+                            <div className="banner-modal__image-wrapper">
+                                <img 
+                                    src={downloadModalData.imgSrc} 
+                                    alt="Generated Promotional Banner" 
+                                    className="banner-modal__image"
+                                />
+                            </div>
+                        </div>
+                        <div className="banner-modal__footer">
+                            <button 
+                                className="btn btn--primary w-full py-3"
+                                onClick={() => setDownloadModalData(prev => ({ ...prev, isOpen: false }))}
+                            >
+                                Close Preview
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

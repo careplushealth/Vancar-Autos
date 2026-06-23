@@ -70,8 +70,8 @@ export default function Footer() {
                                 Manchester, M12 6LB
                             </p>
                             <p className="footer__contact-info">
-                                <span>Phone: <a href="tel:01611234567">0161 123 4567</a></span><br/>
-                                <span>Email: <a href="mailto:info@vancarautos.co.uk">info@vancarautos.co.uk</a></span>
+                                <span>Phone: <a href="tel:07386533337">07386 533337</a></span><br/>
+                                <span>Email: <a href="mailto:hellovancarautos@gmail.com">hellovancarautos@gmail.com</a></span>
                             </p>
                         </div>
                     </div>

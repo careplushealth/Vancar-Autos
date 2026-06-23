@@ -23,8 +23,31 @@ import Settings from './pages/admin/Settings/Settings';
 import ExpenseTracker from './pages/admin/ExpenseTracker/ExpenseTracker';
 import Enquiries from './pages/admin/Enquiries/Enquiries';
 import BannerGenerator from './pages/admin/BannerGenerator/BannerGenerator';
+import InvoiceGenerator from './pages/admin/InvoiceGenerator/InvoiceGenerator';
 
+const CustomersPlaceholder = () => (
+  <div className="p-8 min-h-[80vh] flex flex-col justify-center items-center text-center">
+    <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm max-w-md">
+      <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+      </div>
+      <h2 className="text-xl font-bold text-slate-800 mb-2">Customers Directory</h2>
+      <p className="text-slate-500 text-sm mb-0">Manage customer records, CRM profiles, and purchase history. This module is currently under development.</p>
+    </div>
+  </div>
+);
 
+const SalesPlaceholder = () => (
+  <div className="p-8 min-h-[80vh] flex flex-col justify-center items-center text-center">
+    <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm max-w-md">
+      <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+      </div>
+      <h2 className="text-xl font-bold text-slate-800 mb-2">Sales Analytics</h2>
+      <p className="text-slate-500 text-sm mb-0">Track closed vehicle sales, commission records, and dealership revenue metrics. This module is currently under development.</p>
+    </div>
+  </div>
+);
 
 // Auth Guard
 import { isAuthenticated } from './services/authService';
@@ -79,6 +102,9 @@ const router = createBrowserRouter(
         <Route path="expenses" element={<ExpenseTracker />} />
         <Route path="enquiries" element={<Enquiries />} />
         <Route path="banner-generator" element={<BannerGenerator />} />
+        <Route path="customers" element={<CustomersPlaceholder />} />
+        <Route path="sales" element={<SalesPlaceholder />} />
+        <Route path="invoices" element={<InvoiceGenerator />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 

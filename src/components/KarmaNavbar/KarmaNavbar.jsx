@@ -185,8 +185,8 @@ export default function KarmaNavbar() {
           style={{ transitionDelay: '400ms' }}
         >
           <div className="flex flex-col space-y-2 text-center text-sm font-medium text-slate-500">
-            <span>Call us: 0161 123 4567</span>
-            <span>Email: info@vancarautos.co.uk</span>
+            <span>Call us: <a href="tel:07386533337" className="hover:text-[#0653A5] transition-colors">07386 533337</a></span>
+            <span>Email: <a href="mailto:hellovancarautos@gmail.com" className="hover:text-[#0653A5] transition-colors">hellovancarautos@gmail.com</a></span>
           </div>
           <p className="text-[10px] tracking-[0.2em] uppercase text-slate-400">
             © {new Date().getFullYear()} VANCAR AUTOS LIMITED
