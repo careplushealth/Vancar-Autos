@@ -425,6 +425,580 @@ app.delete('/api/invoices/:id', async (req, res) => {
     }
 });
 
+// --- AUTO TRADER API INTEGRATION ---
+let autoTraderTokenCache = {
+    token: null,
+    expiresAt: null
+};
+
+// Check if credentials are mock/missing
+const isAutoTraderMock = () => {
+    const key = process.env.AUTOTRADER_KEY;
+    const secret = process.env.AUTOTRADER_SECRET;
+    return !key || !secret || key.includes('your-') || secret.includes('your-');
+};
+
+const getAutoTraderToken = async () => {
+    if (isAutoTraderMock()) {
+        return "mock-token-12345";
+    }
+
+    const now = new Date();
+    if (autoTraderTokenCache.token && autoTraderTokenCache.expiresAt && new Date(autoTraderTokenCache.expiresAt) > now) {
+        return autoTraderTokenCache.token;
+    }
+
+    console.log("Fetching new Auto Trader Access Token...");
+    try {
+        const response = await fetch("https://api-sandbox.autotrader.co.uk/authenticate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams({
+                key: process.env.AUTOTRADER_KEY,
+                secret: process.env.AUTOTRADER_SECRET
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Auth failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        autoTraderTokenCache.token = data.access_token;
+        // Expire token 1 minute early to be safe
+        const expiresAt = new Date(data.expires_at || (Date.now() + 15 * 60 * 1000));
+        expiresAt.setMinutes(expiresAt.getMinutes() - 1);
+        autoTraderTokenCache.expiresAt = expiresAt;
+
+        return autoTraderTokenCache.token;
+    } catch (err) {
+        console.error("Auto Trader Authentication Error:", err);
+        throw err;
+    }
+};
+
+const getMockVehicleDetails = (registration, mileage) => {
+    const regClean = registration.replace(/\s+/g, '').toUpperCase();
+    
+    // Pick standard vehicle details based on registration or default
+    let make = "Ford";
+    let model = "Focus";
+    let derivative = "1.0 EcoBoost Hybrid mHEV 125 Titanium Edition 5dr Petrol Manual";
+    let derivativeId = "mock-deriv-ford-focus";
+    let firstRegistrationDate = "2020-09-15";
+    let year = 2020;
+    let fuelType = "Petrol";
+    let transmissionType = "Manual";
+    let colour = "Grey";
+    let baseRetailValue = 14500;
+    
+    if (regClean.includes("WT17TZH") || regClean === "WT17TZH") {
+        make = "MINI";
+        model = "Convertible";
+        derivative = "1.5 Cooper Convertible 2dr Petrol Manual (s/s) (136 ps)";
+        derivativeId = "5b746c3a24974b8fa1048b0141356a34";
+        firstRegistrationDate = "2017-07-19";
+        year = 2017;
+        fuelType = "Petrol";
+        transmissionType = "Manual";
+        colour = "Midnight Black";
+        baseRetailValue = 11800;
+    } else if (regClean.includes("KN20FZG") || regClean === "KN20FZG") {
+        make = "Volkswagen";
+        model = "Passat";
+        derivative = "2.0 TDI EVO SCR SEL Estate 5dr Diesel Manual Euro 6 (s/s) (150 ps)";
+        derivativeId = "vw-passat-2020-sel-mock";
+        firstRegistrationDate = "2020-03-30";
+        year = 2020;
+        fuelType = "Diesel";
+        transmissionType = "Manual";
+        colour = "Urano Grey";
+        baseRetailValue = 18900;
+    } else if (regClean.startsWith("GY") || regClean.startsWith("LD")) {
+        make = "BMW";
+        model = "3 Series";
+        derivative = "2.0 320i M Sport Auto Euro 6 (s/s) 4dr Petrol Automatic";
+        derivativeId = "bmw-3series-mock";
+        firstRegistrationDate = "2019-05-12";
+        year = 2019;
+        fuelType = "Petrol";
+        transmissionType = "Automatic";
+        colour = "Portimao Blue";
+        baseRetailValue = 21500;
+    } else if (regClean.length > 0) {
+        // Deterministic generation based on plate hash
+        let hash = 0;
+        for (let i = 0; i < regClean.length; i++) {
+            hash = regClean.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        hash = Math.abs(hash);
+        
+        const makes = ["Ford", "Vauxhall", "Volkswagen", "Audi", "Nissan", "Toyota", "Mercedes-Benz"];
+        const modelsMap = {
+            "Ford": ["Fiesta", "Puma", "Kuga"],
+            "Vauxhall": ["Corsa", "Astra", "Mokka"],
+            "Volkswagen": ["Golf", "Polo", "Tiguan"],
+            "Audi": ["A3", "A4", "Q3"],
+            "Nissan": ["Qashqai", "Juke", "Micra"],
+            "Toyota": ["Yaris", "Corolla", "RAV4"],
+            "Mercedes-Benz": ["A Class", "C Class", "GLA"]
+        };
+        
+        make = makes[hash % makes.length];
+        const models = modelsMap[make];
+        model = models[hash % models.length];
+        year = 2015 + (hash % 9); // years 2015 to 2023
+        firstRegistrationDate = `${year}-06-${10 + (hash % 15)}`;
+        
+        const fuelTypes = ["Petrol", "Diesel", "Hybrid", "Electric"];
+        fuelType = fuelTypes[hash % fuelTypes.length];
+        transmissionType = (hash % 2 === 0) ? "Manual" : "Automatic";
+        
+        const colours = ["Frozen White", "Shadow Black", "Race Red", "Deep Impact Blue", "Moondust Silver"];
+        colour = colours[hash % colours.length];
+        
+        derivative = `1.6 ${model} Sport 5dr ${fuelType} ${transmissionType}`;
+        derivativeId = `mock-deriv-${make.toLowerCase()}-${model.toLowerCase()}-${hash % 1000}`;
+        baseRetailValue = 9000 + (hash % 15000);
+    }
+
+    // Depreciate based on year and mileage
+    const yearsOld = new Date().getFullYear() - year;
+    const mileFactor = Math.pow(0.99, (mileage || 20000) / 1000);
+    const yearFactor = Math.pow(0.92, yearsOld);
+    
+    const retail = Math.round(baseRetailValue * yearFactor * mileFactor);
+    const privateVal = Math.round(retail * 0.88);
+    const trade = Math.round(retail * 0.78);
+    const partExchange = Math.round(retail * 0.75);
+
+    return {
+        vehicle: {
+            ownershipCondition: "Used",
+            registration: registration.toUpperCase(),
+            vin: "MOCKVIN" + registration.toUpperCase() + "12345",
+            make,
+            model,
+            derivative,
+            derivativeId,
+            vehicleType: "Car",
+            year,
+            firstRegistrationDate,
+            fuelType,
+            transmissionType,
+            colour,
+            doors: 5,
+            seats: 5,
+            engineCapacityCC: 1598
+        },
+        valuations: {
+            trade: { amountGBP: trade },
+            partExchange: { amountGBP: partExchange },
+            retail: { amountGBP: retail },
+            private: { amountGBP: privateVal }
+        }
+    };
+};
+
+const calculateMockConditionValuation = (derivativeId, mileage, conditionRating, registrationDate) => {
+    let baseRetailValue = 15000;
+    let year = 2020;
+    
+    if (derivativeId.includes("5b746c3a24974b8fa")) {
+        baseRetailValue = 11800;
+        year = 2017;
+    } else if (derivativeId.includes("passat")) {
+        baseRetailValue = 18900;
+        year = 2020;
+    } else if (derivativeId.includes("3series")) {
+        baseRetailValue = 21500;
+        year = 2019;
+    }
+    
+    if (registrationDate) {
+        year = new Date(registrationDate).getFullYear();
+    }
+    
+    const yearsOld = new Date().getFullYear() - year;
+    const mileFactor = Math.pow(0.99, mileage / 1000);
+    const yearFactor = Math.pow(0.92, yearsOld);
+    
+    let retail = Math.round(baseRetailValue * yearFactor * mileFactor);
+    
+    let conditionMultiplier = 1.0;
+    const cond = (conditionRating || "").toUpperCase();
+    if (cond === "EXCELLENT") conditionMultiplier = 1.05;
+    else if (cond === "GREAT") conditionMultiplier = 1.02;
+    else if (cond === "GOOD") conditionMultiplier = 1.0;
+    else if (cond === "FAIR") conditionMultiplier = 0.90;
+    else if (cond === "POOR") conditionMultiplier = 0.78;
+    
+    const trade = Math.round(retail * 0.78 * conditionMultiplier);
+    const partExchange = Math.round(retail * 0.75 * conditionMultiplier);
+    const privateVal = Math.round(retail * 0.88 * conditionMultiplier);
+    
+    return {
+        valuations: {
+            trade: { amountGBP: trade },
+            partExchange: { amountGBP: partExchange },
+            retail: { amountGBP: retail },
+            private: { amountGBP: privateVal }
+        }
+    };
+};
+
+app.get('/api/autotrader/vehicle-lookup', async (req, res) => {
+    const { registration, odometerReadingMiles } = req.query;
+    if (!registration) {
+        return res.status(400).json({ error: 'Registration number is required' });
+    }
+    
+    const mileage = parseInt(odometerReadingMiles) || 0;
+    
+    try {
+        if (isAutoTraderMock()) {
+            await new Promise(resolve => setTimeout(resolve, 600));
+            const mockData = getMockVehicleDetails(registration, mileage);
+            return res.json(mockData);
+        }
+        
+        const token = await getAutoTraderToken();
+        const advertiserId = process.env.AUTOTRADER_ADVERTISER_ID || '';
+        
+        let url = `https://api-sandbox.autotrader.co.uk/vehicles?registration=${encodeURIComponent(registration)}`;
+        if (advertiserId) {
+            url += `&advertiserId=${encodeURIComponent(advertiserId)}`;
+        }
+        if (mileage > 0) {
+            url += `&valuations=true&odometerReadingMiles=${mileage}`;
+        }
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                return res.status(404).json({ error: 'Vehicle not found' });
+            }
+            throw new Error(`Auto Trader API responded with status ${response.status}`);
+        }
+        
+        const data = await response.json();
+        res.json(data);
+    } catch (err) {
+        console.error('Auto Trader vehicle lookup error:', err);
+        res.status(500).json({ error: 'Failed to look up vehicle from Auto Trader' });
+    }
+});
+
+app.post('/api/autotrader/valuation', async (req, res) => {
+    const { derivativeId, firstRegistrationDate, odometerReadingMiles, conditionRating } = req.body;
+    
+    if (!derivativeId || !odometerReadingMiles) {
+        return res.status(400).json({ error: 'derivativeId and odometerReadingMiles are required' });
+    }
+    
+    const mileage = parseInt(odometerReadingMiles) || 0;
+    
+    try {
+        if (isAutoTraderMock()) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const mockValuation = calculateMockConditionValuation(derivativeId, mileage, conditionRating, firstRegistrationDate);
+            return res.json(mockValuation);
+        }
+        
+        const token = await getAutoTraderToken();
+        const advertiserId = process.env.AUTOTRADER_ADVERTISER_ID || '';
+        
+        let url = `https://api-sandbox.autotrader.co.uk/valuations`;
+        if (advertiserId) {
+            url += `?advertiserId=${encodeURIComponent(advertiserId)}`;
+        }
+        
+        const payload = {
+            vehicle: {
+                derivativeId,
+                firstRegistrationDate,
+                odometerReadingMiles: mileage
+            },
+            conditionRating: conditionRating || 'Good'
+        };
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Auto Trader Valuation API responded with status ${response.status}`);
+        }
+        
+        const data = await response.json();
+        res.json(data);
+    } catch (err) {
+        console.error('Auto Trader valuation adjustment error:', err);
+        res.status(500).json({ error: 'Failed to retrieve valuation from Auto Trader' });
+    }
+});
+
+const handleMockSyncStock = async () => {
+    const mockCars = [
+        {
+            id: "at-mock-mini-2017",
+            title: "2017 MINI Convertible Cooper",
+            make: "MINI",
+            model: "Convertible",
+            trim: "Cooper",
+            year: 2017,
+            price: 11800,
+            mileage: 25000,
+            fuel: "Petrol",
+            transmission: "Manual",
+            bodyType: "Convertible",
+            colour: "Midnight Black",
+            engine: "1.5L",
+            doors: 2,
+            seats: 4,
+            description: "Stunning MINI Convertible Cooper in Midnight Black. Excellent fuel economy, manual transmission, and standard equipment includes rear parking sensors, Bluetooth connectivity, and air conditioning. Fun to drive, premium look, and full service history.",
+            features: JSON.stringify(["Bluetooth", "Parking Sensors", "Air Conditioning", "Alloy Wheels", "Start/Stop Technology"]),
+            images: JSON.stringify(["/images/car-hatchback.png"]),
+            status: "available",
+            featured: false
+        },
+        {
+            id: "at-mock-vw-passat-2020",
+            title: "2020 Volkswagen Passat Estate SEL",
+            make: "Volkswagen",
+            model: "Passat",
+            trim: "SEL",
+            year: 2020,
+            price: 18900,
+            mileage: 35000,
+            fuel: "Diesel",
+            transmission: "Manual",
+            bodyType: "Estate",
+            colour: "Urano Grey",
+            engine: "2.0L",
+            doors: 5,
+            seats: 5,
+            description: "Spacious and highly economical VW Passat Estate in Urano Grey SEL trim. Perfect family or executive motorway cruiser. Standard features include adaptive cruise control, leather seats, satellite navigation, and active info display.",
+            features: JSON.stringify(["Sat Nav", "Leather Seats", "Adaptive Cruise Control", "Apple CarPlay", "Heated Seats"]),
+            images: JSON.stringify(["/images/car-estate.png"]),
+            status: "available",
+            featured: false
+        },
+        {
+            id: "at-mock-bmw-3series-2019",
+            title: "2019 BMW 3 Series M Sport",
+            make: "BMW",
+            model: "3 Series",
+            trim: "M Sport",
+            year: 2019,
+            price: 21500,
+            mileage: 42000,
+            fuel: "Petrol",
+            transmission: "Automatic",
+            bodyType: "Saloon",
+            colour: "Portimao Blue",
+            engine: "2.0L",
+            doors: 4,
+            seats: 5,
+            description: "Premium BMW 3 Series 320i M Sport in beautiful Portimao Blue. Automatic gearbox, full leather, M Sport styling package, live cockpit professional, front and rear parking assistant, and ambient lighting.",
+            features: JSON.stringify(["M Sport Styling", "Live Cockpit Professional", "Leather Interior", "Ambient Lighting", "Reverse Camera"]),
+            images: JSON.stringify(["/images/car-sedan.png"]),
+            status: "available",
+            featured: false
+        }
+    ];
+
+    let syncedCount = 0;
+    for (const car of mockCars) {
+        const check = await db.query('SELECT id FROM cars WHERE id = $1', [car.id]);
+        if (check.rows.length > 0) {
+            await db.query(
+                `UPDATE cars SET title=$1, make=$2, model=$3, trim=$4, year=$5, price=$6, mileage=$7, fuel=$8, transmission=$9, "bodyType"=$10, colour=$11, engine=$12, doors=$13, seats=$14, description=$15, features=$16, images=$17, status=$18, featured=$19 WHERE id=$20`,
+                [car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, car.features, car.images, car.status, car.featured, car.id]
+            );
+        } else {
+            await db.query(
+                `INSERT INTO cars (id, title, make, model, trim, year, price, mileage, fuel, transmission, "bodyType", colour, engine, doors, seats, description, features, images, status, featured)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
+                [car.id, car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, car.features, car.images, car.status, car.featured]
+            );
+        }
+        syncedCount++;
+    }
+
+    return syncedCount;
+};
+
+app.post('/api/autotrader/sync-stock', async (req, res) => {
+    try {
+        if (isAutoTraderMock()) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const syncedCount = await handleMockSyncStock();
+            return res.json({ success: true, count: syncedCount, mock: true });
+        }
+        
+        const token = await getAutoTraderToken();
+        const advertiserId = process.env.AUTOTRADER_ADVERTISER_ID || '';
+        
+        if (!advertiserId) {
+            return res.status(400).json({ error: 'AUTOTRADER_ADVERTISER_ID is required to sync stock' });
+        }
+        
+        const url = `https://api-sandbox.autotrader.co.uk/stock?advertiserId=${encodeURIComponent(advertiserId)}`;
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Auto Trader Stock API responded with status ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const results = data.results || [];
+        
+        let syncedCount = 0;
+        const activeIds = [];
+        const seenKeys = new Set();
+        
+        const formatBrand = (str) => {
+            if (!str) return '';
+            const upper = str.toUpperCase().trim();
+            if (upper === 'BMW') return 'BMW';
+            if (upper === 'VW') return 'VW';
+            if (upper === 'MINI') return 'MINI';
+            return upper.split(/\s+/).map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+        };
+        
+        const formatModel = (str) => {
+            if (!str) return '';
+            if (str === str.toUpperCase()) {
+                return str.split(/\s+/).map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+            }
+            return str;
+        };
+        
+        for (const item of results) {
+            const stockId = item.metadata?.stockId;
+            if (!stockId) continue;
+            
+            const standard = item.vehicle?.standard || {};
+            let make = item.vehicle?.make || standard.make || 'Unknown';
+            let model = item.vehicle?.model || standard.model || 'Unknown';
+            
+            if ((!make || make === 'Unknown' || make.toLowerCase() === 'null') && model) {
+                const words = model.split(' ');
+                if (words.length > 1) {
+                    make = words[0];
+                    model = words.slice(1).join(' ');
+                }
+            }
+            
+            make = formatBrand(make);
+            model = formatModel(model);
+            const trim = item.vehicle?.trim || standard.trim || '';
+            
+            const year = parseInt(item.vehicle?.year) || 
+                         (item.vehicle?.firstRegistrationDate ? new Date(item.vehicle.firstRegistrationDate).getFullYear() : 
+                         (item.vehicle?.yearOfManufacture ? parseInt(item.vehicle.yearOfManufacture) : new Date().getFullYear()));
+            const price = parseInt(item.adverts?.forecourtPrice?.amountGBP) || parseInt(item.adverts?.retailAdverts?.totalPrice?.amountGBP) || 0;
+            
+            const uniqueKey = `${make}-${model}-${trim}-${year}-${price}`.toLowerCase().replace(/\s+/g, '');
+            if (seenKeys.has(uniqueKey)) {
+                continue;
+            }
+            seenKeys.add(uniqueKey);
+            
+            const dbId = `at-${stockId}`;
+            activeIds.push(dbId);
+            
+            const derivative = item.vehicle?.derivative || standard.derivative || '';
+            const title = `${year} ${make} ${model} ${trim}`.trim() || 'Vehicle';
+            const mileage = parseInt(item.vehicle?.odometerReadingMiles) || 0;
+            const fuel = item.vehicle?.fuelType || standard.fuelType || 'Petrol';
+            const transmission = item.vehicle?.transmissionType || standard.transmissionType || 'Manual';
+            const bodyType = item.vehicle?.bodyType || standard.bodyType || 'Coupe';
+            const colour = item.vehicle?.colour || standard.colour || 'Unlisted';
+            const engine = item.vehicle?.badgeEngineSizeLitres ? `${item.vehicle.badgeEngineSizeLitres}L` : '';
+            const doors = parseInt(item.vehicle?.doors) || 5;
+            const seats = parseInt(item.vehicle?.seats) || 5;
+            const description = item.adverts?.retailAdverts?.description || item.adverts?.retailAdverts?.description2 || derivative || '';
+            
+            let featuresArr = [];
+            if (item.features && Array.isArray(item.features)) {
+                featuresArr = item.features.map(f => f.name || f.standardName).filter(Boolean);
+            } else if (item.vehicle?.features && Array.isArray(item.vehicle.features)) {
+                featuresArr = item.vehicle.features;
+            }
+            const features = JSON.stringify(featuresArr);
+            
+            let imagesArr = [];
+            if (item.media?.images && Array.isArray(item.media.images)) {
+                imagesArr = item.media.images.map(img => {
+                    const href = img.href || '';
+                    return href.replace('{resize}', 'w800');
+                });
+            } else if (item.vehicle?.images && Array.isArray(item.vehicle.images)) {
+                imagesArr = item.vehicle.images.map(img => {
+                    const href = img.href || '';
+                    return href.replace('{resize}', 'w800');
+                });
+            } else if (item.images && Array.isArray(item.images)) {
+                imagesArr = item.images.map(img => {
+                    const href = img.href || '';
+                    return href.replace('{resize}', 'w800');
+                });
+            }
+            const images = JSON.stringify(imagesArr);
+            
+            const status = 'available';
+            const featured = false;
+            
+            const check = await db.query('SELECT id FROM cars WHERE id = $1', [dbId]);
+            if (check.rows.length > 0) {
+                await db.query(
+                    `UPDATE cars SET title=$1, make=$2, model=$3, trim=$4, year=$5, price=$6, mileage=$7, fuel=$8, transmission=$9, "bodyType"=$10, colour=$11, engine=$12, doors=$13, seats=$14, description=$15, features=$16, images=$17, status=$18, featured=$19 WHERE id=$20`,
+                    [title, make, model, trim, year, price, mileage, fuel, transmission, bodyType, colour, engine, doors, seats, description, features, images, status, featured, dbId]
+                );
+            } else {
+                await db.query(
+                    `INSERT INTO cars (id, title, make, model, trim, year, price, mileage, fuel, transmission, "bodyType", colour, engine, doors, seats, description, features, images, status, featured)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
+                    [dbId, title, make, model, trim, year, price, mileage, fuel, transmission, bodyType, colour, engine, doors, seats, description, features, images, status, featured]
+                );
+            }
+            syncedCount++;
+        }
+        
+        if (activeIds.length > 0) {
+            await db.query(
+                `UPDATE cars SET status = 'sold' WHERE id LIKE 'at-%' AND id NOT IN (${activeIds.map((_, i) => `$${i + 1}`).join(',')})`,
+                activeIds
+            );
+        } else {
+            await db.query(`UPDATE cars SET status = 'sold' WHERE id LIKE 'at-%'`);
+        }
+        
+        res.json({ success: true, count: syncedCount });
+    } catch (err) {
+        console.error('Auto Trader stock sync error:', err);
+        res.status(500).json({ error: 'Failed to sync forecourt stock from Auto Trader' });
+    }
+});
+
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {

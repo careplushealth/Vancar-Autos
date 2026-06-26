@@ -242,30 +242,72 @@ export default function Enquiries() {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                /* Valuation request vehicle details */
-                                                <div className="admin-enquiries__vehicle-card">
-                                                    <div className="admin-enquiries__vehicle-row">
-                                                        <strong>Registration:</strong> <span className="uppercase font-bold">{selectedEnquiry.vehicle_details.registration || 'N/A'}</span>
+                                                <>
+                                                    <div className="admin-enquiries__vehicle-card">
+                                                        <div className="admin-enquiries__vehicle-row">
+                                                            <strong>Registration:</strong> <span className="uppercase font-bold">{selectedEnquiry.vehicle_details.registration || 'N/A'}</span>
+                                                        </div>
+                                                        <div className="admin-enquiries__vehicle-row">
+                                                            <strong>Make & Model:</strong> <span>{selectedEnquiry.vehicle_details.make} {selectedEnquiry.vehicle_details.model}</span>
+                                                        </div>
+                                                        <div className="admin-enquiries__vehicle-row">
+                                                            <strong>Year:</strong> <span>{selectedEnquiry.vehicle_details.year || 'N/A'}</span>
+                                                        </div>
+                                                        <div className="admin-enquiries__vehicle-row">
+                                                            <strong>Mileage:</strong> <span>{formatMileage(selectedEnquiry.vehicle_details.mileage)} miles</span>
+                                                        </div>
+                                                        <div className="admin-enquiries__vehicle-row">
+                                                            <strong>Condition:</strong> <span className="badge badge--condition">{selectedEnquiry.vehicle_details.condition || 'N/A'}</span>
+                                                        </div>
+                                                        <div className="admin-enquiries__vehicle-row">
+                                                            <strong>Service History:</strong> <span>{selectedEnquiry.vehicle_details.serviceHistory || 'N/A'}</span>
+                                                        </div>
+                                                        <div className="admin-enquiries__vehicle-row">
+                                                            <strong>Accident History:</strong> <span>{selectedEnquiry.vehicle_details.accidents || 'N/A'}</span>
+                                                        </div>
                                                     </div>
-                                                    <div className="admin-enquiries__vehicle-row">
-                                                        <strong>Make & Model:</strong> <span>{selectedEnquiry.vehicle_details.make} {selectedEnquiry.vehicle_details.model}</span>
-                                                    </div>
-                                                    <div className="admin-enquiries__vehicle-row">
-                                                        <strong>Year:</strong> <span>{selectedEnquiry.vehicle_details.year || 'N/A'}</span>
-                                                    </div>
-                                                    <div className="admin-enquiries__vehicle-row">
-                                                        <strong>Mileage:</strong> <span>{formatMileage(selectedEnquiry.vehicle_details.mileage)} miles</span>
-                                                    </div>
-                                                    <div className="admin-enquiries__vehicle-row">
-                                                        <strong>Condition:</strong> <span className="badge badge--condition">{selectedEnquiry.vehicle_details.condition || 'N/A'}</span>
-                                                    </div>
-                                                    <div className="admin-enquiries__vehicle-row">
-                                                        <strong>Service History:</strong> <span>{selectedEnquiry.vehicle_details.serviceHistory || 'N/A'}</span>
-                                                    </div>
-                                                    <div className="admin-enquiries__vehicle-row">
-                                                        <strong>Accident History:</strong> <span>{selectedEnquiry.vehicle_details.accidents || 'N/A'}</span>
-                                                    </div>
-                                                </div>
+
+                                                    {/* Auto Trader Valuation details if present */}
+                                                    {selectedEnquiry.vehicle_details.autotrader_valuation && (
+                                                        <div className="admin-enquiries__autotrader-valuation-box" style={{ marginTop: '15px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+                                                            <div style={{ backgroundColor: '#002F6C', color: 'white', padding: '6px 12px', fontSize: '11px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                <span>AUTO TRADER CONNECT VALUATION</span>
+                                                                <span style={{ fontSize: '9px', opacity: 0.8 }}>Sandbox Active</span>
+                                                            </div>
+                                                            <div style={{ padding: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px' }}>
+                                                                <div>
+                                                                    <span style={{ color: 'var(--color-text-secondary)', display: 'block', fontSize: '11px' }}>Part Exchange (Dealer Buy)</span>
+                                                                    <strong style={{ fontSize: '15px', color: 'var(--color-accent)' }}>
+                                                                        {formatPrice(selectedEnquiry.vehicle_details.autotrader_valuation.partExchange)}
+                                                                    </strong>
+                                                                </div>
+                                                                <div>
+                                                                    <span style={{ color: 'var(--color-text-secondary)', display: 'block', fontSize: '11px' }}>Trade Value</span>
+                                                                    <strong>
+                                                                        {formatPrice(selectedEnquiry.vehicle_details.autotrader_valuation.trade)}
+                                                                    </strong>
+                                                                </div>
+                                                                <div>
+                                                                    <span style={{ color: 'var(--color-text-secondary)', display: 'block', fontSize: '11px' }}>Private Value</span>
+                                                                    <strong>
+                                                                        {formatPrice(selectedEnquiry.vehicle_details.autotrader_valuation.private)}
+                                                                    </strong>
+                                                                </div>
+                                                                <div>
+                                                                    <span style={{ color: 'var(--color-text-secondary)', display: 'block', fontSize: '11px' }}>Retail Value</span>
+                                                                    <strong>
+                                                                        {formatPrice(selectedEnquiry.vehicle_details.autotrader_valuation.retail)}
+                                                                    </strong>
+                                                                </div>
+                                                                {selectedEnquiry.vehicle_details.autotrader_valuation.derivativeName && (
+                                                                    <div style={{ gridColumn: '1 / -1', fontSize: '11px', color: 'var(--color-text-secondary)', borderTop: '1px solid var(--color-border)', paddingTop: '6px', marginTop: '4px' }}>
+                                                                        <strong>Derivative:</strong> {selectedEnquiry.vehicle_details.autotrader_valuation.derivativeName}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     )}

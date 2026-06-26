@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { getCars, deleteCar, updateCar } from '../../../services/dataService';
+import { getCars, deleteCar, updateCar, syncAutoTraderStock, syncDataFromServer } from '../../../services/dataService';
 import './ManageCars.css';
 
 export default function ManageCars() {
     const [refresh, setRefresh] = useState(0);
+    const [syncing, setSyncing] = useState(false);
     const cars = useMemo(() => getCars(), [refresh]);
 
     const handleDelete = (id) => {
@@ -20,11 +21,42 @@ export default function ManageCars() {
         setRefresh(prev => prev + 1);
     };
 
+    const handleSync = async () => {
+        setSyncing(true);
+        try {
+            const res = await syncAutoTraderStock();
+            await syncDataFromServer();
+            setRefresh(prev => prev + 1);
+            alert(`Stock synchronized successfully! Synced ${res.count} active vehicle(s).`);
+        } catch (err) {
+            console.error(err);
+            alert('Failed to synchronize forecourt stock from Auto Trader. Please check console logs.');
+        } finally {
+            setSyncing(false);
+        }
+    };
+
     return (
         <div className="manage-cars">
             <div className="manage-cars__header">
                 <h1>Manage Inventory</h1>
-                <Link to="/admin/cars/new" className="btn btn--primary">+ Add Car</Link>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                        onClick={handleSync} 
+                        className="btn btn--secondary" 
+                        disabled={syncing}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.625rem 1.25rem' }}
+                    >
+                        {syncing ? (
+                            <>
+                                <span className="mini-spinner-dark"></span> Syncing...
+                            </>
+                        ) : (
+                            <>🔄 Sync Auto Trader</>
+                        )}
+                    </button>
+                    <Link to="/admin/cars/new" className="btn btn--primary">+ Add Car</Link>
+                </div>
             </div>
 
             <div className="manage-cars__table-container">

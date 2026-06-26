@@ -1,5 +1,8 @@
 .expense-tracker {
     animation: fadeIn var(--transition-slow) ease forwards;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .expense-tracker__header {
@@ -72,6 +75,9 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xl);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .expense-tracker__form-container {
@@ -82,6 +88,8 @@
 
 .expense-tracker__table-container {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 /* Premium Card Wrapper */
@@ -91,6 +99,9 @@
     border-radius: var(--radius-lg);
     padding: var(--spacing-xl);
     box-shadow: var(--shadow-md);
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .expense-tracker__card h2 {
@@ -330,7 +341,7 @@
 .expense-tracker__table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 850px;
+    min-width: 1200px; /* adjusted for 11 columns */
 }
 
 .expense-tracker__table th {
@@ -568,4 +579,71 @@
     width: fit-content;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+}
+
+/* Dashboard Statistics Header & Filter styling */
+.expense-tracker__stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.expense-tracker__stats-header h2 {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.expense-tracker__stats-filter {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.expense-tracker__stats-filter label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    margin-bottom: 0;
+}
+
+.expense-tracker__stats-filter select {
+    padding: 6px 12px;
+    font-size: var(--font-size-xs);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-input);
+    color: var(--color-text-primary);
+}
+
+/* Clickable column header styling */
+.expense-tracker__table th {
+    user-select: none;
+    transition: background-color var(--transition-base);
+}
+
+.expense-tracker__table th:hover {
+    background-color: var(--color-bg-tertiary) !important;
+}
+
+.sort-icon {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 10px;
+    vertical-align: middle;
+}
+
+.sort-icon--inactive {
+    color: var(--color-text-tertiary);
+    opacity: 0.4;
+}
+
+.sort-icon--active {
+    color: var(--color-accent); /* Royal Blue */
+    font-weight: bold;
 }

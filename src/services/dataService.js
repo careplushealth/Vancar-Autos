@@ -409,3 +409,60 @@ export function deleteInvoice(id) {
     syncNeon(`/invoices/${id}`, 'DELETE');
 }
 
+// === Auto Trader API Services ===
+export async function lookupVehicle(registration, odometerReadingMiles = 0) {
+    try {
+        const url = `${API_URL}/autotrader/vehicle-lookup?registration=${encodeURIComponent(registration)}&odometerReadingMiles=${odometerReadingMiles}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('Vehicle registration not found.');
+            }
+            throw new Error('Failed to retrieve vehicle details.');
+        }
+        return await response.json();
+    } catch (err) {
+        console.error('Error looking up vehicle:', err);
+        throw err;
+    }
+}
+
+export async function getConditionValuation(derivativeId, firstRegistrationDate, odometerReadingMiles, conditionRating) {
+    try {
+        const url = `${API_URL}/autotrader/valuation`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                derivativeId,
+                firstRegistrationDate,
+                odometerReadingMiles,
+                conditionRating
+            })
+        });
+        if (!response.ok) {
+            throw new Error('Failed to retrieve adjusted valuation.');
+        }
+        return await response.json();
+    } catch (err) {
+        console.error('Error retrieving condition valuation:', err);
+        throw err;
+    }
+}
+
+export async function syncAutoTraderStock() {
+    try {
+        const url = `${API_URL}/autotrader/sync-stock`;
+        const response = await fetch(url, {
+            method: 'POST'
+        });
+        if (!response.ok) {
+            throw new Error('Failed to synchronize forecourt stock with Auto Trader.');
+        }
+        return await response.json();
+    } catch (err) {
+        console.error('Error syncing stock:', err);
+        throw err;
+    }
+}
+

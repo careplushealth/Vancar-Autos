@@ -7,20 +7,8 @@ import {
     getMakes,
     getModelsByMake 
 } from '../../../services/dataService';
+import autotraderMakesModels from '../../../data/autotrader_makes_models.json';
 import './ExpenseTracker.css';
-
-const COMMON_VEHICLES = {
-    "BMW": ["1 Series", "3 Series", "5 Series", "X1", "X3", "X5", "M3", "M5"],
-    "Audi": ["A1", "A3", "A4", "A6", "Q3", "Q5", "Q7", "TT", "R8"],
-    "Mercedes-Benz": ["A-Class", "C-Class", "E-Class", "S-Class", "GLA", "GLC", "GLE", "SLK"],
-    "Ford": ["Fiesta", "Focus", "Mondeo", "Mustang", "Puma", "Kuga", "Ranger"],
-    "Volkswagen": ["Polo", "Golf", "Passat", "Tiguan", "Touareg", "Transporter", "ID.3", "ID.4"],
-    "Toyota": ["Yaris", "Corolla", "Prius", "C-HR", "RAV4", "Land Cruiser", "Hilux"],
-    "Land Rover": ["Defender", "Discovery", "Range Rover", "Range Rover Sport", "Range Rover Evoque"],
-    "Porsche": ["911", "Cayman", "Boxster", "Panamera", "Macan", "Cayenne", "Taycan"],
-    "Jaguar": ["XE", "XF", "XJ", "F-Type", "E-Pace", "F-Pace", "I-Pace"],
-    "Tesla": ["Model 3", "Model Y", "Model S", "Model X"]
-};
 
 const EXPENSE_TYPES = [
     "MOT",
@@ -63,6 +51,11 @@ export default function ExpenseTracker() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterMake, setFilterMake] = useState('All');
     const [filterStatus, setFilterStatus] = useState('All');
+    const [dashboardFilter, setDashboardFilter] = useState('All');
+
+    // Sorting State
+    const [sortField, setSortField] = useState('date');
+    const [sortDirection, setSortDirection] = useState('desc');
 
     // Modal State
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -79,6 +72,24 @@ export default function ExpenseTracker() {
 
     const refreshData = () => {
         setRecords(getVehicleExpenses());
+    };
+
+    const handleSort = (field) => {
+        if (sortField === field) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
+    const renderSortIcon = (field) => {
+        if (sortField !== field) {
+            return <span className="sort-icon sort-icon--inactive">⇅</span>;
+        }
+        return sortDirection === 'asc' 
+            ? <span className="sort-icon sort-icon--active">▲</span> 
+            : <span className="sort-icon sort-icon--active">▼</span>;
     };
 
     // View Details Modal Handlers
@@ -122,30 +133,32 @@ export default function ExpenseTracker() {
     // Derived lists for Dropdowns
     const systemMakes = useMemo(() => {
         try {
-            const makes = getMakes();
-            // Merge with common makes
-            const allMakes = new Set([...Object.keys(COMMON_VEHICLES), ...makes]);
+            const autotraderMakesList = Object.keys(autotraderMakesModels);
+            const recordMakes = records.map(r => r.make);
+            const allMakes = new Set([...autotraderMakesList, ...recordMakes]);
             return [...allMakes].sort();
         } catch (err) {
             console.error(err);
-            return Object.keys(COMMON_VEHICLES).sort();
+            return Object.keys(autotraderMakesModels).sort();
         }
-    }, []);
+    }, [records]);
 
     const availableModels = useMemo(() => {
         if (!formState.make || formState.make === 'Other') return [];
         let models = [];
-        if (COMMON_VEHICLES[formState.make]) {
-            models = [...COMMON_VEHICLES[formState.make]];
+        if (autotraderMakesModels[formState.make]) {
+            models = [...autotraderMakesModels[formState.make]];
         }
         try {
-            const systemModels = getModelsByMake(formState.make);
-            models = [...new Set([...models, ...systemModels])];
+            const recordModels = records
+                .filter(r => r.make === formState.make)
+                .map(r => r.model);
+            models = [...new Set([...models, ...recordModels])];
         } catch (err) {
             console.error(err);
         }
         return models.sort();
-    }, [formState.make]);
+    }, [formState.make, records]);
 
     // Handle Form Inputs
     const handleInputChange = (e) => {
@@ -235,21 +248,31 @@ export default function ExpenseTracker() {
 
     // Dashboard Statistics calculations
     const stats = useMemo(() => {
-        const totalVehicles = records.length;
-        const soldVehicles = records.filter(r => r.status === 'Sold').length;
+        const filteredForStats = records.filter(r => {
+            if (dashboardFilter === 'Sold') return r.status === 'Sold';
+            if (dashboardFilter === 'Unsold') return r.status === 'In Stock';
+            return true;
+        });
+
+        const totalVehicles = filteredForStats.length;
+        const soldVehicles = filteredForStats.filter(r => r.status === 'Sold').length;
         
+        let totalBuyingPrice = 0;
         let totalExpenses = 0;
         let totalProfit = 0;
         let totalLoss = 0;
 
-        records.forEach(r => {
+        filteredForStats.forEach(r => {
+            // Purchase price
+            totalBuyingPrice += parseFloat(r.buying_price || 0);
+
             // Sum vehicle expenses
             const vehicleExpenses = (r.expenses || []).reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
             totalExpenses += vehicleExpenses;
 
-            // Profit / loss summary
-            const pL = parseFloat(r.profit_loss || 0);
+            // Profit / loss summary (only include sold vehicles in profit/loss)
             if (r.status === 'Sold') {
+                const pL = parseFloat(r.profit_loss || 0);
                 if (pL > 0) {
                     totalProfit += pL;
                 } else if (pL < 0) {
@@ -258,14 +281,17 @@ export default function ExpenseTracker() {
             }
         });
 
+        const totalCost = totalBuyingPrice + totalExpenses;
+
         return {
             totalVehicles,
             soldVehicles,
             totalExpenses,
+            totalCost,
             totalProfit,
             totalLoss
         };
-    }, [records]);
+    }, [records, dashboardFilter]);
 
     // Handle Main Form Submit
     const handleFormSubmit = (e) => {
@@ -375,19 +401,75 @@ export default function ExpenseTracker() {
         return ['All', ...new Set(makes)].sort();
     }, [records]);
 
-    // Filtered records for table display
-    const filteredRecords = useMemo(() => {
-        return records.filter(r => {
+    // Sorted and Filtered records for table display
+    const sortedAndFilteredRecords = useMemo(() => {
+        // 1. Filter
+        const filtered = records.filter(r => {
             const matchesSearch = 
                 r.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                r.model.toLowerCase().includes(searchQuery.toLowerCase());
+                r.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (r.registration && r.registration.toLowerCase().includes(searchQuery.toLowerCase()));
             
             const matchesMake = filterMake === 'All' || r.make === filterMake;
-            const matchesStatus = filterStatus === 'All' || r.status === filterStatus;
+            
+            let matchesStatus = true;
+            if (filterStatus === 'Sold') {
+                matchesStatus = r.status === 'Sold';
+            } else if (filterStatus === 'Unsold') {
+                matchesStatus = r.status === 'In Stock';
+            }
 
             return matchesSearch && matchesMake && matchesStatus;
         });
-    }, [records, searchQuery, filterMake, filterStatus]);
+
+        // 2. Sort
+        if (!sortField) return filtered;
+
+        const getSortValue = (r) => {
+            const totalExp = (r.expenses || []).reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+            switch (sortField) {
+                case 'registration':
+                    return r.registration ? r.registration.toUpperCase() : '';
+                case 'make':
+                    return r.make.toLowerCase();
+                case 'model':
+                    return r.model.toLowerCase();
+                case 'date':
+                    return r.created_at ? new Date(r.created_at).getTime() : 0;
+                case 'buying_price':
+                    return parseFloat(r.buying_price || 0);
+                case 'expenses':
+                    return totalExp;
+                case 'total_cost':
+                    return parseFloat(r.buying_price || 0) + totalExp;
+                case 'selling_price':
+                    return parseFloat(r.selling_price || 0);
+                case 'profit_loss':
+                    return parseFloat(r.profit_loss || 0);
+                case 'status':
+                    return r.status.toLowerCase();
+                default:
+                    return 0;
+            }
+        };
+
+        filtered.sort((a, b) => {
+            const valA = getSortValue(a);
+            const valB = getSortValue(b);
+
+            if (typeof valA === 'string' && typeof valB === 'string') {
+                return sortDirection === 'asc' 
+                    ? valA.localeCompare(valB) 
+                    : valB.localeCompare(valA);
+            } else {
+                return sortDirection === 'asc' 
+                    ? valA - valB 
+                    : valB - valA;
+            }
+        });
+
+        return filtered;
+    }, [records, searchQuery, filterMake, filterStatus, sortField, sortDirection]);
 
     return (
         <div className="expense-tracker">
@@ -396,11 +478,28 @@ export default function ExpenseTracker() {
                 <p>Track purchase values, custom workshop expenses, and calculate vehicle profit margins.</p>
             </header>
 
+            {/* Dashboard Statistics Header & Filter */}
+            <div className="expense-tracker__stats-header">
+                <h2>Dashboard Overview</h2>
+                <div className="expense-tracker__stats-filter">
+                    <label className="form-label">Filter Stats:</label>
+                    <select 
+                        value={dashboardFilter} 
+                        onChange={(e) => setDashboardFilter(e.target.value)} 
+                        className="form-select"
+                    >
+                        <option value="All">All Cars</option>
+                        <option value="Sold">Sold Cars Only</option>
+                        <option value="Unsold">Unsold Cars Only</option>
+                    </select>
+                </div>
+            </div>
+
             {/* Dashboard Statistics */}
             <section className="expense-tracker__stats">
                 <div className="expense-tracker__stat-card">
                     <span className="expense-tracker__stat-number">{stats.totalVehicles}</span>
-                    <span className="expense-tracker__stat-label">Total Vehicles Tracked</span>
+                    <span className="expense-tracker__stat-label">Total Vehicles</span>
                 </div>
                 <div className="expense-tracker__stat-card">
                     <span className="expense-tracker__stat-number">{stats.soldVehicles}</span>
@@ -409,6 +508,10 @@ export default function ExpenseTracker() {
                 <div className="expense-tracker__stat-card">
                     <span className="expense-tracker__stat-number">£{stats.totalExpenses.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                     <span className="expense-tracker__stat-label">Total Expenses</span>
+                </div>
+                <div className="expense-tracker__stat-card">
+                    <span className="expense-tracker__stat-number">£{stats.totalCost.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                    <span className="expense-tracker__stat-label">Total Cost</span>
                 </div>
                 <div className="expense-tracker__stat-card expense-tracker__stat-card--profit">
                     <span className="expense-tracker__stat-number">£{stats.totalProfit.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
@@ -713,7 +816,7 @@ export default function ExpenseTracker() {
                                     type="text" 
                                     value={searchQuery} 
                                     onChange={(e) => setSearchQuery(e.target.value)} 
-                                    placeholder="Search by Make or Model..."
+                                    placeholder="Search by Make, Model, or Reg..."
                                     className="form-input expense-tracker__search"
                                 />
                                 <select 
@@ -732,54 +835,76 @@ export default function ExpenseTracker() {
                                     className="form-select expense-tracker__filter-select"
                                 >
                                     <option value="All">All Statuses</option>
-                                    <option value="In Stock">In Stock</option>
                                     <option value="Sold">Sold</option>
+                                    <option value="Unsold">Unsold</option>
                                 </select>
                             </div>
                         </div>
 
-                        {filteredRecords.length > 0 ? (
+                        {sortedAndFilteredRecords.length > 0 ? (
                             <div className="expense-tracker__table-scroll">
                                 <table className="expense-tracker__table">
                                     <thead>
                                         <tr>
-                                            <th>Vehicle</th>
-                                            <th>Buying Price</th>
-                                            <th>Expenses</th>
-                                            <th>Total Cost</th>
-                                            <th>Selling Price</th>
-                                            <th>Profit / Loss</th>
-                                            <th>Status</th>
+                                            <th onClick={() => handleSort('registration')} style={{ cursor: 'pointer' }}>
+                                                Registration {renderSortIcon('registration')}
+                                            </th>
+                                            <th onClick={() => handleSort('make')} style={{ cursor: 'pointer' }}>
+                                                Make {renderSortIcon('make')}
+                                            </th>
+                                            <th onClick={() => handleSort('model')} style={{ cursor: 'pointer' }}>
+                                                Model {renderSortIcon('model')}
+                                            </th>
+                                            <th onClick={() => handleSort('date')} style={{ cursor: 'pointer' }}>
+                                                Date Added {renderSortIcon('date')}
+                                            </th>
+                                            <th onClick={() => handleSort('buying_price')} style={{ cursor: 'pointer' }}>
+                                                Buying Price {renderSortIcon('buying_price')}
+                                            </th>
+                                            <th onClick={() => handleSort('expenses')} style={{ cursor: 'pointer' }}>
+                                                Expenses {renderSortIcon('expenses')}
+                                            </th>
+                                            <th onClick={() => handleSort('total_cost')} style={{ cursor: 'pointer' }}>
+                                                Total Cost {renderSortIcon('total_cost')}
+                                            </th>
+                                            <th onClick={() => handleSort('selling_price')} style={{ cursor: 'pointer' }}>
+                                                Selling Price {renderSortIcon('selling_price')}
+                                            </th>
+                                            <th onClick={() => handleSort('profit_loss')} style={{ cursor: 'pointer' }}>
+                                                Profit / Loss {renderSortIcon('profit_loss')}
+                                            </th>
+                                            <th onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>
+                                                Status {renderSortIcon('status')}
+                                            </th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredRecords.map(rec => {
-                                            const totalExp = (rec.expenses || []).reduce((sum, e) => sum + e.amount, 0);
-                                            const totalCost = rec.buying_price + totalExp;
+                                        {sortedAndFilteredRecords.map(rec => {
+                                            const totalExp = (rec.expenses || []).reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+                                            const totalCost = parseFloat(rec.buying_price || 0) + totalExp;
                                             const pL = parseFloat(rec.profit_loss || 0);
 
                                             return (
                                                 <tr key={rec.id}>
-                                                    <td>
-                                                        <div className="expense-tracker__vehicle-info">
-                                                            <span className="expense-tracker__vehicle-title">{rec.make} {rec.model}</span>
-                                                            {rec.registration && (
-                                                                <span className="expense-tracker__vehicle-reg">{rec.registration}</span>
-                                                            )}
-                                                            <span className="expense-tracker__vehicle-date">Added: {rec.created_at ? new Date(rec.created_at).toLocaleDateString('en-GB') : '—'}</span>
-                                                        </div>
+                                                    <td style={{ fontFamily: 'monospace', fontWeight: 'var(--font-weight-semibold)', textTransform: 'uppercase' }}>
+                                                        {rec.registration ? rec.registration : '—'}
                                                     </td>
-                                                    <td>£{parseFloat(rec.buying_price).toLocaleString()}</td>
-                                                    <td>£{totalExp.toLocaleString()}</td>
-                                                    <td>£{totalCost.toLocaleString()}</td>
+                                                    <td>{rec.make}</td>
+                                                    <td>{rec.model}</td>
                                                     <td>
-                                                        {rec.status === 'Sold' ? `£${parseFloat(rec.selling_price).toLocaleString()}` : '—'}
+                                                        {rec.created_at ? new Date(rec.created_at).toLocaleDateString('en-GB') : '—'}
+                                                    </td>
+                                                    <td>£{parseFloat(rec.buying_price || 0).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                                                    <td>£{totalExp.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                                                    <td>£{totalCost.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                                                    <td>
+                                                        {rec.status === 'Sold' ? `£${parseFloat(rec.selling_price || 0).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : '—'}
                                                     </td>
                                                     <td>
                                                         {rec.status === 'Sold' ? (
                                                             <span className={`expense-tracker__pL-badge ${pL >= 0 ? 'expense-tracker__pL-badge--profit' : 'expense-tracker__pL-badge--loss'}`}>
-                                                                {pL >= 0 ? `+£${pL.toLocaleString()}` : `-£${Math.abs(pL).toLocaleString()}`}
+                                                                {pL >= 0 ? `+£${pL.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : `-£${Math.abs(pL).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
                                                             </span>
                                                         ) : (
                                                             <span className="expense-tracker__pL-badge expense-tracker__pL-badge--pending">
