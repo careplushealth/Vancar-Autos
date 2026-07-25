@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider, createRoutesFromElements, Route, Navigate, ScrollRestoration, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
 
@@ -21,14 +22,18 @@ import ManageBlogs from './pages/admin/ManageBlogs/ManageBlogs';
 import BlogEditor from './pages/admin/BlogEditor/BlogEditor';
 import Settings from './pages/admin/Settings/Settings';
 import ExpenseTracker from './pages/admin/ExpenseTracker/ExpenseTracker';
+import GeneralExpenseTracker from './pages/admin/GeneralExpenseTracker/GeneralExpenseTracker';
+import BusinessAnalytics from './pages/admin/BusinessAnalytics/BusinessAnalytics';
 import Enquiries from './pages/admin/Enquiries/Enquiries';
 import BannerGenerator from './pages/admin/BannerGenerator/BannerGenerator';
 import InvoiceGenerator from './pages/admin/InvoiceGenerator/InvoiceGenerator';
+import DepositSlipGenerator from './pages/admin/DepositSlipGenerator/DepositSlipGenerator';
+import { syncDataFromServer } from './services/dataService';
 
 const CustomersPlaceholder = () => (
   <div className="p-8 min-h-[80vh] flex flex-col justify-center items-center text-center">
     <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm max-w-md">
-      <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(85,160,31,0.1)', color: '#55A01F' }}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
       </div>
       <h2 className="text-xl font-bold text-slate-800 mb-2">Customers Directory</h2>
@@ -40,7 +45,7 @@ const CustomersPlaceholder = () => (
 const SalesPlaceholder = () => (
   <div className="p-8 min-h-[80vh] flex flex-col justify-center items-center text-center">
     <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm max-w-md">
-      <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(85,160,31,0.1)', color: '#55A01F' }}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
       </div>
       <h2 className="text-xl font-bold text-slate-800 mb-2">Sales Analytics</h2>
@@ -100,11 +105,14 @@ const router = createBrowserRouter(
         <Route path="blogs/new" element={<BlogEditor />} />
         <Route path="blogs/:id/edit" element={<BlogEditor />} />
         <Route path="expenses" element={<ExpenseTracker />} />
+        <Route path="general-expenses" element={<GeneralExpenseTracker />} />
+        <Route path="analytics" element={<BusinessAnalytics />} />
         <Route path="enquiries" element={<Enquiries />} />
         <Route path="banner-generator" element={<BannerGenerator />} />
         <Route path="customers" element={<CustomersPlaceholder />} />
         <Route path="sales" element={<SalesPlaceholder />} />
         <Route path="invoices" element={<InvoiceGenerator />} />
+        <Route path="deposit-slips" element={<DepositSlipGenerator />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 
@@ -120,9 +128,6 @@ const router = createBrowserRouter(
   )
 );
 
-import { useEffect, useState } from 'react';
-import { syncDataFromServer } from './services/dataService';
-
 export default function App() {
   const [loading, setLoading] = useState(true);
 
@@ -131,7 +136,13 @@ export default function App() {
   }, []);
 
   if (loading) {
-    return <div style={{ height: '100vh', background: 'var(--color-bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{color: 'white'}}>Loading...</div></div>;
+    return (
+      <div style={{ height: '100vh', background: 'var(--color-bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: '40px', height: '40px', border: '3px solid rgba(85,160,31,0.2)', borderTop: '3px solid #55A01F', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        </div>
+      </div>
+    );
   }
 
   return <RouterProvider router={router} />;

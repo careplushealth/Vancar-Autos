@@ -1,15 +1,11 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './KarmaHero.css';
-
-// Lazy-load the Three.js canvas showroom to keep the main bundle light and optimize performance
-const ThreeShowroom = lazy(() => import('./ThreeShowroom'));
 
 export default function KarmaHero() {
   const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
-    // Fade-in animation trigger
     const timer = setTimeout(() => {
       setAnimate(true);
     }, 100);
@@ -20,7 +16,7 @@ export default function KarmaHero() {
     <section className="karma-hero" aria-label="Premium Dealership Showcase">
       <div className="container">
         <div className="karma-hero__grid">
-          {/* Left Column: Spacious Conversion-Focused Text Content */}
+          {/* Left Column: Conversion-Focused Text Content */}
           <div
             className={`karma-hero__content transition-all duration-[1000ms] ease-out ${
               animate ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
@@ -54,14 +50,22 @@ export default function KarmaHero() {
             </div>
           </div>
 
-          {/* Right Column: Code-Split 3D Canvas Showcase */}
-          <Suspense fallback={
-            <div className="karma-hero__visual flex items-center justify-center">
-              <div className="w-12 h-12 border-4 border-[var(--color-accent)]/20 border-t-[var(--color-accent)] rounded-full animate-spin" />
+          {/* Right Column: Premium Static Car Showcase */}
+          <div
+            className={`karma-hero__visual transition-all duration-[1200ms] ease-out ${
+              animate ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
+            }`}
+          >
+            <div className="karma-hero__image-wrap">
+              <img
+                src="/hero-car.png"
+                alt="Premium vehicle at Vancar Autos"
+                className="karma-hero__car-img"
+                loading="eager"
+                decoding="async"
+              />
             </div>
-          }>
-            <ThreeShowroom />
-          </Suspense>
+          </div>
         </div>
       </div>
     </section>

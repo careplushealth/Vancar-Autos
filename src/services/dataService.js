@@ -1,10 +1,13 @@
 import carsData from '../data/cars.json';
 import blogsData from '../data/blogs.json';
+import { normalizeMake } from '../utils/makeUtils';
 
 const CARS_KEY = 'vancar_cars';
 const BLOGS_KEY = 'vancar_blogs';
 const EXPENSES_KEY = 'vancar_vehicle_expenses';
+const GENERAL_EXPENSES_KEY = 'vancar_general_expenses';
 const INVOICES_KEY = 'vancar_invoices';
+const DEPOSIT_SLIPS_KEY = 'vancar_deposit_slips';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const syncNeon = (endpoint, method, data = null) => {
@@ -17,11 +20,13 @@ const syncNeon = (endpoint, method, data = null) => {
 
 export async function syncDataFromServer() {
     try {
-        const [carsRes, blogsRes, expensesRes, invoicesRes] = await Promise.all([
+        const [carsRes, blogsRes, expensesRes, invoicesRes, generalExpensesRes, depositSlipsRes] = await Promise.all([
             fetch(`${API_URL}/cars`),
             fetch(`${API_URL}/blogs`),
             fetch(`${API_URL}/vehicle-expenses`),
-            fetch(`${API_URL}/invoices`).catch(err => ({ ok: false, error: err }))
+            fetch(`${API_URL}/invoices`).catch(err => ({ ok: false, error: err })),
+            fetch(`${API_URL}/general-expenses`).catch(err => ({ ok: false, error: err })),
+            fetch(`${API_URL}/deposit-slips`).catch(err => ({ ok: false, error: err }))
         ]);
         if (carsRes.ok) {
             const cars = await carsRes.json();
@@ -38,6 +43,14 @@ export async function syncDataFromServer() {
         if (invoicesRes && invoicesRes.ok) {
             const invoices = await invoicesRes.json();
             if (Array.isArray(invoices)) saveData(INVOICES_KEY, invoices);
+        }
+        if (generalExpensesRes && generalExpensesRes.ok) {
+            const generalExpenses = await generalExpensesRes.json();
+            if (Array.isArray(generalExpenses)) saveData(GENERAL_EXPENSES_KEY, generalExpenses);
+        }
+        if (depositSlipsRes && depositSlipsRes.ok) {
+            const depositSlips = await depositSlipsRes.json();
+            if (Array.isArray(depositSlips)) saveData(DEPOSIT_SLIPS_KEY, depositSlips);
         }
     } catch (err) {
         console.error("Failed to sync from server:", err);
@@ -254,7 +267,22 @@ export function deleteBlog(id) {
 
 // === Vehicle Expenses ===
 export function getVehicleExpenses() {
-  return initData(EXPENSES_KEY, []);
+  const records = initData(EXPENSES_KEY, []);
+  // Ensure existing data is normalized and has vat_scheme
+  return records.map(r => ({
+    ...r,
+    make: normalizeMake(r.make),
+    vat_scheme: r.vat_scheme || 'VAT Margin',
+    expenses: (r.expenses || []).map(e => ({
+      ...e,
+      date: e.date || (r.created_at ? r.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10)),
+      description: e.description || '',
+      calculateVat: !!e.calculateVat,
+      vatAmount: e.vatAmount !== undefined ? e.vatAmount : (e.calculateVat ? parseFloat(e.amount || 0) * 0.20 : 0),
+      netAmount: e.netAmount !== undefined ? e.netAmount : parseFloat(e.amount || 0),
+      grossAmount: e.grossAmount !== undefined ? e.grossAmount : (e.calculateVat ? parseFloat(e.amount || 0) * 1.20 : parseFloat(e.amount || 0))
+    }))
+  }));
 }
 
 export function createVehicleExpense(expenseData) {
@@ -262,6 +290,8 @@ export function createVehicleExpense(expenseData) {
   const nowStr = new Date().toISOString();
   const newExpense = { 
     ...expenseData, 
+    make: normalizeMake(expenseData.make),
+    vat_scheme: expenseData.vat_scheme || 'VAT Margin',
     id: generateId(),
     created_at: nowStr,
     updated_at: nowStr
@@ -280,6 +310,8 @@ export function updateVehicleExpense(id, expenseData) {
   expenses[idx] = { 
     ...expenses[idx], 
     ...expenseData, 
+    make: normalizeMake(expenseData.make || expenses[idx].make),
+    vat_scheme: expenseData.vat_scheme || expenses[idx].vat_scheme || 'VAT Margin',
     id,
     updated_at: nowStr
   };
@@ -297,6 +329,48 @@ export function deleteVehicleExpense(id) {
 export function getModelsByMake(make) {
   const cars = getCars();
   return [...new Set(cars.filter(c => c.make === make).map(c => c.model))].sort();
+}
+
+// === General Expenses ===
+export function getGeneralExpenses() {
+  return initData(GENERAL_EXPENSES_KEY, []);
+}
+
+export function createGeneralExpense(data) {
+  const expenses = getGeneralExpenses();
+  const nowStr = new Date().toISOString();
+  const newExpense = {
+    ...data,
+    id: generateId(),
+    created_at: nowStr,
+    updated_at: nowStr
+  };
+  expenses.push(newExpense);
+  saveData(GENERAL_EXPENSES_KEY, expenses);
+  syncNeon('/general-expenses', 'POST', newExpense);
+  return newExpense;
+}
+
+export function updateGeneralExpense(id, data) {
+  const expenses = getGeneralExpenses();
+  const idx = expenses.findIndex(e => e.id === id);
+  if (idx === -1) return null;
+  const nowStr = new Date().toISOString();
+  expenses[idx] = {
+    ...expenses[idx],
+    ...data,
+    id,
+    updated_at: nowStr
+  };
+  saveData(GENERAL_EXPENSES_KEY, expenses);
+  syncNeon(`/general-expenses/${id}`, 'PUT', expenses[idx]);
+  return expenses[idx];
+}
+
+export function deleteGeneralExpense(id) {
+  const expenses = getGeneralExpenses().filter(e => e.id !== id);
+  saveData(GENERAL_EXPENSES_KEY, expenses);
+  syncNeon(`/general-expenses/${id}`, 'DELETE');
 }
 
 // === Contact Submissions ===
@@ -465,4 +539,64 @@ export async function syncAutoTraderStock() {
         throw err;
     }
 }
+
+// === Deposit Slips ===
+export function getDepositSlips() {
+    return initData(DEPOSIT_SLIPS_KEY, []);
+}
+
+export function generateDepositSlipNumber() {
+    const slips = getDepositSlips();
+    const currentYear = new Date().getFullYear();
+    const prefix = `VDS-${currentYear}-`;
+    
+    const existingNumbers = slips
+        .map(s => s.receipt_number || '')
+        .filter(n => n.startsWith(prefix))
+        .map(n => parseInt(n.replace(prefix, ''), 10))
+        .filter(n => !isNaN(n));
+    
+    const maxNum = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
+    const nextNum = maxNum + 1;
+    return `${prefix}${nextNum.toString().padStart(5, '0')}`;
+}
+
+export function createDepositSlip(data) {
+    const slips = getDepositSlips();
+    const nowStr = new Date().toISOString();
+    const newSlip = {
+        ...data,
+        id: data.id || generateId(),
+        receipt_number: data.receipt_number || generateDepositSlipNumber(),
+        created_at: nowStr,
+        updated_at: nowStr
+    };
+    slips.unshift(newSlip);
+    saveData(DEPOSIT_SLIPS_KEY, slips);
+    syncNeon('/deposit-slips', 'POST', newSlip);
+    return newSlip;
+}
+
+export function updateDepositSlip(id, data) {
+    const slips = getDepositSlips();
+    const idx = slips.findIndex(s => s.id === id);
+    if (idx === -1) return null;
+    const nowStr = new Date().toISOString();
+    slips[idx] = {
+        ...slips[idx],
+        ...data,
+        id,
+        updated_at: nowStr
+    };
+    saveData(DEPOSIT_SLIPS_KEY, slips);
+    syncNeon(`/deposit-slips/${id}`, 'PUT', slips[idx]);
+    return slips[idx];
+}
+
+export function deleteDepositSlip(id) {
+    const slips = getDepositSlips().filter(s => s.id !== id);
+    saveData(DEPOSIT_SLIPS_KEY, slips);
+    syncNeon(`/deposit-slips/${id}`, 'DELETE');
+}
+
 

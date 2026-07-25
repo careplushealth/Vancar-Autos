@@ -7,29 +7,29 @@ export default {
   theme: {
     extend: {
       colors: {
-        red: {
-          50: '#f0f7ff',
-          100: '#e0effe',
-          200: '#bae0fd',
-          300: '#7cc7fb',
-          400: '#38a9f8',
-          500: '#1a6fdc', // Lighter Royal Blue
-          600: '#0653A5', // Royal Blue primary
-          700: '#004799', // Darker Royal Blue
-          800: '#033f7e',
-          900: '#093669',
+        brand: {
+          50: '#f2f9eb',
+          100: '#e2f2d2',
+          200: '#c5e5a5',
+          300: '#9dd16d',
+          400: '#78bc42',
+          500: '#55A01F', /* Vancar Green primary */
+          600: '#3d7515', /* Darker Green */
+          700: '#2e5810',
+          800: '#264a0e',
+          900: '#1f3d0c',
         },
-        blue: {
-          50: '#fffbeb',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#FFD700', // Golden Yellow
-          600: '#eab308',
-          700: '#ca8a04',
-          800: '#a16207',
-          900: '#854d0e',
+        gold: {
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#FFA500', /* Orange */
+          600: '#e69100',
+          700: '#cc7a00',
+          800: '#a36200',
+          900: '#7c4a00',
         }
       },
       letterSpacing: {

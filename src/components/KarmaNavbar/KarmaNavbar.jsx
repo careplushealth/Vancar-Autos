@@ -102,7 +102,7 @@ export default function KarmaNavbar() {
             </Link>
             <Link
               to="/contact"
-              className="btn btn--sm shadow-sm bg-[var(--color-info)] text-slate-900 border border-[var(--color-info)] hover:bg-[#e6c200] hover:border-[#e6c200] hover:-translate-y-[2px]"
+              className="btn btn--sm shadow-sm bg-[var(--color-info)] text-slate-900 border border-[var(--color-info)] hover:bg-[#e69100] hover:border-[#e69100] hover:-translate-y-[2px]"
             >
               Contact Us
             </Link>
@@ -185,8 +185,8 @@ export default function KarmaNavbar() {
           style={{ transitionDelay: '400ms' }}
         >
           <div className="flex flex-col space-y-2 text-center text-sm font-medium text-slate-500">
-            <span>Call us: <a href="tel:07386533337" className="hover:text-[#0653A5] transition-colors">07386 533337</a></span>
-            <span>Email: <a href="mailto:hellovancarautos@gmail.com" className="hover:text-[#0653A5] transition-colors">hellovancarautos@gmail.com</a></span>
+            <span>Call us: <a href="tel:07386533337" className="hover:text-[#55A01F] transition-colors">07386 533337</a></span>
+            <span>Email: <a href="mailto:hellovancarautos@gmail.com" className="hover:text-[#55A01F] transition-colors">hellovancarautos@gmail.com</a></span>
           </div>
           <p className="text-[10px] tracking-[0.2em] uppercase text-slate-400">
             © {new Date().getFullYear()} VANCAR AUTOS LIMITED

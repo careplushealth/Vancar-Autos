@@ -87,12 +87,12 @@
 
 .car-card__favorite-btn:hover {
     transform: scale(1.1);
-    color: #0653A5;
+    color: #55A01F;
     background: #ffffff;
 }
 
 .car-card__favorite-btn--active {
-    color: #0653A5 !important;
+    color: #55A01F !important;
     background: #ffffff;
 }
 

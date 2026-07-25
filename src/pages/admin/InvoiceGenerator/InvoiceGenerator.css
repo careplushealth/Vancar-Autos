@@ -92,7 +92,7 @@
 
 .form-input:focus {
     outline: none;
-    border-color: #0653A5;
+    border-color: #55A01F;
     box-shadow: 0 0 0 3px rgba(6, 83, 165, 0.15);
 }
 
@@ -115,7 +115,7 @@
 
 .form-select:focus {
     outline: none;
-    border-color: #0653A5;
+    border-color: #55A01F;
 }
 
 /* History List Table */
@@ -183,7 +183,7 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #0653A5;
+    background: #55A01F;
     cursor: pointer;
     border: none;
     transition: background 0.15s ease, transform 0.1s ease;
@@ -198,7 +198,7 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #0653A5;
+    background: #55A01F;
     cursor: pointer;
     border: none;
     transition: background 0.15s ease, transform 0.1s ease;
@@ -235,7 +235,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    border-bottom: 2px solid #0653A5;
+    border-bottom: 2px solid #55A01F;
     padding-bottom: 20px;
     margin-bottom: 25px;
 }
@@ -260,7 +260,7 @@
 .invoice-pdf-type-title {
     font-size: 32px;
     font-weight: 800;
-    color: #0653A5;
+    color: #55A01F;
     margin: 0 0 10px 0;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -299,7 +299,7 @@
     font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
-    color: #0653A5;
+    color: #55A01F;
     margin: 0 0 8px 0;
     border-bottom: 1px solid #e2e8f0;
     padding-bottom: 4px;
@@ -321,7 +321,7 @@
 }
 
 .invoice-pdf-table th {
-    background-color: #0653A5;
+    background-color: #55A01F;
     color: #ffffff;
     font-weight: 600;
     text-transform: uppercase;
@@ -410,7 +410,7 @@
 }
 
 .totals-row.accent-row span:last-child {
-    color: #0653A5;
+    color: #55A01F;
     font-weight: 500;
 }
 
@@ -427,7 +427,7 @@
 }
 
 .totals-row.due-row strong:first-child {
-    color: #0653A5;
+    color: #55A01F;
 }
 
 .totals-row.due-row strong:last-child {

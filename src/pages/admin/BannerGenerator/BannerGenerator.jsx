@@ -200,7 +200,7 @@ export default function BannerGenerator() {
         const topOffsetY = panelY + verticalOffset; // base Y position for contents
 
         // Colors
-        const blueColor = '#0653A5';
+        const blueColor = '#55A01F';
         const blackColor = '#000000';
 
         // Column grid percentages to match reference image exactly

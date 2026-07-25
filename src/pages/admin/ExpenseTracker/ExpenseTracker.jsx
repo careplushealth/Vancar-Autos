@@ -3,11 +3,10 @@ import {
     getVehicleExpenses, 
     createVehicleExpense, 
     updateVehicleExpense, 
-    deleteVehicleExpense,
-    getMakes,
-    getModelsByMake 
+    deleteVehicleExpense
 } from '../../../services/dataService';
 import autotraderMakesModels from '../../../data/autotrader_makes_models.json';
+import { normalizeMake, deduplicateMakes } from '../../../utils/makeUtils';
 import './ExpenseTracker.css';
 
 const EXPENSE_TYPES = [
@@ -32,8 +31,15 @@ const INITIAL_FORM_STATE = {
     buyingPrice: '',
     status: 'In Stock',
     sellingPrice: '',
-    expenses: [] // Array of { type, amount, date }
+    vat_scheme: 'VAT Margin',
+    expenses: [] // Array of { type, amount, date, description, calculateVat, netAmount, vatAmount }
 };
+
+const fmt = (n) =>
+    new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 2 }).format(n || 0);
+
+const fmtInt = (n) =>
+    new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);
 
 export default function ExpenseTracker() {
     // State
@@ -45,12 +51,16 @@ export default function ExpenseTracker() {
     // Expense Input Form State
     const [expenseType, setExpenseType] = useState('Service');
     const [expenseAmount, setExpenseAmount] = useState('');
+    const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().slice(0, 10));
+    const [expenseDescription, setExpenseDescription] = useState('');
+    const [expenseCalculateVat, setExpenseCalculateVat] = useState(false);
     const [editingExpenseIdx, setEditingExpenseIdx] = useState(null);
 
     // Filter & Search State
     const [searchQuery, setSearchQuery] = useState('');
     const [filterMake, setFilterMake] = useState('All');
     const [filterStatus, setFilterStatus] = useState('All');
+    const [filterVatScheme, setFilterVatScheme] = useState('All');
     const [dashboardFilter, setDashboardFilter] = useState('All');
 
     // Sorting State
@@ -113,9 +123,20 @@ export default function ExpenseTracker() {
             return;
         }
 
-        const totalExp = (markSoldRecord.expenses || []).reduce((sum, exp) => sum + exp.amount, 0);
-        const totalCost = markSoldRecord.buying_price + totalExp;
-        const profitLoss = price - totalCost;
+        const totalGrossExp = (markSoldRecord.expenses || []).reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+        const totalNetExp = (markSoldRecord.expenses || []).reduce((sum, exp) => sum + parseFloat(exp.netAmount ?? exp.amount ?? 0), 0);
+        const scheme = markSoldRecord.vat_scheme || 'VAT Margin';
+        const buying = parseFloat(markSoldRecord.buying_price || 0);
+
+        let outputVat = 0;
+        if (scheme === 'VAT Commercial') {
+            outputVat = price * 0.20;
+        } else {
+            const marginProfit = price - buying - totalNetExp;
+            outputVat = marginProfit > 0 ? marginProfit * (1 / 6) : 0;
+        }
+
+        const profitLoss = price - buying - totalNetExp - outputVat;
 
         updateVehicleExpense(markSoldRecord.id, {
             ...markSoldRecord,
@@ -130,28 +151,31 @@ export default function ExpenseTracker() {
         refreshData();
     };
 
-    // Derived lists for Dropdowns
+    // Derived lists for Dropdowns with deduplication and standardization
     const systemMakes = useMemo(() => {
         try {
             const autotraderMakesList = Object.keys(autotraderMakesModels);
             const recordMakes = records.map(r => r.make);
-            const allMakes = new Set([...autotraderMakesList, ...recordMakes]);
-            return [...allMakes].sort();
+            return deduplicateMakes([...autotraderMakesList, ...recordMakes]);
         } catch (err) {
             console.error(err);
-            return Object.keys(autotraderMakesModels).sort();
+            return deduplicateMakes(Object.keys(autotraderMakesModels));
         }
     }, [records]);
 
     const availableModels = useMemo(() => {
         if (!formState.make || formState.make === 'Other') return [];
         let models = [];
-        if (autotraderMakesModels[formState.make]) {
-            models = [...autotraderMakesModels[formState.make]];
+        const normFormMake = normalizeMake(formState.make);
+
+        // Check autotrader dataset case-insensitively
+        const matchKey = Object.keys(autotraderMakesModels).find(k => k.toLowerCase() === normFormMake.toLowerCase());
+        if (matchKey && autotraderMakesModels[matchKey]) {
+            models = [...autotraderMakesModels[matchKey]];
         }
         try {
             const recordModels = records
-                .filter(r => r.make === formState.make)
+                .filter(r => normalizeMake(r.make) === normFormMake)
                 .map(r => r.model);
             models = [...new Set([...models, ...recordModels])];
         } catch (err) {
@@ -177,21 +201,32 @@ export default function ExpenseTracker() {
             return;
         }
 
-        const dateStr = new Date().toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
-        });
+        if (!expenseDate) {
+            alert("Please enter a valid expense date.");
+            return;
+        }
+
+        const calculateVat = expenseCalculateVat;
+        const vatAmount = calculateVat ? amount * 0.20 : 0;
+        const netAmount = amount;
+        const grossAmount = calculateVat ? amount * 1.20 : amount;
+
+        const expenseItem = {
+            type: expenseType,
+            amount: amount,
+            date: expenseDate,
+            description: expenseDescription.trim(),
+            calculateVat,
+            vatAmount,
+            netAmount,
+            grossAmount
+        };
 
         if (editingExpenseIdx !== null) {
             // Update existing expense
             setFormState(prev => {
                 const updated = [...prev.expenses];
-                updated[editingExpenseIdx] = {
-                    type: expenseType,
-                    amount: amount,
-                    date: updated[editingExpenseIdx].date // keep original date
-                };
+                updated[editingExpenseIdx] = expenseItem;
                 return { ...prev, expenses: updated };
             });
             setEditingExpenseIdx(null);
@@ -199,22 +234,24 @@ export default function ExpenseTracker() {
             // Add new expense
             setFormState(prev => ({
                 ...prev,
-                expenses: [...prev.expenses, {
-                    type: expenseType,
-                    amount: amount,
-                    date: dateStr
-                }]
+                expenses: [...prev.expenses, expenseItem]
             }));
         }
 
         // Reset inputs
         setExpenseAmount('');
+        setExpenseDescription('');
+        setExpenseCalculateVat(false);
+        setExpenseDate(new Date().toISOString().slice(0, 10));
     };
 
     const handleEditExpense = (idx) => {
-        const expense = formState.expenses[idx];
-        setExpenseType(expense.type);
-        setExpenseAmount(expense.amount);
+        const exp = formState.expenses[idx];
+        setExpenseType(exp.type);
+        setExpenseAmount(exp.amount);
+        setExpenseDate(exp.date || new Date().toISOString().slice(0, 10));
+        setExpenseDescription(exp.description || '');
+        setExpenseCalculateVat(!!exp.calculateVat);
         setEditingExpenseIdx(idx);
     };
 
@@ -226,27 +263,46 @@ export default function ExpenseTracker() {
         if (editingExpenseIdx === idx) {
             setEditingExpenseIdx(null);
             setExpenseAmount('');
+            setExpenseDescription('');
+            setExpenseCalculateVat(false);
+            setExpenseDate(new Date().toISOString().slice(0, 10));
         }
     };
 
-    // Live profit-loss calculations for the active form
+    // Live profit-loss and VAT calculations for the active form
     const formCalculations = useMemo(() => {
         const buying = parseFloat(formState.buyingPrice) || 0;
-        const totalExpenses = formState.expenses.reduce((sum, exp) => sum + exp.amount, 0);
-        const totalCost = buying + totalExpenses;
+        const totalGrossExpenses = formState.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+        const totalVatReclaimable = formState.expenses.reduce((sum, exp) => sum + parseFloat(exp.vatAmount || 0), 0);
+        const totalNetExpenses = totalGrossExpenses - totalVatReclaimable;
+        const totalCost = buying + totalGrossExpenses;
         const selling = formState.status === 'Sold' ? (parseFloat(formState.sellingPrice) || 0) : 0;
-        const profitLoss = selling - totalCost;
+
+        let outputVat = 0;
+        if (formState.status === 'Sold') {
+            if (formState.vat_scheme === 'VAT Commercial') {
+                outputVat = selling * 0.20;
+            } else {
+                const marginProfit = selling - buying - totalNetExpenses;
+                outputVat = marginProfit > 0 ? marginProfit * (1 / 6) : 0;
+            }
+        }
+
+        const netProfitLoss = formState.status === 'Sold' ? (selling - buying - totalNetExpenses - outputVat) : -totalCost;
 
         return {
             buying,
-            totalExpenses,
+            totalGrossExpenses,
+            totalNetExpenses,
+            totalVatReclaimable,
             totalCost,
             selling,
-            profitLoss
+            outputVat,
+            netProfitLoss
         };
-    }, [formState.buyingPrice, formState.expenses, formState.status, formState.sellingPrice]);
+    }, [formState.buyingPrice, formState.expenses, formState.status, formState.sellingPrice, formState.vat_scheme]);
 
-    // Dashboard Statistics calculations
+    // Dashboard Statistics calculations with VAT and scheme metrics
     const stats = useMemo(() => {
         const filteredForStats = records.filter(r => {
             if (dashboardFilter === 'Sold') return r.status === 'Sold';
@@ -259,20 +315,40 @@ export default function ExpenseTracker() {
         
         let totalBuyingPrice = 0;
         let totalExpenses = 0;
+        let totalVatReclaimed = 0;
+        let totalOutputVatMargin = 0;
+        let totalOutputVatCommercial = 0;
         let totalProfit = 0;
         let totalLoss = 0;
 
         filteredForStats.forEach(r => {
-            // Purchase price
             totalBuyingPrice += parseFloat(r.buying_price || 0);
 
-            // Sum vehicle expenses
-            const vehicleExpenses = (r.expenses || []).reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
-            totalExpenses += vehicleExpenses;
+            (r.expenses || []).forEach(e => {
+                const net = parseFloat(e.netAmount ?? e.amount ?? 0);
+                const vat = e.vatAmount !== undefined ? parseFloat(e.vatAmount || 0) : (e.calculateVat ? net * 0.20 : 0);
+                const gross = e.grossAmount !== undefined ? parseFloat(e.grossAmount || 0) : (net + vat);
+                totalExpenses += gross;
+                totalVatReclaimed += vat;
+            });
 
-            // Profit / loss summary (only include sold vehicles in profit/loss)
             if (r.status === 'Sold') {
-                const pL = parseFloat(r.profit_loss || 0);
+                const selling = parseFloat(r.selling_price || 0);
+                const buying = parseFloat(r.buying_price || 0);
+                const netExp = (r.expenses || []).reduce((s, e) => s + parseFloat(e.netAmount ?? e.amount ?? 0), 0);
+                const scheme = r.vat_scheme || 'VAT Margin';
+
+                let outVat = 0;
+                if (scheme === 'VAT Commercial') {
+                    outVat = selling * 0.20;
+                    totalOutputVatCommercial += outVat;
+                } else {
+                    const margin = selling - buying - netExp;
+                    outVat = margin > 0 ? margin * (1 / 6) : 0;
+                    totalOutputVatMargin += outVat;
+                }
+
+                const pL = selling - buying - netExp - outVat;
                 if (pL > 0) {
                     totalProfit += pL;
                 } else if (pL < 0) {
@@ -282,11 +358,18 @@ export default function ExpenseTracker() {
         });
 
         const totalCost = totalBuyingPrice + totalExpenses;
+        const totalOutputVat = totalOutputVatMargin + totalOutputVatCommercial;
+        const netVatPayable = totalOutputVat - totalVatReclaimed;
 
         return {
             totalVehicles,
             soldVehicles,
             totalExpenses,
+            totalVatReclaimed,
+            totalOutputVatMargin,
+            totalOutputVatCommercial,
+            totalOutputVat,
+            netVatPayable,
             totalCost,
             totalProfit,
             totalLoss
@@ -297,8 +380,8 @@ export default function ExpenseTracker() {
     const handleFormSubmit = (e) => {
         e.preventDefault();
 
-        // Validation
-        const finalMake = formState.make === 'Other' ? formState.customMake.trim() : formState.make;
+        const rawMake = formState.make === 'Other' ? formState.customMake : formState.make;
+        const finalMake = normalizeMake(rawMake);
         const finalModel = formState.make === 'Other' ? formState.customModel.trim() : formState.model;
 
         if (!finalMake || !finalModel) {
@@ -318,9 +401,21 @@ export default function ExpenseTracker() {
             return;
         }
 
-        const totalExpenses = formState.expenses.reduce((sum, exp) => sum + exp.amount, 0);
-        const totalCost = buying + totalExpenses;
-        const profitLoss = formState.status === 'Sold' ? (selling - totalCost) : -totalCost;
+        const totalNetExp = formState.expenses.reduce((sum, exp) => sum + parseFloat(exp.netAmount ?? exp.amount ?? 0), 0);
+        const totalGrossExp = formState.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+        const totalCost = buying + totalGrossExp;
+
+        let outputVat = 0;
+        if (formState.status === 'Sold') {
+            if (formState.vat_scheme === 'VAT Commercial') {
+                outputVat = selling * 0.20;
+            } else {
+                const marginProfit = selling - buying - totalNetExp;
+                outputVat = marginProfit > 0 ? marginProfit * (1 / 6) : 0;
+            }
+        }
+
+        const profitLoss = formState.status === 'Sold' ? (selling - buying - totalNetExp - outputVat) : -totalCost;
 
         const payload = {
             make: finalMake,
@@ -329,6 +424,7 @@ export default function ExpenseTracker() {
             buying_price: buying,
             status: formState.status,
             selling_price: formState.status === 'Sold' ? selling : 0,
+            vat_scheme: formState.vat_scheme,
             profit_loss: profitLoss,
             expenses: formState.expenses
         };
@@ -345,6 +441,9 @@ export default function ExpenseTracker() {
         setEditId(null);
         setEditingExpenseIdx(null);
         setExpenseAmount('');
+        setExpenseDescription('');
+        setExpenseCalculateVat(false);
+        setExpenseDate(new Date().toISOString().slice(0, 10));
         refreshData();
     };
 
@@ -354,6 +453,9 @@ export default function ExpenseTracker() {
         setEditId(null);
         setEditingExpenseIdx(null);
         setExpenseAmount('');
+        setExpenseDescription('');
+        setExpenseCalculateVat(false);
+        setExpenseDate(new Date().toISOString().slice(0, 10));
     };
 
     // Load record for edit
@@ -361,22 +463,30 @@ export default function ExpenseTracker() {
         setIsEditing(true);
         setEditId(record.id);
         
-        // Check if make is one of common/known makes
-        const isCommonMake = systemMakes.includes(record.make);
+        const normRecordMake = normalizeMake(record.make);
+        const isKnown = systemMakes.includes(normRecordMake);
 
         setFormState({
-            make: isCommonMake ? record.make : 'Other',
-            model: isCommonMake ? record.model : 'Other',
-            customMake: isCommonMake ? '' : record.make,
-            customModel: isCommonMake ? '' : record.model,
+            make: isKnown ? normRecordMake : 'Other',
+            model: isKnown ? record.model : 'Other',
+            customMake: isKnown ? '' : normRecordMake,
+            customModel: isKnown ? '' : record.model,
             registration: record.registration || '',
             buyingPrice: record.buying_price,
             status: record.status,
             sellingPrice: record.status === 'Sold' ? record.selling_price : '',
-            expenses: record.expenses || []
+            vat_scheme: record.vat_scheme || 'VAT Margin',
+            expenses: (record.expenses || []).map(e => ({
+                ...e,
+                date: e.date || (record.created_at ? record.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10)),
+                description: e.description || '',
+                calculateVat: !!e.calculateVat,
+                vatAmount: e.vatAmount !== undefined ? e.vatAmount : (e.calculateVat ? parseFloat(e.amount || 0) * 0.20 : 0),
+                netAmount: e.netAmount !== undefined ? e.netAmount : parseFloat(e.amount || 0),
+                grossAmount: e.grossAmount !== undefined ? e.grossAmount : (e.calculateVat ? parseFloat(e.amount || 0) * 1.20 : parseFloat(e.amount || 0))
+            }))
         });
         
-        // Scroll to form on mobile
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -395,22 +505,23 @@ export default function ExpenseTracker() {
         }
     };
 
-    // Unique makes list for table filtering
+    // Unique standardized makes list for table filtering
     const tableMakes = useMemo(() => {
-        const makes = records.map(r => r.make);
-        return ['All', ...new Set(makes)].sort();
+        const makes = records.map(r => normalizeMake(r.make));
+        return ['All', ...deduplicateMakes(makes)];
     }, [records]);
 
     // Sorted and Filtered records for table display
     const sortedAndFilteredRecords = useMemo(() => {
         // 1. Filter
         const filtered = records.filter(r => {
+            const normMake = normalizeMake(r.make);
             const matchesSearch = 
-                r.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                normMake.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 r.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (r.registration && r.registration.toLowerCase().includes(searchQuery.toLowerCase()));
             
-            const matchesMake = filterMake === 'All' || r.make === filterMake;
+            const matchesMake = filterMake === 'All' || normMake === filterMake;
             
             let matchesStatus = true;
             if (filterStatus === 'Sold') {
@@ -419,7 +530,9 @@ export default function ExpenseTracker() {
                 matchesStatus = r.status === 'In Stock';
             }
 
-            return matchesSearch && matchesMake && matchesStatus;
+            const matchesVatScheme = filterVatScheme === 'All' || (r.vat_scheme || 'VAT Margin') === filterVatScheme;
+
+            return matchesSearch && matchesMake && matchesStatus && matchesVatScheme;
         });
 
         // 2. Sort
@@ -431,7 +544,7 @@ export default function ExpenseTracker() {
                 case 'registration':
                     return r.registration ? r.registration.toUpperCase() : '';
                 case 'make':
-                    return r.make.toLowerCase();
+                    return normalizeMake(r.make).toLowerCase();
                 case 'model':
                     return r.model.toLowerCase();
                 case 'date':
@@ -446,6 +559,8 @@ export default function ExpenseTracker() {
                     return parseFloat(r.selling_price || 0);
                 case 'profit_loss':
                     return parseFloat(r.profit_loss || 0);
+                case 'vat_scheme':
+                    return (r.vat_scheme || 'VAT Margin').toLowerCase();
                 case 'status':
                     return r.status.toLowerCase();
                 default:
@@ -469,13 +584,13 @@ export default function ExpenseTracker() {
         });
 
         return filtered;
-    }, [records, searchQuery, filterMake, filterStatus, sortField, sortDirection]);
+    }, [records, searchQuery, filterMake, filterStatus, filterVatScheme, sortField, sortDirection]);
 
     return (
         <div className="expense-tracker">
             <header className="expense-tracker__header">
                 <h1>Vehicle Expense Tracker</h1>
-                <p>Track purchase values, custom workshop expenses, and calculate vehicle profit margins.</p>
+                <p>Track purchase values, workshop expenses, VAT Margin & Commercial schemes, and calculate net vehicle profitability.</p>
             </header>
 
             {/* Dashboard Statistics Header & Filter */}
@@ -506,19 +621,27 @@ export default function ExpenseTracker() {
                     <span className="expense-tracker__stat-label">Vehicles Sold</span>
                 </div>
                 <div className="expense-tracker__stat-card">
-                    <span className="expense-tracker__stat-number">£{stats.totalExpenses.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
-                    <span className="expense-tracker__stat-label">Total Expenses</span>
+                    <span className="expense-tracker__stat-number">{fmtInt(stats.totalExpenses)}</span>
+                    <span className="expense-tracker__stat-label">Gross Expenses</span>
                 </div>
                 <div className="expense-tracker__stat-card">
-                    <span className="expense-tracker__stat-number">£{stats.totalCost.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                    <span className="expense-tracker__stat-number" style={{ color: '#55A01F' }}>{fmtInt(stats.totalVatReclaimed)}</span>
+                    <span className="expense-tracker__stat-label">Reclaimable Expense VAT</span>
+                </div>
+                <div className="expense-tracker__stat-card">
+                    <span className="expense-tracker__stat-number" style={{ color: '#3b82f6' }}>{fmtInt(stats.totalOutputVat)}</span>
+                    <span className="expense-tracker__stat-label">Total Output VAT (Sales)</span>
+                </div>
+                <div className="expense-tracker__stat-card">
+                    <span className="expense-tracker__stat-number">{fmtInt(stats.totalCost)}</span>
                     <span className="expense-tracker__stat-label">Total Cost</span>
                 </div>
                 <div className="expense-tracker__stat-card expense-tracker__stat-card--profit">
-                    <span className="expense-tracker__stat-number">£{stats.totalProfit.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
-                    <span className="expense-tracker__stat-label">Total Profit</span>
+                    <span className="expense-tracker__stat-number">{fmtInt(stats.totalProfit)}</span>
+                    <span className="expense-tracker__stat-label">Net Profit</span>
                 </div>
                 <div className="expense-tracker__stat-card expense-tracker__stat-card--loss">
-                    <span className="expense-tracker__stat-number">£{stats.totalLoss.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                    <span className="expense-tracker__stat-number">{fmtInt(stats.totalLoss)}</span>
                     <span className="expense-tracker__stat-label">Total Loss</span>
                 </div>
             </section>
@@ -625,6 +748,7 @@ export default function ExpenseTracker() {
                                         value={formState.buyingPrice} 
                                         onChange={handleInputChange} 
                                         min="0"
+                                        step="0.01"
                                         placeholder="e.g. 15000"
                                         className="form-input" 
                                         required 
@@ -632,8 +756,20 @@ export default function ExpenseTracker() {
                                 </div>
                             </div>
 
-                            {/* Status & Conditional Selling Price */}
+                            {/* VAT Scheme & Status */}
                             <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label">VAT Scheme</label>
+                                    <select
+                                        name="vat_scheme"
+                                        value={formState.vat_scheme}
+                                        onChange={handleInputChange}
+                                        className="form-select"
+                                    >
+                                        <option value="VAT Margin">VAT Margin (1/6 Profit)</option>
+                                        <option value="VAT Commercial">VAT Commercial (20% Sale)</option>
+                                    </select>
+                                </div>
                                 <div className="form-group">
                                     <label className="form-label">Status</label>
                                     <select 
@@ -646,8 +782,12 @@ export default function ExpenseTracker() {
                                         <option value="Sold">Sold</option>
                                     </select>
                                 </div>
-                                {formState.status === 'Sold' ? (
-                                    <div className="form-group animate-slide-down">
+                            </div>
+
+                            {/* Conditional Selling Price */}
+                            {formState.status === 'Sold' && (
+                                <div className="form-row animate-slide-down">
+                                    <div className="form-group">
                                         <label className="form-label">Selling Price (£)</label>
                                         <input 
                                             type="number" 
@@ -655,15 +795,14 @@ export default function ExpenseTracker() {
                                             value={formState.sellingPrice} 
                                             onChange={handleInputChange} 
                                             min="0"
+                                            step="0.01"
                                             placeholder="e.g. 18500"
                                             className="form-input" 
                                             required 
                                         />
                                     </div>
-                                ) : (
-                                    <div className="form-group" style={{ visibility: 'hidden' }} />
-                                )}
-                            </div>
+                                </div>
+                            )}
 
                             <hr className="expense-tracker__divider" />
 
@@ -671,8 +810,8 @@ export default function ExpenseTracker() {
                             <div className="expense-tracker__expense-section">
                                 <h3>Workshop & Reconditioning Expenses</h3>
                                 
-                                <div className="expense-tracker__expense-input-row">
-                                    <div className="form-group" style={{ flex: 2, marginBottom: 0 }}>
+                                <div className="expense-tracker__expense-grid">
+                                    <div className="form-group">
                                         <label className="form-label">Expense Type</label>
                                         <select 
                                             value={expenseType} 
@@ -684,44 +823,82 @@ export default function ExpenseTracker() {
                                             ))}
                                         </select>
                                     </div>
-                                    <div className="form-group" style={{ flex: 2, marginBottom: 0 }}>
-                                        <label className="form-label">Amount (£)</label>
+                                    <div className="form-group">
+                                        <label className="form-label">Expense Amount (£)</label>
                                         <input 
                                             type="number" 
                                             value={expenseAmount} 
                                             onChange={(e) => setExpenseAmount(e.target.value)} 
                                             min="0"
-                                            placeholder="e.g. 250"
+                                            step="0.01"
+                                            placeholder="e.g. 120"
                                             className="form-input" 
                                         />
                                     </div>
-                                    <button 
-                                        type="button" 
-                                        onClick={handleAddExpense} 
-                                        className="btn btn--secondary expense-tracker__add-expense-btn"
-                                    >
-                                        {editingExpenseIdx !== null ? 'Save' : '+ Add'}
-                                    </button>
+                                    <div className="form-group">
+                                        <label className="form-label">Expense Date</label>
+                                        <input 
+                                            type="date" 
+                                            value={expenseDate} 
+                                            onChange={(e) => setExpenseDate(e.target.value)} 
+                                            className="form-input" 
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                        <label className="form-label">Description / Notes</label>
+                                        <input 
+                                            type="text" 
+                                            value={expenseDescription} 
+                                            onChange={(e) => setExpenseDescription(e.target.value)} 
+                                            placeholder="e.g. New front brake pads"
+                                            className="form-input" 
+                                        />
+                                    </div>
+                                    <div className="form-group form-group--checkbox" style={{ gridColumn: 'span 2' }}>
+                                        <label className="expense-tracker__checkbox-label">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={expenseCalculateVat} 
+                                                onChange={(e) => setExpenseCalculateVat(e.target.checked)} 
+                                            />
+                                            Calculate VAT (20%) — Reclaimable Input VAT (£{(parseFloat(expenseAmount) * 0.20 || 0).toFixed(2)})
+                                        </label>
+                                    </div>
                                 </div>
+                                <button 
+                                    type="button" 
+                                    onClick={handleAddExpense} 
+                                    className="btn btn--secondary expense-tracker__add-expense-btn"
+                                    style={{ marginTop: '0.75rem', width: '100%' }}
+                                >
+                                    {editingExpenseIdx !== null ? 'Update Expense Entry' : '+ Add Expense Entry'}
+                                </button>
 
                                 {/* Temporary Expense List */}
                                 {formState.expenses.length > 0 ? (
-                                    <div className="expense-tracker__temp-table-container">
+                                    <div className="expense-tracker__temp-table-container" style={{ marginTop: '1.25rem' }}>
                                         <table className="expense-tracker__temp-table">
                                             <thead>
                                                 <tr>
-                                                    <th>Type</th>
-                                                    <th>Amount</th>
                                                     <th>Date</th>
+                                                    <th>Type</th>
+                                                    <th>Description</th>
+                                                    <th>Net</th>
+                                                    <th>VAT</th>
+                                                    <th>Gross</th>
                                                     <th>Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {formState.expenses.map((exp, idx) => (
                                                     <tr key={idx}>
-                                                        <td>{exp.type}</td>
-                                                        <td>£{exp.amount.toLocaleString()}</td>
                                                         <td>{exp.date}</td>
+                                                        <td><strong>{exp.type}</strong></td>
+                                                        <td>{exp.description || '—'}</td>
+                                                        <td>{fmt(exp.netAmount ?? exp.amount)}</td>
+                                                        <td>{exp.calculateVat ? <span className="expense-tracker__vat-badge">{fmt(exp.vatAmount ?? (exp.amount * 0.20))}</span> : '£0.00'}</td>
+                                                        <td><strong>{fmt(exp.grossAmount ?? (exp.calculateVat ? exp.amount * 1.20 : exp.amount))}</strong></td>
                                                         <td>
                                                             <div className="expense-tracker__temp-actions">
                                                                 <button 
@@ -745,8 +922,8 @@ export default function ExpenseTracker() {
                                             </tbody>
                                         </table>
                                         <div className="expense-tracker__temp-total">
-                                            <span>Total Expenses:</span>
-                                            <strong>£{formCalculations.totalExpenses.toLocaleString()}</strong>
+                                            <span>Gross Expenses: <strong>{fmt(formCalculations.totalGrossExpenses)}</strong></span>
+                                            <span style={{ color: '#55A01F' }}>Reclaimable VAT: <strong>{fmt(formCalculations.totalVatReclaimable)}</strong></span>
                                         </div>
                                     </div>
                                 ) : (
@@ -758,29 +935,39 @@ export default function ExpenseTracker() {
 
                             {/* Profit Calculation Summary Card */}
                             <div className="expense-tracker__calculations-summary">
-                                <h4>Cost & Profit Summary</h4>
+                                <h4>Cost & Profit Summary ({formState.vat_scheme})</h4>
                                 <div className="expense-tracker__calc-grid">
                                     <div className="expense-tracker__calc-item">
                                         <span>Buying Price</span>
-                                        <strong>£{formCalculations.buying.toLocaleString()}</strong>
+                                        <strong>{fmt(formCalculations.buying)}</strong>
                                     </div>
                                     <div className="expense-tracker__calc-item">
-                                        <span>Total Expenses</span>
-                                        <strong>+ £{formCalculations.totalExpenses.toLocaleString()}</strong>
+                                        <span>Gross Expenses</span>
+                                        <strong>+ {fmt(formCalculations.totalGrossExpenses)}</strong>
+                                    </div>
+                                    <div className="expense-tracker__calc-item">
+                                        <span>Expense VAT Reclaim</span>
+                                        <strong style={{ color: '#55A01F' }}>- {fmt(formCalculations.totalVatReclaimable)}</strong>
                                     </div>
                                     <div className="expense-tracker__calc-item expense-tracker__calc-item--total">
-                                        <span>Total Cost</span>
-                                        <strong>£{formCalculations.totalCost.toLocaleString()}</strong>
+                                        <span>Total Gross Cost</span>
+                                        <strong>{fmt(formCalculations.totalCost)}</strong>
                                     </div>
                                     <div className="expense-tracker__calc-item">
                                         <span>Selling Price</span>
-                                        <strong>{formState.status === 'Sold' ? `£${formCalculations.selling.toLocaleString()}` : '— (In Stock)'}</strong>
+                                        <strong>{formState.status === 'Sold' ? fmt(formCalculations.selling) : '— (In Stock)'}</strong>
                                     </div>
-                                    <div className={`expense-tracker__calc-item expense-tracker__calc-item--pL ${formState.status === 'Sold' ? (formCalculations.profitLoss >= 0 ? 'expense-tracker__calc-item--profit' : 'expense-tracker__calc-item--loss') : ''}`}>
-                                        <span>Profit / Loss</span>
+                                    {formState.status === 'Sold' && (
+                                        <div className="expense-tracker__calc-item">
+                                            <span>Output VAT Liability ({formState.vat_scheme === 'VAT Commercial' ? '20%' : '1/6 Margin'})</span>
+                                            <strong style={{ color: '#ef4444' }}>- {fmt(formCalculations.outputVat)}</strong>
+                                        </div>
+                                    )}
+                                    <div className={`expense-tracker__calc-item expense-tracker__calc-item--pL ${formState.status === 'Sold' ? (formCalculations.netProfitLoss >= 0 ? 'expense-tracker__calc-item--profit' : 'expense-tracker__calc-item--loss') : ''}`}>
+                                        <span>Net Profit / Loss</span>
                                         <strong>
                                             {formState.status === 'Sold' 
-                                                ? (formCalculations.profitLoss >= 0 ? `+£${formCalculations.profitLoss.toLocaleString()}` : `-£${Math.abs(formCalculations.profitLoss).toLocaleString()}`) 
+                                                ? (formCalculations.netProfitLoss >= 0 ? `+${fmt(formCalculations.netProfitLoss)}` : `-${fmt(Math.abs(formCalculations.netProfitLoss))}`) 
                                                 : '— (Pending Sale)'
                                             }
                                         </strong>
@@ -816,7 +1003,7 @@ export default function ExpenseTracker() {
                                     type="text" 
                                     value={searchQuery} 
                                     onChange={(e) => setSearchQuery(e.target.value)} 
-                                    placeholder="Search by Make, Model, or Reg..."
+                                    placeholder="Search Make, Model, or Reg..."
                                     className="form-input expense-tracker__search"
                                 />
                                 <select 
@@ -838,6 +1025,15 @@ export default function ExpenseTracker() {
                                     <option value="Sold">Sold</option>
                                     <option value="Unsold">Unsold</option>
                                 </select>
+                                <select 
+                                    value={filterVatScheme} 
+                                    onChange={(e) => setFilterVatScheme(e.target.value)} 
+                                    className="form-select expense-tracker__filter-select"
+                                >
+                                    <option value="All">All VAT Schemes</option>
+                                    <option value="VAT Margin">VAT Margin</option>
+                                    <option value="VAT Commercial">VAT Commercial</option>
+                                </select>
                             </div>
                         </div>
 
@@ -847,7 +1043,7 @@ export default function ExpenseTracker() {
                                     <thead>
                                         <tr>
                                             <th onClick={() => handleSort('registration')} style={{ cursor: 'pointer' }}>
-                                                Registration {renderSortIcon('registration')}
+                                                Reg {renderSortIcon('registration')}
                                             </th>
                                             <th onClick={() => handleSort('make')} style={{ cursor: 'pointer' }}>
                                                 Make {renderSortIcon('make')}
@@ -855,8 +1051,8 @@ export default function ExpenseTracker() {
                                             <th onClick={() => handleSort('model')} style={{ cursor: 'pointer' }}>
                                                 Model {renderSortIcon('model')}
                                             </th>
-                                            <th onClick={() => handleSort('date')} style={{ cursor: 'pointer' }}>
-                                                Date Added {renderSortIcon('date')}
+                                            <th onClick={() => handleSort('vat_scheme')} style={{ cursor: 'pointer' }}>
+                                                VAT Scheme {renderSortIcon('vat_scheme')}
                                             </th>
                                             <th onClick={() => handleSort('buying_price')} style={{ cursor: 'pointer' }}>
                                                 Buying Price {renderSortIcon('buying_price')}
@@ -871,7 +1067,7 @@ export default function ExpenseTracker() {
                                                 Selling Price {renderSortIcon('selling_price')}
                                             </th>
                                             <th onClick={() => handleSort('profit_loss')} style={{ cursor: 'pointer' }}>
-                                                Profit / Loss {renderSortIcon('profit_loss')}
+                                                Net Profit {renderSortIcon('profit_loss')}
                                             </th>
                                             <th onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>
                                                 Status {renderSortIcon('status')}
@@ -881,30 +1077,34 @@ export default function ExpenseTracker() {
                                     </thead>
                                     <tbody>
                                         {sortedAndFilteredRecords.map(rec => {
+                                            const normMake = normalizeMake(rec.make);
                                             const totalExp = (rec.expenses || []).reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
                                             const totalCost = parseFloat(rec.buying_price || 0) + totalExp;
                                             const pL = parseFloat(rec.profit_loss || 0);
+                                            const scheme = rec.vat_scheme || 'VAT Margin';
 
                                             return (
                                                 <tr key={rec.id}>
                                                     <td style={{ fontFamily: 'monospace', fontWeight: 'var(--font-weight-semibold)', textTransform: 'uppercase' }}>
                                                         {rec.registration ? rec.registration : '—'}
                                                     </td>
-                                                    <td>{rec.make}</td>
+                                                    <td><strong>{normMake}</strong></td>
                                                     <td>{rec.model}</td>
                                                     <td>
-                                                        {rec.created_at ? new Date(rec.created_at).toLocaleDateString('en-GB') : '—'}
+                                                        <span className="expense-tracker__scheme-badge">
+                                                            {scheme}
+                                                        </span>
                                                     </td>
-                                                    <td>£{parseFloat(rec.buying_price || 0).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
-                                                    <td>£{totalExp.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
-                                                    <td>£{totalCost.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                                                    <td>{fmtInt(rec.buying_price)}</td>
+                                                    <td>{fmtInt(totalExp)}</td>
+                                                    <td>{fmtInt(totalCost)}</td>
                                                     <td>
-                                                        {rec.status === 'Sold' ? `£${parseFloat(rec.selling_price || 0).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : '—'}
+                                                        {rec.status === 'Sold' ? fmtInt(rec.selling_price) : '—'}
                                                     </td>
                                                     <td>
                                                         {rec.status === 'Sold' ? (
                                                             <span className={`expense-tracker__pL-badge ${pL >= 0 ? 'expense-tracker__pL-badge--profit' : 'expense-tracker__pL-badge--loss'}`}>
-                                                                {pL >= 0 ? `+£${pL.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : `-£${Math.abs(pL).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
+                                                                {pL >= 0 ? `+${fmtInt(pL)}` : `-${fmtInt(Math.abs(pL))}`}
                                                             </span>
                                                         ) : (
                                                             <span className="expense-tracker__pL-badge expense-tracker__pL-badge--pending">
@@ -969,7 +1169,7 @@ export default function ExpenseTracker() {
                 <div className="expense-tracker__modal-overlay">
                     <div className="expense-tracker__modal">
                         <h3>Delete Expense Record</h3>
-                        <p>Are you sure you want to delete the reconditioning and sales history for <strong>{recordToDelete?.make} {recordToDelete?.model}</strong>?</p>
+                        <p>Are you sure you want to delete the reconditioning and sales history for <strong>{normalizeMake(recordToDelete?.make)} {recordToDelete?.model}</strong>?</p>
                         <p className="expense-tracker__modal-warning">This action cannot be undone.</p>
                         <div className="expense-tracker__modal-actions">
                             <button 
@@ -997,7 +1197,7 @@ export default function ExpenseTracker() {
                         <div className="expense-tracker__details-grid">
                             <div className="expense-tracker__details-item">
                                 <span>Vehicle</span>
-                                <strong>{detailsRecord.make} {detailsRecord.model}</strong>
+                                <strong>{normalizeMake(detailsRecord.make)} {detailsRecord.model}</strong>
                             </div>
                             {detailsRecord.registration && (
                                 <div className="expense-tracker__details-item">
@@ -1006,6 +1206,10 @@ export default function ExpenseTracker() {
                                 </div>
                             )}
                             <div className="expense-tracker__details-item">
+                                <span>VAT Scheme</span>
+                                <span className="expense-tracker__scheme-badge">{detailsRecord.vat_scheme || 'VAT Margin'}</span>
+                            </div>
+                            <div className="expense-tracker__details-item">
                                 <span>Status</span>
                                 <span className={`expense-tracker__status-badge expense-tracker__status-badge--${detailsRecord.status.toLowerCase().replace(' ', '-')}`}>
                                     {detailsRecord.status}
@@ -1013,26 +1217,30 @@ export default function ExpenseTracker() {
                             </div>
                             <div className="expense-tracker__details-item">
                                 <span>Buying Price</span>
-                                <strong>£{parseFloat(detailsRecord.buying_price).toLocaleString()}</strong>
+                                <strong>{fmt(detailsRecord.buying_price)}</strong>
                             </div>
                             <div className="expense-tracker__details-item">
-                                <span>Total Expenses</span>
-                                <strong>£{(detailsRecord.expenses || []).reduce((sum, e) => sum + e.amount, 0).toLocaleString()}</strong>
+                                <span>Gross Expenses</span>
+                                <strong>{fmt((detailsRecord.expenses || []).reduce((sum, e) => sum + parseFloat(e.amount || 0), 0))}</strong>
+                            </div>
+                            <div className="expense-tracker__details-item">
+                                <span>Reclaimable Expense VAT</span>
+                                <strong style={{ color: '#55A01F' }}>{fmt((detailsRecord.expenses || []).reduce((sum, e) => sum + parseFloat(e.vatAmount || 0), 0))}</strong>
                             </div>
                             <div className="expense-tracker__details-item">
                                 <span>Total Cost</span>
-                                <strong>£{(parseFloat(detailsRecord.buying_price) + (detailsRecord.expenses || []).reduce((sum, e) => sum + e.amount, 0)).toLocaleString()}</strong>
+                                <strong>{fmt(parseFloat(detailsRecord.buying_price) + (detailsRecord.expenses || []).reduce((sum, e) => sum + parseFloat(e.amount || 0), 0))}</strong>
                             </div>
                             {detailsRecord.status === 'Sold' && (
                                 <>
                                     <div className="expense-tracker__details-item">
                                         <span>Selling Price</span>
-                                        <strong>£{parseFloat(detailsRecord.selling_price).toLocaleString()}</strong>
+                                        <strong>{fmt(detailsRecord.selling_price)}</strong>
                                     </div>
                                     <div className="expense-tracker__details-item">
-                                        <span>Profit / Loss</span>
+                                        <span>Net Profit / Loss</span>
                                         <span className={`expense-tracker__pL-badge ${parseFloat(detailsRecord.profit_loss) >= 0 ? 'expense-tracker__pL-badge--profit' : 'expense-tracker__pL-badge--loss'}`}>
-                                            {parseFloat(detailsRecord.profit_loss) >= 0 ? `+£${parseFloat(detailsRecord.profit_loss).toLocaleString()}` : `-£${Math.abs(parseFloat(detailsRecord.profit_loss)).toLocaleString()}`}
+                                            {parseFloat(detailsRecord.profit_loss) >= 0 ? `+${fmt(detailsRecord.profit_loss)}` : `-${fmt(Math.abs(parseFloat(detailsRecord.profit_loss)))}`}
                                         </span>
                                     </div>
                                 </>
@@ -1045,17 +1253,23 @@ export default function ExpenseTracker() {
                                 <table className="expense-tracker__temp-table">
                                     <thead>
                                         <tr>
+                                            <th>Date</th>
                                             <th>Type</th>
-                                            <th>Amount</th>
-                                            <th>Date Added</th>
+                                            <th>Description</th>
+                                            <th>Net</th>
+                                            <th>VAT</th>
+                                            <th>Gross</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {detailsRecord.expenses.map((exp, idx) => (
                                             <tr key={idx}>
-                                                <td>{exp.type}</td>
-                                                <td>£{exp.amount.toLocaleString()}</td>
-                                                <td>{exp.date}</td>
+                                                <td>{exp.date || '—'}</td>
+                                                <td><strong>{exp.type}</strong></td>
+                                                <td>{exp.description || '—'}</td>
+                                                <td>{fmt(exp.netAmount ?? exp.amount)}</td>
+                                                <td>{exp.calculateVat ? <span className="expense-tracker__vat-badge">{fmt(exp.vatAmount ?? (exp.amount * 0.20))}</span> : '£0.00'}</td>
+                                                <td><strong>{fmt(exp.grossAmount ?? (exp.calculateVat ? exp.amount * 1.20 : exp.amount))}</strong></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -1082,7 +1296,7 @@ export default function ExpenseTracker() {
                 <div className="expense-tracker__modal-overlay">
                     <div className="expense-tracker__modal">
                         <h3>Mark Vehicle as Sold</h3>
-                        <p>Enter the final selling price for <strong>{markSoldRecord.make} {markSoldRecord.model}</strong> to calculate profitability.</p>
+                        <p>Enter the final selling price for <strong>{normalizeMake(markSoldRecord.make)} {markSoldRecord.model}</strong> ({markSoldRecord.vat_scheme || 'VAT Margin'}) to calculate profitability.</p>
                         <form onSubmit={submitQuickMarkSold} className="expense-tracker__form">
                             <div className="form-group">
                                 <label className="form-label">Selling Price (£)</label>
@@ -1091,6 +1305,7 @@ export default function ExpenseTracker() {
                                     value={quickSellingPrice} 
                                     onChange={(e) => setQuickSellingPrice(e.target.value)} 
                                     min="0"
+                                    step="0.01"
                                     placeholder="e.g. 19500"
                                     className="form-input" 
                                     required 

@@ -1,0 +1,603 @@
+/* Deposit Slip Generator Styles */
+.vds-container {
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Header */
+.vds-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+}
+
+.vds-header h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin: 0 0 0.25rem 0;
+    letter-spacing: -0.02em;
+}
+
+.vds-header p {
+    font-size: 0.875rem;
+    color: var(--color-text-tertiary);
+    margin: 0;
+}
+
+.vds-create-btn {
+    white-space: nowrap;
+}
+
+/* Card */
+.vds-card {
+    background: #ffffff;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+/* List Table Controls */
+.vds-table-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.vds-search {
+    max-width: 420px;
+}
+
+.vds-count {
+    font-size: 0.8125rem;
+    color: var(--color-text-tertiary);
+    font-weight: 500;
+}
+
+/* List Table */
+.vds-table-scroll {
+    overflow-x: auto;
+}
+
+.vds-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.vds-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+    white-space: nowrap;
+}
+
+.vds-table td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    vertical-align: middle;
+}
+
+.vds-table tr:hover td {
+    background: var(--color-bg-secondary);
+}
+
+.vds-num-badge {
+    color: #55A01F;
+    font-family: monospace;
+    font-size: 0.875rem;
+}
+
+.vds-reg-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 0.75rem;
+}
+
+.vds-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.vds-danger-btn {
+    color: #ef4444 !important;
+    border-color: #fecaca !important;
+}
+
+.vds-danger-btn:hover {
+    background: #fef2f2 !important;
+}
+
+.vds-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--color-text-tertiary);
+}
+
+/* Editor Split Layout */
+.vds-editor-view {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.vds-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    background: #ffffff;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+}
+
+.vds-top-bar-right {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.vds-split-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+/* Form Column */
+.vds-form-column {
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+.vds-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.vds-section-title {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-bottom: 0.375rem;
+    border-bottom: 1px solid var(--color-border);
+    margin: 0.5rem 0 0 0;
+}
+
+.vds-inventory-box {
+    background: var(--color-bg-secondary);
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+}
+
+.vds-sig-toggle {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.375rem;
+}
+
+.vds-radio-label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 0.78125rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.vds-radio-label--active {
+    border-color: #55A01F;
+    background: rgba(85, 160, 31, 0.08);
+    color: #3d7515;
+}
+
+.vds-canvas-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.vds-canvas {
+    border: 1px dashed var(--color-border);
+    border-radius: 8px;
+    background: #fafafa;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+/* Document Preview Column */
+.vds-preview-column {
+    position: sticky;
+    top: 1rem;
+    display: flex;
+    justify-content: center;
+}
+
+.vds-document-container {
+    width: 100%;
+    max-width: 794px; /* A4 standard width at 96dpi */
+    background: #e2e8f0;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+/* A4 DOCUMENT STYLING (EXACTLY REPLICATING REFERENCE RECEIPT) */
+.vds-document {
+    background: #ffffff;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 2.25rem 2.5rem;
+    border: 2px solid #0f172a;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #0f172a;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Top Banner Header */
+.vds-doc-header-banner {
+    border: 2px solid #0f172a;
+    text-align: center;
+    padding: 0.625rem 1rem;
+    margin-bottom: 1.25rem;
+    background: #ffffff;
+}
+
+.vds-doc-header-banner h1 {
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    margin: 0;
+    color: #0f172a;
+    text-transform: uppercase;
+    font-family: 'Outfit', 'Arial Black', sans-serif;
+}
+
+/* Common Doc Row & Line */
+.vds-doc-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.625rem;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+.vds-doc-label {
+    font-weight: 800;
+    font-size: 0.9375rem;
+    text-decoration: underline;
+    letter-spacing: 0.04em;
+    color: #0f172a;
+}
+
+.vds-doc-sublabel {
+    font-weight: 700;
+    font-size: 0.78125rem;
+    letter-spacing: 0.04em;
+    color: #0f172a;
+    white-space: nowrap;
+}
+
+.vds-doc-dots-value {
+    flex: 1;
+    border-bottom: 1px dotted #64748b;
+    font-weight: 600;
+    color: #1e293b;
+    padding-left: 0.25rem;
+    word-break: break-word;
+    min-height: 1.25rem;
+}
+
+/* Seller Box */
+.vds-doc-seller-box {
+    margin-bottom: 1.25rem;
+}
+
+/* Mid Row: Left Dates & Right Legal Notice */
+.vds-doc-mid-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    align-items: stretch;
+    margin-bottom: 1.25rem;
+}
+
+.vds-doc-mid-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.vds-doc-legal-box {
+    background: #e2e8f0;
+    border: 1px solid #94a3b8;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.vds-doc-legal-box p {
+    margin: 0;
+    font-size: 0.6875rem;
+    font-weight: 800;
+    line-height: 1.35;
+    color: #1e293b;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+/* Vehicle Details Heading */
+.vds-doc-heading {
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    margin: 1.25rem 0 1rem 0;
+    color: #0f172a;
+    text-transform: uppercase;
+}
+
+.vds-doc-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+/* Buyer's Declaration Box */
+.vds-doc-declaration-box {
+    margin-top: 1.25rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid #94a3b8;
+}
+
+.vds-doc-dec-header {
+    background: #475569;
+    color: #ffffff;
+    padding: 0.45rem 1rem;
+}
+
+.vds-doc-dec-header h3 {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.vds-doc-dec-body {
+    background: #f1f5f9;
+    padding: 1rem 1.125rem;
+}
+
+.vds-doc-dec-body p {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: #334155;
+    text-align: justify;
+}
+
+.vds-doc-dec-body p:last-child {
+    margin-bottom: 0;
+}
+
+.vds-highlight-val {
+    background: #ffffff;
+    padding: 1px 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    color: #0f172a;
+    font-weight: 800;
+    display: inline-block;
+}
+
+/* Signature & Buyer Details Block */
+.vds-doc-buyer-signature-block {
+    margin-top: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.vds-doc-sig-line {
+    min-height: 48px;
+    align-items: center;
+}
+
+.vds-doc-sig-img {
+    max-height: 44px;
+    object-fit: contain;
+    vertical-align: middle;
+}
+
+/* Footer Branding Bar */
+.vds-doc-footer-branding {
+    border-top: 1px solid #cbd5e1;
+    padding-top: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.vds-doc-brand-left {
+    display: flex;
+    flex-direction: column;
+}
+
+.vds-brand-logo-text {
+    font-size: 1.125rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: #0f172a;
+    font-family: 'Outfit', sans-serif;
+}
+
+.vds-brand-subtext {
+    font-size: 0.6875rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.vds-brand-url {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #55A01F;
+    margin-top: 2px;
+}
+
+.vds-doc-brand-qr {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: 0.625rem;
+    font-weight: 800;
+    color: #475569;
+    letter-spacing: 0.04em;
+}
+
+.vds-qr-code-box {
+    width: 44px;
+    height: 44px;
+    border: 1px solid #94a3b8;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+}
+
+/* Modal */
+.vds-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 1rem;
+}
+
+.vds-modal {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 1.75rem;
+    max-width: 450px;
+    width: 100%;
+    box-shadow: var(--shadow-xl);
+}
+
+.vds-modal h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+}
+
+.vds-modal-warning {
+    color: #ef4444;
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.vds-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+/* Responsive UI Adjustments */
+@media (max-width: 1100px) {
+    .vds-split-layout {
+        grid-template-columns: 1fr;
+    }
+    .vds-preview-column {
+        position: static;
+    }
+}
+
+/* PRINT MEDIA STYLES (A4 PRINT & PDF GENERATION) */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    .vds-document-container,
+    .vds-document-container *,
+    .vds-document,
+    .vds-document * {
+        visibility: visible;
+    }
+
+    .vds-document-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
+
+    .vds-document {
+        border: 2px solid #000000 !important;
+        box-shadow: none !important;
+        padding: 15mm 15mm !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .no-print,
+    .admin-layout__sidebar,
+    .admin-layout__logo,
+    .admin-layout__nav,
+    .vds-top-bar,
+    .vds-form-column {
+        display: none !important;
+    }
+
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+}

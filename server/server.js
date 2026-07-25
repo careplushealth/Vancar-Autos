@@ -71,15 +71,17 @@ const initDB = async () => {
                 status VARCHAR(50) NOT NULL,
                 selling_price NUMERIC DEFAULT 0,
                 profit_loss NUMERIC NOT NULL,
+                vat_scheme VARCHAR(50) DEFAULT 'VAT Margin',
                 expenses JSONB DEFAULT '[]',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
 
-        // Migration query to add registration column if the table already exists
+        // Migration query to add registration & vat_scheme columns if the table already exists
         await db.query(`
             ALTER TABLE vehicle_expenses ADD COLUMN IF NOT EXISTS registration VARCHAR(50);
+            ALTER TABLE vehicle_expenses ADD COLUMN IF NOT EXISTS vat_scheme VARCHAR(50) DEFAULT 'VAT Margin';
         `);
 
         // Create contact submissions table
@@ -109,6 +111,42 @@ const initDB = async () => {
                 vehicle_details JSONB NOT NULL,
                 sale_details JSONB NOT NULL,
                 notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // Create general expenses table
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS general_expenses (
+                id VARCHAR(50) PRIMARY KEY,
+                category VARCHAR(100) NOT NULL,
+                amount NUMERIC NOT NULL,
+                date VARCHAR(50) NOT NULL,
+                description TEXT,
+                notes TEXT,
+                receipt_url TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // Create deposit slips table
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS deposit_slips (
+                id VARCHAR(50) PRIMARY KEY,
+                receipt_number VARCHAR(50) UNIQUE NOT NULL,
+                receipt_date VARCHAR(50) NOT NULL,
+                order_number VARCHAR(50),
+                stock_book_number VARCHAR(50),
+                seller_details JSONB NOT NULL,
+                vehicle_details JSONB NOT NULL,
+                deposit_details JSONB NOT NULL,
+                buyer_details JSONB NOT NULL,
+                signature_data TEXT,
+                signature_type VARCHAR(20) DEFAULT 'blank',
+                vehicle_id VARCHAR(50),
+                created_by VARCHAR(100) DEFAULT 'admin',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -265,12 +303,13 @@ app.get('/api/vehicle-expenses', async (req, res) => {
 });
 
 app.post('/api/vehicle-expenses', async (req, res) => {
-    const { id, make, model, registration, buying_price, status, selling_price, profit_loss, expenses } = req.body;
+    const { id, make, model, registration, buying_price, status, selling_price, profit_loss, vat_scheme, expenses } = req.body;
+    const scheme = vat_scheme || 'VAT Margin';
     try {
         const result = await db.query(
-            `INSERT INTO vehicle_expenses (id, make, model, registration, buying_price, status, selling_price, profit_loss, expenses, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()) RETURNING *`,
-            [id, make, model, registration, buying_price, status, selling_price, profit_loss, JSON.stringify(expenses)]
+            `INSERT INTO vehicle_expenses (id, make, model, registration, buying_price, status, selling_price, profit_loss, vat_scheme, expenses, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()) RETURNING *`,
+            [id, make, model, registration, buying_price, status, selling_price, profit_loss, scheme, JSON.stringify(expenses)]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -281,13 +320,14 @@ app.post('/api/vehicle-expenses', async (req, res) => {
 
 app.put('/api/vehicle-expenses/:id', async (req, res) => {
     const { id } = req.params;
-    const { make, model, registration, buying_price, status, selling_price, profit_loss, expenses } = req.body;
+    const { make, model, registration, buying_price, status, selling_price, profit_loss, vat_scheme, expenses } = req.body;
+    const scheme = vat_scheme || 'VAT Margin';
     try {
         const result = await db.query(
             `UPDATE vehicle_expenses 
-             SET make=$1, model=$2, registration=$3, buying_price=$4, status=$5, selling_price=$6, profit_loss=$7, expenses=$8, updated_at=NOW()
-             WHERE id=$9 RETURNING *`,
-            [make, model, registration, buying_price, status, selling_price, profit_loss, JSON.stringify(expenses), id]
+             SET make=$1, model=$2, registration=$3, buying_price=$4, status=$5, selling_price=$6, profit_loss=$7, vat_scheme=$8, expenses=$9, updated_at=NOW()
+             WHERE id=$10 RETURNING *`,
+            [make, model, registration, buying_price, status, selling_price, profit_loss, scheme, JSON.stringify(expenses), id]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -419,6 +459,61 @@ app.delete('/api/invoices/:id', async (req, res) => {
     try {
         await db.query('DELETE FROM invoices WHERE id=$1', [id]);
         res.json({ message: 'Invoice deleted successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// --- DEPOSIT SLIPS API ---
+
+app.get('/api/deposit-slips', async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM deposit_slips ORDER BY created_at DESC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/deposit-slips', async (req, res) => {
+    const { id, receipt_number, receipt_date, order_number, stock_book_number, seller_details, vehicle_details, deposit_details, buyer_details, signature_data, signature_type, vehicle_id, created_by } = req.body;
+    try {
+        const result = await db.query(
+            `INSERT INTO deposit_slips (id, receipt_number, receipt_date, order_number, stock_book_number, seller_details, vehicle_details, deposit_details, buyer_details, signature_data, signature_type, vehicle_id, created_by, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW()) RETURNING *`,
+            [id, receipt_number, receipt_date, order_number || '', stock_book_number || '', JSON.stringify(seller_details), JSON.stringify(vehicle_details), JSON.stringify(deposit_details), JSON.stringify(buyer_details), signature_data || '', signature_type || 'blank', vehicle_id || null, created_by || 'admin']
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.put('/api/deposit-slips/:id', async (req, res) => {
+    const { id } = req.params;
+    const { receipt_number, receipt_date, order_number, stock_book_number, seller_details, vehicle_details, deposit_details, buyer_details, signature_data, signature_type, vehicle_id } = req.body;
+    try {
+        const result = await db.query(
+            `UPDATE deposit_slips 
+             SET receipt_number=$1, receipt_date=$2, order_number=$3, stock_book_number=$4, seller_details=$5, vehicle_details=$6, deposit_details=$7, buyer_details=$8, signature_data=$9, signature_type=$10, vehicle_id=$11, updated_at=NOW()
+             WHERE id=$12 RETURNING *`,
+            [receipt_number, receipt_date, order_number || '', stock_book_number || '', JSON.stringify(seller_details), JSON.stringify(vehicle_details), JSON.stringify(deposit_details), JSON.stringify(buyer_details), signature_data || '', signature_type || 'blank', vehicle_id || null, id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.delete('/api/deposit-slips/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.query('DELETE FROM deposit_slips WHERE id=$1', [id]);
+        res.json({ message: 'Deposit slip deleted successfully' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -856,19 +951,36 @@ app.post('/api/autotrader/sync-stock', async (req, res) => {
             return res.status(400).json({ error: 'AUTOTRADER_ADVERTISER_ID is required to sync stock' });
         }
         
-        const url = `https://api-sandbox.autotrader.co.uk/stock?advertiserId=${encodeURIComponent(advertiserId)}`;
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': `Bearer ${token}`
+        let results = [];
+        let page = 1;
+        const pageSize = 50; // Use a reasonable page size to minimize requests
+        let totalResults = 0;
+        let hasMore = true;
+
+        while (hasMore) {
+            const url = `https://api-sandbox.autotrader.co.uk/stock?advertiserId=${encodeURIComponent(advertiserId)}&page=${page}&pageSize=${pageSize}`;
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Auto Trader Stock API responded with status ${response.status} on page ${page}`);
             }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Auto Trader Stock API responded with status ${response.status}`);
+            
+            const data = await response.json();
+            const pageResults = data.results || [];
+            results = results.concat(pageResults);
+            
+            totalResults = data.totalResults || 0;
+            
+            if (pageResults.length === 0 || results.length >= totalResults) {
+                hasMore = false;
+            } else {
+                page++;
+            }
         }
-        
-        const data = await response.json();
-        const results = data.results || [];
         
         let syncedCount = 0;
         const activeIds = [];
@@ -996,6 +1108,59 @@ app.post('/api/autotrader/sync-stock', async (req, res) => {
     } catch (err) {
         console.error('Auto Trader stock sync error:', err);
         res.status(500).json({ error: 'Failed to sync forecourt stock from Auto Trader' });
+    }
+});
+
+
+// --- GENERAL EXPENSES API ---
+
+app.get('/api/general-expenses', async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM general_expenses ORDER BY date DESC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/general-expenses', async (req, res) => {
+    const { id, category, amount, date, description, notes, receipt_url, created_at, updated_at } = req.body;
+    try {
+        const result = await db.query(
+            `INSERT INTO general_expenses (id, category, amount, date, description, notes, receipt_url, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+            [id, category, amount, date, description || '', notes || '', receipt_url || '', created_at, updated_at]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.put('/api/general-expenses/:id', async (req, res) => {
+    const { id } = req.params;
+    const { category, amount, date, description, notes, receipt_url, updated_at } = req.body;
+    try {
+        const result = await db.query(
+            `UPDATE general_expenses SET category=$1, amount=$2, date=$3, description=$4, notes=$5, receipt_url=$6, updated_at=$7 WHERE id=$8 RETURNING *`,
+            [category, amount, date, description || '', notes || '', receipt_url || '', updated_at, id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.delete('/api/general-expenses/:id', async (req, res) => {
+    try {
+        await db.query('DELETE FROM general_expenses WHERE id=$1', [req.params.id]);
+        res.json({ message: 'General expense deleted' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 

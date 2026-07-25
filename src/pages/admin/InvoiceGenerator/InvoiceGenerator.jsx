@@ -359,7 +359,7 @@ export default function InvoiceGenerator() {
 
         tempDiv.innerHTML = `
             <div id="invoice-pdf-template-download" style="width: 210mm; min-height: 297mm; padding: 20mm; box-sizing: border-box; background: white; font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #0f172a; line-height: 1.5;">
-                <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #0653A5; padding-bottom: 20px; margin-bottom: 25px;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #55A01F; padding-bottom: 20px; margin-bottom: 25px;">
                     <div>
                         <img src="/images/logo.png" alt="Vancar Autos" style="height: 55px; margin-bottom: 12px; display: block;" />
                         <div style="font-size: 11px; color: #475569; line-height: 1.4;">
@@ -372,7 +372,7 @@ export default function InvoiceGenerator() {
                         </div>
                     </div>
                     <div style="text-align: right; min-width: 220px;">
-                        <h1 style="font-size: 32px; font-weight: bold; color: #0653A5; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Invoice</h1>
+                        <h1 style="font-size: 32px; font-weight: bold; color: #55A01F; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Invoice</h1>
                         <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 11px; line-height: 1.5; text-align: left;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                                 <strong style="color: #475569;">Invoice No:</strong>
@@ -391,7 +391,7 @@ export default function InvoiceGenerator() {
                 </div>
 
                 <div style="margin-bottom: 25px;">
-                    <h2 style="font-size: 12px; text-transform: uppercase; color: #0653A5; margin: 0 0 8px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; letter-spacing: 0.5px;">Bill To</h2>
+                    <h2 style="font-size: 12px; text-transform: uppercase; color: #55A01F; margin: 0 0 8px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; letter-spacing: 0.5px;">Bill To</h2>
                     <div style="font-size: 12px; color: #0f172a; line-height: 1.5;">
                         <strong>${customer.name || 'Customer Name'}</strong><br />
                         ${customer.address1 || 'Address Line 1'}${customer.address2 ? `<br />${customer.address2}` : ''}<br />
@@ -403,7 +403,7 @@ export default function InvoiceGenerator() {
 
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 11px;">
                     <thead>
-                        <tr style="background-color: #0653A5; color: white;">
+                        <tr style="background-color: #55A01F; color: white;">
                             <th style="text-align: left; padding: 10px; border-radius: 4px 0 0 4px; font-weight: 600; text-transform: uppercase; border: none;">Description</th>
                             <th style="text-align: center; padding: 10px; width: 80px; font-weight: 600; text-transform: uppercase; border: none;">Qty</th>
                             <th style="text-align: right; padding: 10px; width: 100px; font-weight: 600; text-transform: uppercase; border: none;">Rate</th>
@@ -426,7 +426,7 @@ export default function InvoiceGenerator() {
 
                 <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
                     <div style="width: 48%;">
-                        <h2 style="font-size: 12px; text-transform: uppercase; color: #0653A5; margin: 0 0 8px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; letter-spacing: 0.5px;">Vehicle Details</h2>
+                        <h2 style="font-size: 12px; text-transform: uppercase; color: #55A01F; margin: 0 0 8px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; letter-spacing: 0.5px;">Vehicle Details</h2>
                         <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 10px;">
                             <div><strong style="color:#64748b;">Registration:</strong> <span style="color:#0f172a; font-weight:500;">${vehicle.registration || '-'}</span></div>
                             <div><strong style="color:#64748b;">Make:</strong> <span style="color:#0f172a; font-weight:500;">${vehicle.make || '-'}</span></div>
@@ -448,11 +448,11 @@ export default function InvoiceGenerator() {
                             </div>
                             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 4px 0;">
                                 <strong style="color:#475569;">Deposit Paid:</strong>
-                                <span style="color:#0653A5; font-weight: 500;">- £${depositFormatted}</span>
+                                <span style="color:#55A01F; font-weight: 500;">- £${depositFormatted}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 4px 0;">
                                 <strong style="color:#475569;">Part Exchange:</strong>
-                                <span style="color:#0653A5; font-weight: 500;">- £${pxFormatted}</span>
+                                <span style="color:#55A01F; font-weight: 500;">- £${pxFormatted}</span>
                             </div>
                             ${parseFloat(sale.settlementFigure) > 0 ? `
                             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 4px 0;">
@@ -461,10 +461,10 @@ export default function InvoiceGenerator() {
                             </div>` : ''}
                             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 4px 0;">
                                 <strong style="color:#475569;">Finance Amount:</strong>
-                                <span style="color:#0653A5; font-weight: 500;">- £${financeFormatted}</span>
+                                <span style="color:#55A01F; font-weight: 500;">- £${financeFormatted}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; padding-top: 8px; font-size: 14px;">
-                                <strong style="color:#0653A5; font-weight: 700;">Balance Due:</strong>
+                                <strong style="color:#55A01F; font-weight: 700;">Balance Due:</strong>
                                 <span style="color:#0f172a; font-weight: 700; border-bottom: 2px double #0f172a;">£${balanceFormatted}</span>
                             </div>
                         </div>
