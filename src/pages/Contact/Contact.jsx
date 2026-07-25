@@ -114,15 +114,15 @@ export default function Contact() {
                     <div className="contact__info">
                         <div className="contact__info-card">
                             <h4>📍 Visit Us</h4>
-                            <p>VANCAR AUTOS LIMITED<br />Reg. No: 16593644<br />14 MIDLAND STREET<br />MANCHESTER, M12 6LB</p>
+                            <p>VANCAR AUTOS LIMITED<br />14 MIDLAND STREET<br />MANCHESTER, M12 6LB</p>
                         </div>
                         <div className="contact__info-card">
                             <h4>📞 Call Us</h4>
-                            <p>XXXXXXXXXXXX</p>
+                            <p><a href="tel:07386533337" style={{ color: 'inherit', fontWeight: 'bold' }}>07386 533337</a></p>
                         </div>
                         <div className="contact__info-card">
                             <h4>📧 Email Us</h4>
-                            <p>hellovancarautos@gmail.com</p>
+                            <p><a href="mailto:hellovancarautos@gmail.com" style={{ color: 'inherit' }}>hellovancarautos@gmail.com</a></p>
                         </div>
                         <div className="contact__info-card">
                             <h4>🕐 Opening Hours</h4>
@@ -131,11 +131,18 @@ export default function Contact() {
                     </div>
                 </div>
 
-                {/* Map Placeholder */}
+                {/* Interactive Google Map */}
                 <div className="contact__map">
-                    <div className="contact__map-placeholder">
-                        <span>📍 Map – Manchester, M12 6LB</span>
-                    </div>
+                    <iframe
+                        title="Vancar Autos Location Map"
+                        src="https://maps.google.com/maps?q=14%20Midland%20Street%2C%20Manchester%2C%20M12%206LB&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                        width="100%"
+                        height="400"
+                        style={{ border: 0, borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}
+                        allowFullScreen=""
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                    />
                 </div>
             </div>
         </div>

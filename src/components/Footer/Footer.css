@@ -92,27 +92,34 @@
     color: var(--color-text-primary);
 }
 
-.footer__contact-info {
+.footer__contact-info-list {
     margin-top: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
 }
 
-.footer__contact-info a {
+.footer__contact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.footer__contact-icon {
+    color: var(--color-accent);
+    flex-shrink: 0;
+}
+
+.footer__contact-item a {
     color: var(--color-text-primary);
     font-weight: var(--font-weight-semibold);
     transition: color var(--transition-base);
 }
 
-.footer__contact-info a:hover {
+.footer__contact-item a:hover {
     color: var(--color-accent);
-}
-
-.footer__legal-disclaimer {
-    padding: var(--spacing-xl) 0;
-    border-top: 1px solid var(--color-border);
-    font-size: var(--font-size-xs);
-    color: var(--color-text-tertiary);
-    line-height: 1.6;
-    text-align: justify;
 }
 
 .footer__bottom {

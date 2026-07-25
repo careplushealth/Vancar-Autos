@@ -260,7 +260,7 @@ export default function Home() {
                 <div className="container text-center">
                     <div className="home__reviews-badge mb-4">
                         <span className="home__reviews-stars">★★★★★</span>
-                        <h4 className="text-sm font-bold text-slate-900 mt-1">Rated 4.8 / 5 on Trustpilot</h4>
+                        <h4 className="text-sm font-bold text-slate-900 mt-1">Rated 4.8 / 5 Across All Platforms</h4>
                     </div>
                     <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 mb-12">What Our Customers Say</h2>
                     
