@@ -190,6 +190,27 @@ export default function CarDetails() {
                                 </div>
                             </div>
                         )}
+
+                        {/* Sales Information (if sales record exists) */}
+                        {(car.lead_source || car.leadSource) && (
+                            <div className="car-details__sales-info">
+                                <h3>Sales Information</h3>
+                                <div className="car-details__sales-grid">
+                                    <div className="car-details__sales-card">
+                                        <span className="car-details__sales-label">Lead Source</span>
+                                        <strong className="car-details__sales-value">📍 {car.lead_source || car.leadSource}</strong>
+                                    </div>
+                                    {(car.lead_source === 'Auto Trader' || car.leadSource === 'Auto Trader') && (car.autotrader_days_advertised !== null && car.autotrader_days_advertised !== undefined && car.autotrader_days_advertised !== '' || car.autotraderDaysAdvertised !== null && car.autotraderDaysAdvertised !== undefined && car.autotraderDaysAdvertised !== '') && (
+                                        <div className="car-details__sales-card">
+                                            <span className="car-details__sales-label">Auto Trader Days Advertised</span>
+                                            <strong className="car-details__sales-value">
+                                                ⏱️ {car.autotrader_days_advertised ?? car.autotraderDaysAdvertised} {parseInt(car.autotrader_days_advertised ?? car.autotraderDaysAdvertised) === 1 ? 'day' : 'days'}
+                                            </strong>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Sidebar Actions */}

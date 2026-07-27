@@ -192,14 +192,45 @@
 }
 
 .car-details__description,
-.car-details__features {
+.car-details__features,
+.car-details__sales-info {
     margin-bottom: var(--spacing-2xl);
 }
 
 .car-details__description h3,
-.car-details__features h3 {
+.car-details__features h3,
+.car-details__sales-info h3 {
     font-size: var(--font-size-lg);
     margin-bottom: var(--spacing-md);
+}
+
+.car-details__sales-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+}
+
+.car-details__sales-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.car-details__sales-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.car-details__sales-value {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
 }
 
 .car-details__description p {

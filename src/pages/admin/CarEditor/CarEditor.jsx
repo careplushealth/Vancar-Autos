@@ -3,11 +3,24 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getCarById, createCar, updateCar } from '../../../services/dataService';
 import './CarEditor.css';
 
+const LEAD_SOURCES = [
+    'Facebook',
+    'Auto Trader',
+    'Gumtree',
+    'eBay',
+    'Website',
+    'Walk-in',
+    'Referral',
+    'Repeat Customer',
+    'Other'
+];
+
 const INITIAL_FORM = {
     title: '', make: '', model: '', trim: '', year: new Date().getFullYear(),
     price: '', mileage: '', fuel: 'Petrol', transmission: 'Automatic',
     bodyType: 'SUV', colour: '', engine: '', doors: 5, seats: 5,
-    description: '', features: [], images: [], status: 'available', featured: false
+    description: '', features: [], images: [], status: 'available', featured: false,
+    lead_source: '', autotrader_days_advertised: ''
 };
 
 export default function CarEditor() {
@@ -71,14 +84,38 @@ export default function CarEditor() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (form.status === 'sold') {
+            const src = form.lead_source || form.leadSource;
+            if (!src) {
+                alert('Customer Source / Lead Source is required when marking a vehicle as Sold.');
+                return;
+            }
+            if (src === 'Auto Trader') {
+                const days = form.autotrader_days_advertised ?? form.autotraderDaysAdvertised;
+                if (days === '' || days === null || days === undefined || isNaN(days) || parseInt(days) < 0) {
+                    alert('Number of Days Advertised on Auto Trader is required and must be a valid non-negative number.');
+                    return;
+                }
+            }
+        }
+
         setLoading(true);
+
+        const payload = {
+            ...form,
+            lead_source: form.status === 'sold' ? (form.lead_source || form.leadSource) : form.lead_source,
+            leadSource: form.status === 'sold' ? (form.lead_source || form.leadSource) : form.leadSource,
+            autotrader_days_advertised: (form.status === 'sold' && (form.lead_source || form.leadSource) === 'Auto Trader') ? parseInt(form.autotrader_days_advertised ?? form.autotraderDaysAdvertised) : null,
+            autotraderDaysAdvertised: (form.status === 'sold' && (form.lead_source || form.leadSource) === 'Auto Trader') ? parseInt(form.autotrader_days_advertised ?? form.autotraderDaysAdvertised) : null
+        };
 
         // Simulate API delay
         setTimeout(() => {
             if (isEdit) {
-                updateCar(id, form);
+                updateCar(id, payload);
             } else {
-                createCar(form);
+                createCar(payload);
             }
             navigate('/admin/cars');
         }, 500);
@@ -139,6 +176,52 @@ export default function CarEditor() {
                             </label>
                         </div>
                     </div>
+
+                    {form.status === 'sold' && (
+                        <div className="car-editor__sold-box" style={{ marginTop: '20px', padding: '15px', background: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
+                            <h3 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '12px', color: '#002F6C' }}>
+                                📍 Sales & Lead Information
+                            </h3>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label" style={{ fontWeight: 'bold' }}>
+                                        Customer Source / Lead Source <span style={{ color: '#e53935' }}>*</span>
+                                    </label>
+                                    <select 
+                                        name="lead_source" 
+                                        className="form-select" 
+                                        value={form.lead_source || form.leadSource || ''} 
+                                        onChange={(e) => setForm(prev => ({ ...prev, lead_source: e.target.value, leadSource: e.target.value }))}
+                                        required={form.status === 'sold'}
+                                    >
+                                        <option value="">-- Select Lead Source --</option>
+                                        {LEAD_SOURCES.map(src => (
+                                            <option key={src} value={src}>{src}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {(form.lead_source === 'Auto Trader' || form.leadSource === 'Auto Trader') && (
+                                    <div className="form-group">
+                                        <label className="form-label" style={{ fontWeight: 'bold' }}>
+                                            Number of Days Advertised on Auto Trader <span style={{ color: '#e53935' }}>*</span>
+                                        </label>
+                                        <input 
+                                            name="autotrader_days_advertised"
+                                            type="number" 
+                                            min="0"
+                                            step="1"
+                                            className="form-input" 
+                                            placeholder="e.g. 14"
+                                            value={form.autotrader_days_advertised ?? form.autotraderDaysAdvertised ?? ''} 
+                                            onChange={(e) => setForm(prev => ({ ...prev, autotrader_days_advertised: e.target.value, autotraderDaysAdvertised: e.target.value }))}
+                                            required={form.status === 'sold' && (form.lead_source === 'Auto Trader' || form.leadSource === 'Auto Trader')}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="car-editor__section">

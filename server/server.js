@@ -33,8 +33,15 @@ const initDB = async () => {
                 features JSONB,
                 images JSONB,
                 status VARCHAR(50) DEFAULT 'available',
-                featured BOOLEAN DEFAULT false
+                featured BOOLEAN DEFAULT false,
+                lead_source VARCHAR(100),
+                autotrader_days_advertised INTEGER
             );
+        `);
+        
+        await db.query(`
+            ALTER TABLE cars ADD COLUMN IF NOT EXISTS lead_source VARCHAR(100);
+            ALTER TABLE cars ADD COLUMN IF NOT EXISTS autotrader_days_advertised INTEGER;
         `);
         
         await db.query(`
@@ -172,7 +179,12 @@ initDB();
 app.get('/api/cars', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM cars');
-        res.json(result.rows);
+        const rows = result.rows.map(row => ({
+            ...row,
+            lead_source: row.lead_source || null,
+            autotrader_days_advertised: row.autotrader_days_advertised !== null ? parseInt(row.autotrader_days_advertised) : null
+        }));
+        res.json(rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -181,11 +193,24 @@ app.get('/api/cars', async (req, res) => {
 
 app.post('/api/cars', async (req, res) => {
     const car = req.body;
+    const leadSource = car.lead_source || car.leadSource || null;
+    const rawDays = car.autotrader_days_advertised !== undefined ? car.autotrader_days_advertised : car.autotraderDaysAdvertised;
+    const autotraderDays = (rawDays !== undefined && rawDays !== null && rawDays !== '') ? parseInt(rawDays) : null;
+
+    if (car.status === 'sold') {
+        if (!leadSource) {
+            return res.status(400).json({ error: 'Lead source is required when marking a vehicle as Sold' });
+        }
+        if (leadSource === 'Auto Trader' && (autotraderDays === null || isNaN(autotraderDays) || autotraderDays < 0)) {
+            return res.status(400).json({ error: 'Number of Days Advertised on Auto Trader is required and must be a valid non-negative number' });
+        }
+    }
+
     try {
         const result = await db.query(
-            `INSERT INTO cars (id, title, make, model, trim, year, price, mileage, fuel, transmission, "bodyType", colour, engine, doors, seats, description, features, images, status, featured)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) RETURNING *`,
-            [car.id, car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured]
+            `INSERT INTO cars (id, title, make, model, trim, year, price, mileage, fuel, transmission, "bodyType", colour, engine, doors, seats, description, features, images, status, featured, lead_source, autotrader_days_advertised)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22) RETURNING *`,
+            [car.id, car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, leadSource, autotraderDays]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -197,11 +222,24 @@ app.post('/api/cars', async (req, res) => {
 app.put('/api/cars/:id', async (req, res) => {
     const { id } = req.params;
     const car = req.body;
+    const leadSource = car.lead_source || car.leadSource || null;
+    const rawDays = car.autotrader_days_advertised !== undefined ? car.autotrader_days_advertised : car.autotraderDaysAdvertised;
+    const autotraderDays = (rawDays !== undefined && rawDays !== null && rawDays !== '') ? parseInt(rawDays) : null;
+
+    if (car.status === 'sold') {
+        if (!leadSource) {
+            return res.status(400).json({ error: 'Lead source is required when marking a vehicle as Sold' });
+        }
+        if (leadSource === 'Auto Trader' && (autotraderDays === null || isNaN(autotraderDays) || autotraderDays < 0)) {
+            return res.status(400).json({ error: 'Number of Days Advertised on Auto Trader is required and must be a valid non-negative number' });
+        }
+    }
+
     try {
         const result = await db.query(
-            `UPDATE cars SET title=$1, make=$2, model=$3, trim=$4, year=$5, price=$6, mileage=$7, fuel=$8, transmission=$9, "bodyType"=$10, colour=$11, engine=$12, doors=$13, seats=$14, description=$15, features=$16, images=$17, status=$18, featured=$19
-             WHERE id=$20 RETURNING *`,
-            [car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, id]
+            `UPDATE cars SET title=$1, make=$2, model=$3, trim=$4, year=$5, price=$6, mileage=$7, fuel=$8, transmission=$9, "bodyType"=$10, colour=$11, engine=$12, doors=$13, seats=$14, description=$15, features=$16, images=$17, status=$18, featured=$19, lead_source=$20, autotrader_days_advertised=$21
+             WHERE id=$22 RETURNING *`,
+            [car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, leadSource, autotraderDays, id]
         );
         res.json(result.rows[0]);
     } catch (err) {

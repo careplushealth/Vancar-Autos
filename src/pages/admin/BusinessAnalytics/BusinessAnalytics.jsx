@@ -5,7 +5,7 @@ import {
     PointElement, ArcElement, Title, Tooltip, Legend, Filler
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
-import { getVehicleExpenses, getGeneralExpenses } from '../../../services/dataService';
+import { getVehicleExpenses, getGeneralExpenses, getCars } from '../../../services/dataService';
 import { normalizeMake, deduplicateMakes } from '../../../utils/makeUtils';
 import './BusinessAnalytics.css';
 
@@ -298,6 +298,36 @@ export default function BusinessAnalytics() {
             .sort((a, b) => parseFloat(b.profit_loss || 0) - parseFloat(a.profit_loss || 0))
             .slice(0, 8),
         [filteredVehicle]);
+
+    // Lead Source Analytics (Vehicles sold by channel & average Auto Trader days)
+    const leadSourceAnalytics = useMemo(() => {
+        const cars = getCars().filter(c => c.status === 'sold' && (c.lead_source || c.leadSource));
+        const counts = {};
+        let autotraderSum = 0;
+        let autotraderCount = 0;
+
+        cars.forEach(c => {
+            const src = c.lead_source || c.leadSource;
+            counts[src] = (counts[src] || 0) + 1;
+            if (src === 'Auto Trader') {
+                const days = parseInt(c.autotrader_days_advertised ?? c.autotraderDaysAdvertised);
+                if (!isNaN(days) && days >= 0) {
+                    autotraderSum += days;
+                    autotraderCount++;
+                }
+            }
+        });
+
+        const sortedEntries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        const avgAutotraderDays = autotraderCount > 0 ? (autotraderSum / autotraderCount).toFixed(1) : null;
+
+        return {
+            entries: sortedEntries,
+            totalSoldWithSource: cars.length,
+            avgAutotraderDays,
+            autotraderCount
+        };
+    }, []);
 
     // Unique standardized makes for filter
     const makes = useMemo(() => ['All', ...deduplicateMakes(vehicleExpenses.map(r => r.make))], [vehicleExpenses]);
@@ -755,6 +785,69 @@ export default function BusinessAnalytics() {
                                                     {netProfit >= 0 ? '+' : ''}{fmt(netProfit)}
                                                 </span>
                                             </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* Sales Channel & Lead Source Analytics */}
+            <div className="ba-table-card" style={{ marginTop: '24px' }}>
+                <div className="ba-table-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                    <div>
+                        <h3>Lead Source Performance ({leadSourceAnalytics.totalSoldWithSource} Vehicles Tracked)</h3>
+                        <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>Sales volume by advertising channel</span>
+                    </div>
+                    {leadSourceAnalytics.avgAutotraderDays !== null && (
+                        <div style={{ background: '#002F6C', color: '#ffffff', padding: '6px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold' }}>
+                            ⏱️ Auto Trader Avg Duration: {leadSourceAnalytics.avgAutotraderDays} days
+                        </div>
+                    )}
+                </div>
+                {leadSourceAnalytics.entries.length === 0 ? (
+                    <div className="ba-chart-empty">No sold vehicle lead sources recorded yet. Mark vehicles as Sold in Manage Inventory to track lead channel performance.</div>
+                ) : (
+                    <div className="ba-table-wrap">
+                        <table className="ba-table">
+                            <thead>
+                                <tr>
+                                    <th>Lead Channel</th>
+                                    <th>Vehicles Sold</th>
+                                    <th>Share of Total</th>
+                                    {leadSourceAnalytics.avgAutotraderDays !== null && <th>Auto Trader Metrics</th>}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {leadSourceAnalytics.entries.map(([source, count]) => {
+                                    const pct = leadSourceAnalytics.totalSoldWithSource > 0 
+                                        ? Math.round((count / leadSourceAnalytics.totalSoldWithSource) * 100) 
+                                        : 0;
+                                    return (
+                                        <tr key={source}>
+                                            <td><strong>📍 {source}</strong></td>
+                                            <td>{count} vehicle{count === 1 ? '' : 's'}</td>
+                                            <td>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '160px' }}>
+                                                    <div style={{ flex: 1, height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                                                        <div style={{ width: `${pct}%`, height: '100%', background: '#55A01F', borderRadius: '4px' }} />
+                                                    </div>
+                                                    <span style={{ fontSize: '12px', fontWeight: 'bold', width: '36px' }}>{pct}%</span>
+                                                </div>
+                                            </td>
+                                            {leadSourceAnalytics.avgAutotraderDays !== null && (
+                                                <td>
+                                                    {source === 'Auto Trader' ? (
+                                                        <span style={{ color: '#55A01F', fontWeight: 'bold', fontSize: '13px' }}>
+                                                            {leadSourceAnalytics.avgAutotraderDays} days avg duration ({leadSourceAnalytics.autotraderCount} sales)
+                                                        </span>
+                                                    ) : (
+                                                        <span style={{ opacity: 0.4 }}>—</span>
+                                                    )}
+                                                </td>
+                                            )}
                                         </tr>
                                     );
                                 })}
