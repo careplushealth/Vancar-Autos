@@ -19,7 +19,7 @@ const GREEN_DARK = '#3d7515';
 const GREEN_LIGHT = 'rgba(85, 160, 31, 0.15)';
 const AMBER = '#f59e0b';
 const RED = '#ef4444';
-const BLUE = '#3b82f6';
+const ORANGE = '#e67e22';
 const PURPLE = '#8b5cf6';
 const PINK = '#ec4899';
 const CYAN = '#06b6d4';
@@ -333,7 +333,7 @@ export default function BusinessAnalytics() {
     const makes = useMemo(() => ['All', ...deduplicateMakes(vehicleExpenses.map(r => r.make))], [vehicleExpenses]);
     const genCats = useMemo(() => ['All', ...new Set(generalExpenses.map(r => r.category))].sort(), [generalExpenses]);
 
-    const DONUT_COLORS = [GREEN, BLUE, AMBER, PURPLE, PINK, CYAN, '#f97316', '#64748b'];
+    const DONUT_COLORS = [GREEN, ORANGE, AMBER, PURPLE, PINK, CYAN, '#f97316', '#64748b'];
 
     // Export CSV
     const exportCSV = () => {
@@ -478,7 +478,7 @@ export default function BusinessAnalytics() {
                     icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>} />
                 <KPICard label="Net Profit" value={fmt(kpis.totalNetProfit)} subtitle="After expenses & VAT" color={kpis.totalNetProfit >= 0 ? GREEN : RED}
                     icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>} />
-                <KPICard label="Vehicles Sold" value={kpis.vehiclesSold} subtitle={`${kpis.inStockCount} in stock`} color={BLUE}
+                <KPICard label="Vehicles Sold" value={kpis.vehiclesSold} subtitle={`${kpis.inStockCount} in stock`} color={ORANGE}
                     icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>} />
                 <KPICard label="Avg Profit / Vehicle" value={fmt(kpis.avgProfitPerVehicle)} subtitle="Sold vehicles only" color={PURPLE}
                     icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>} />
@@ -494,7 +494,7 @@ export default function BusinessAnalytics() {
                     icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>} />
                 <KPICard label="Net VAT Payable" value={fmt(kpis.netVatPayable)} subtitle="Output VAT - Input VAT" color={kpis.netVatPayable >= 0 ? AMBER : GREEN}
                     icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>} />
-                <KPICard label="Stock Buying Capital" value={fmt(kpis.totalBuyingCost)} subtitle="Acquisition value" color={BLUE}
+                <KPICard label="Stock Buying Capital" value={fmt(kpis.totalBuyingCost)} subtitle="Acquisition value" color={ORANGE}
                     icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /></svg>} />
             </section>
 
@@ -533,7 +533,7 @@ export default function BusinessAnalytics() {
                     <div className="ba-chart-legend">
                         <span className="ba-legend-dot" style={{ background: GREEN }} /> Revenue
                         <span className="ba-legend-dot" style={{ background: RED }} /> Total Expenses
-                        <span className="ba-legend-dot" style={{ background: BLUE }} /> Net Profit
+                        <span className="ba-legend-dot" style={{ background: ORANGE }} /> Net Profit
                     </div>
                     <div className="ba-chart-wrap">
                         <Line
@@ -565,7 +565,7 @@ export default function BusinessAnalytics() {
                                     {
                                         label: 'Net Profit',
                                         data: monthlyChartData.profits,
-                                        borderColor: BLUE,
+                                        borderColor: ORANGE,
                                         backgroundColor: 'transparent',
                                         tension: 0.4,
                                         pointRadius: 4,
@@ -719,7 +719,7 @@ export default function BusinessAnalytics() {
                                 labels: ['VAT Margin\nOutput', 'Commercial\nOutput', 'Input VAT\nReclaimed'],
                                 datasets: [{
                                     data: [kpis.totalOutputVatMargin, kpis.totalOutputVatCommercial, kpis.totalReclaimableVehicleVat],
-                                    backgroundColor: [CYAN, BLUE, GREEN],
+                                    backgroundColor: [CYAN, ORANGE, GREEN],
                                     borderRadius: 8,
                                     borderSkipped: false,
                                 }]
@@ -802,7 +802,7 @@ export default function BusinessAnalytics() {
                         <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>Sales volume by advertising channel</span>
                     </div>
                     {leadSourceAnalytics.avgAutotraderDays !== null && (
-                        <div style={{ background: '#002F6C', color: '#ffffff', padding: '6px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold' }}>
+                        <div style={{ background: 'var(--color-accent)', color: '#ffffff', padding: '6px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold' }}>
                             ⏱️ Auto Trader Avg Duration: {leadSourceAnalytics.avgAutotraderDays} days
                         </div>
                     )}

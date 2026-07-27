@@ -270,9 +270,9 @@ export default function Enquiries() {
                                                     {/* Auto Trader Valuation details if present */}
                                                     {selectedEnquiry.vehicle_details.autotrader_valuation && (
                                                         <div className="admin-enquiries__autotrader-valuation-box" style={{ marginTop: '15px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-                                                            <div style={{ backgroundColor: '#002F6C', color: 'white', padding: '6px 12px', fontSize: '11px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                            <div style={{ backgroundColor: 'var(--color-accent)', color: 'white', padding: '8px 14px', fontSize: '11px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', letterSpacing: '0.05em' }}>
                                                                 <span>AUTO TRADER CONNECT VALUATION</span>
-                                                                <span style={{ fontSize: '9px', opacity: 0.8 }}>Live Active</span>
+                                                                <span style={{ fontSize: '10px', background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>Live Active</span>
                                                             </div>
                                                             <div style={{ padding: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px' }}>
                                                                 <div>

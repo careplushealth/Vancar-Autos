@@ -179,7 +179,7 @@ export default function CarEditor() {
 
                     {form.status === 'sold' && (
                         <div className="car-editor__sold-box" style={{ marginTop: '20px', padding: '15px', background: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
-                            <h3 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '12px', color: '#002F6C' }}>
+                            <h3 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '12px', color: 'var(--color-accent)' }}>
                                 📍 Sales & Lead Information
                             </h3>
                             <div className="form-row">

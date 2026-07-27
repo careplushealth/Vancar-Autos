@@ -137,13 +137,13 @@
 }
 
 .admin-enquiries__item-card--selected {
-    background-color: #f0f7ff !important;
+    background-color: rgba(85, 160, 31, 0.08) !important;
     border-left: 4px solid var(--color-accent);
 }
 
 .admin-enquiries__item-card--unread {
     font-weight: var(--font-weight-semibold);
-    background-color: rgba(6, 83, 165, 0.02);
+    background-color: rgba(85, 160, 31, 0.03);
 }
 
 .admin-enquiries__item-card--unread .admin-enquiries__item-name {
@@ -167,18 +167,18 @@
 }
 
 .admin-enquiries__type-badge--contact {
-    background-color: #e0f2fe;
-    color: #0369a1;
+    background-color: rgba(85, 160, 31, 0.12);
+    color: var(--color-accent);
 }
 
 .admin-enquiries__type-badge--vehicle_inquiry {
-    background-color: #e0faff;
-    color: #0284c7;
+    background-color: rgba(230, 126, 34, 0.12);
+    color: #e67e22;
 }
 
 .admin-enquiries__type-badge--sell_valuation {
-    background-color: #fef3c7;
-    color: #d97706;
+    background-color: rgba(15, 23, 42, 0.08);
+    color: var(--color-text-primary);
 }
 
 .admin-enquiries__item-date {

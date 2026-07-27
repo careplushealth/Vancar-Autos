@@ -1,5 +1,6 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import { logout } from '../services/authService';
+import Logo from '../components/Logo/Logo';
 import './AdminLayout.css';
 
 export default function AdminLayout() {
@@ -13,10 +14,10 @@ export default function AdminLayout() {
     return (
         <div className="admin-layout">
             <aside className="admin-layout__sidebar">
-                <div className="admin-layout__logo">
-                    <span>VCA</span>
-                    <small>Admin Panel</small>
-                </div>
+                <Link to="/admin" className="admin-layout__logo-wrapper" title="Go to Admin Dashboard">
+                    <Logo style={{ height: '36px' }} />
+                    <span className="admin-layout__logo-badge">ADMIN</span>
+                </Link>
 
                 <nav className="admin-layout__nav">
                     <NavLink to="/admin" end className={({ isActive }) => `admin-layout__link ${isActive ? 'admin-layout__link--active' : ''}`}>

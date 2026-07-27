@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../../../services/authService';
+import Logo from '../../../components/Logo/Logo';
 import './Login.css';
 
 export default function Login() {
@@ -23,9 +24,11 @@ export default function Login() {
         <div className="admin-login">
             <div className="admin-login__card">
                 <div className="admin-login__header">
-                    <span className="admin-login__logo">VCA</span>
-                    <h1>Admin Login</h1>
-                    <p>Enter your credentials to access the admin panel</p>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
+                        <Logo style={{ height: '46px' }} />
+                    </div>
+                    <h1>Admin Portal</h1>
+                    <p>Enter your credentials to access the admin portal</p>
                 </div>
 
                 <form onSubmit={handleSubmit}>

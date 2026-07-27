@@ -257,7 +257,6 @@ export default function ManageCars() {
                                 <button 
                                     type="submit" 
                                     className="btn btn--primary"
-                                    style={{ backgroundColor: '#002F6C', color: '#ffffff' }}
                                 >
                                     Confirm Vehicle Sold
                                 </button>

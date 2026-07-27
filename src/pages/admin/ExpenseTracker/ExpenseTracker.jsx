@@ -629,7 +629,7 @@ export default function ExpenseTracker() {
                     <span className="expense-tracker__stat-label">Reclaimable Expense VAT</span>
                 </div>
                 <div className="expense-tracker__stat-card">
-                    <span className="expense-tracker__stat-number" style={{ color: '#3b82f6' }}>{fmtInt(stats.totalOutputVat)}</span>
+                    <span className="expense-tracker__stat-number" style={{ color: 'var(--color-accent)' }}>{fmtInt(stats.totalOutputVat)}</span>
                     <span className="expense-tracker__stat-label">Total Output VAT (Sales)</span>
                 </div>
                 <div className="expense-tracker__stat-card">

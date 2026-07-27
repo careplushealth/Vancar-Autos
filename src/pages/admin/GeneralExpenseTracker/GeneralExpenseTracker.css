@@ -103,8 +103,8 @@
     flex-shrink: 0;
 }
 
-.gen-expense__kpi-icon--green { background: rgba(85, 160, 31, 0.1); color: #55A01F; }
-.gen-expense__kpi-icon--blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.gen-expense__kpi-icon--green { background: rgba(85, 160, 31, 0.1); color: var(--color-accent); }
+.gen-expense__kpi-icon--blue { background: rgba(85, 160, 31, 0.1); color: var(--color-accent); }
 .gen-expense__kpi-icon--amber { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
 .gen-expense__kpi-icon--purple { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
 
