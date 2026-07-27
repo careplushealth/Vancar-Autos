@@ -1,11 +1,14 @@
+const path = require('path');
 const dotenv = require('dotenv');
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+const AUTOTRADER_BASE_URL = process.env.AUTOTRADER_BASE_URL || "https://api.autotrader.co.uk";
 
 const getAutoTraderToken = async () => {
     const key = process.env.AUTOTRADER_KEY;
     const secret = process.env.AUTOTRADER_SECRET;
     
-    const response = await fetch("https://api-sandbox.autotrader.co.uk/authenticate", {
+    const response = await fetch(`${AUTOTRADER_BASE_URL}/authenticate`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({ key, secret })
@@ -16,20 +19,21 @@ const getAutoTraderToken = async () => {
 
 const run = async () => {
     const token = await getAutoTraderToken();
-    const advertiserId = process.env.AUTOTRADER_ADVERTISER_ID || '66897';
+    const advertiserId = process.env.AUTOTRADER_ADVERTISER_ID || '10050204';
 
     // 1. Vehicle Lookup & Valuation Test
     const registration = 'KN20FZG';
-    const lookupUrl = `https://api-sandbox.autotrader.co.uk/vehicles?registration=${encodeURIComponent(registration)}&advertiserId=${encodeURIComponent(advertiserId)}&valuations=true&odometerReadingMiles=30000`;
+    const lookupUrl = `${AUTOTRADER_BASE_URL}/vehicles?registration=${encodeURIComponent(registration)}&advertiserId=${encodeURIComponent(advertiserId)}&valuations=true&odometerReadingMiles=30000`;
     
     const resLookup = await fetch(lookupUrl, { headers: { 'Authorization': `Bearer ${token}` } });
     const lookupData = await resLookup.json();
 
     console.log("======================================================================");
-    console.log("AUTO TRADER API LIVE SANDBOX TEST RESULTS FOR INTEGRATION TEAM");
+    console.log("AUTO TRADER API TEST RESULTS");
     console.log("======================================================================");
     console.log("\n[TEST 1: VEHICLE VALUATION API]");
-    console.log("API Status: 200 OK");
+    console.log(`API Base URL: ${AUTOTRADER_BASE_URL}`);
+    console.log(`Advertiser ID: ${advertiserId}`);
     console.log("Vehicle Details:");
     console.log(JSON.stringify({
         registration: lookupData.vehicle?.registration,
@@ -48,7 +52,7 @@ const run = async () => {
     console.log("\n======================================================================");
 
     // 2. Stock API Test
-    const stockUrl = `https://api-sandbox.autotrader.co.uk/stock?advertiserId=${encodeURIComponent(advertiserId)}`;
+    const stockUrl = `${AUTOTRADER_BASE_URL}/stock?advertiserId=${encodeURIComponent(advertiserId)}`;
     const resStock = await fetch(stockUrl, { headers: { 'Authorization': `Bearer ${token}` } });
     const stockData = await resStock.json();
 

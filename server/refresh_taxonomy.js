@@ -3,6 +3,8 @@ const path = require('path');
 const dotenv = require('dotenv');
 dotenv.config();
 
+const AUTOTRADER_BASE_URL = process.env.AUTOTRADER_BASE_URL || "https://api.autotrader.co.uk";
+
 const getAutoTraderToken = async () => {
     const key = process.env.AUTOTRADER_KEY;
     const secret = process.env.AUTOTRADER_SECRET;
@@ -10,7 +12,7 @@ const getAutoTraderToken = async () => {
         throw new Error("AUTOTRADER_KEY and AUTOTRADER_SECRET must be set in .env file");
     }
     
-    const response = await fetch("https://api-sandbox.autotrader.co.uk/authenticate", {
+    const response = await fetch(`${AUTOTRADER_BASE_URL}/authenticate`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({ key, secret })
@@ -31,7 +33,7 @@ const run = async () => {
         console.log("Token obtained successfully.");
 
         console.log("Fetching makes list for vehicleType=Car...");
-        const resMakes = await fetch("https://api-sandbox.autotrader.co.uk/taxonomy/makes?vehicleType=Car", {
+        const resMakes = await fetch(`${AUTOTRADER_BASE_URL}/taxonomy/makes?vehicleType=Car`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
 
@@ -52,7 +54,7 @@ const run = async () => {
             const batch = makes.slice(i, i + batchSize);
             await Promise.all(batch.map(async (make) => {
                 try {
-                    const resModels = await fetch(`https://api-sandbox.autotrader.co.uk/taxonomy/models?makeId=${make.makeId}`, {
+                    const resModels = await fetch(`${AUTOTRADER_BASE_URL}/taxonomy/models?makeId=${make.makeId}`, {
                         headers: { "Authorization": `Bearer ${token}` }
                     });
                     if (resModels.ok) {

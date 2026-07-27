@@ -521,6 +521,8 @@ app.delete('/api/deposit-slips/:id', async (req, res) => {
 });
 
 // --- AUTO TRADER API INTEGRATION ---
+const AUTOTRADER_BASE_URL = process.env.AUTOTRADER_BASE_URL || "https://api.autotrader.co.uk";
+
 let autoTraderTokenCache = {
     token: null,
     expiresAt: null
@@ -530,7 +532,7 @@ let autoTraderTokenCache = {
 const isAutoTraderMock = () => {
     const key = process.env.AUTOTRADER_KEY;
     const secret = process.env.AUTOTRADER_SECRET;
-    return !key || !secret || key.includes('your-') || secret.includes('your-');
+    return !key || !secret || key.includes('your-');
 };
 
 const getAutoTraderToken = async () => {
@@ -545,7 +547,7 @@ const getAutoTraderToken = async () => {
 
     console.log("Fetching new Auto Trader Access Token...");
     try {
-        const response = await fetch("https://api-sandbox.autotrader.co.uk/authenticate", {
+        const response = await fetch(`${AUTOTRADER_BASE_URL}/authenticate`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded"
@@ -762,7 +764,7 @@ app.get('/api/autotrader/vehicle-lookup', async (req, res) => {
         const token = await getAutoTraderToken();
         const advertiserId = process.env.AUTOTRADER_ADVERTISER_ID || '';
         
-        let url = `https://api-sandbox.autotrader.co.uk/vehicles?registration=${encodeURIComponent(registration)}`;
+        let url = `${AUTOTRADER_BASE_URL}/vehicles?registration=${encodeURIComponent(registration)}`;
         if (advertiserId) {
             url += `&advertiserId=${encodeURIComponent(advertiserId)}`;
         }
@@ -810,7 +812,7 @@ app.post('/api/autotrader/valuation', async (req, res) => {
         const token = await getAutoTraderToken();
         const advertiserId = process.env.AUTOTRADER_ADVERTISER_ID || '';
         
-        let url = `https://api-sandbox.autotrader.co.uk/valuations`;
+        let url = `${AUTOTRADER_BASE_URL}/valuations`;
         if (advertiserId) {
             url += `?advertiserId=${encodeURIComponent(advertiserId)}`;
         }
@@ -958,7 +960,7 @@ app.post('/api/autotrader/sync-stock', async (req, res) => {
         let hasMore = true;
 
         while (hasMore) {
-            const url = `https://api-sandbox.autotrader.co.uk/stock?advertiserId=${encodeURIComponent(advertiserId)}&page=${page}&pageSize=${pageSize}`;
+            const url = `${AUTOTRADER_BASE_URL}/stock?advertiserId=${encodeURIComponent(advertiserId)}&page=${page}&pageSize=${pageSize}`;
             const response = await fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -1107,7 +1109,8 @@ app.post('/api/autotrader/sync-stock', async (req, res) => {
         res.json({ success: true, count: syncedCount });
     } catch (err) {
         console.error('Auto Trader stock sync error:', err);
-        res.status(500).json({ error: 'Failed to sync forecourt stock from Auto Trader' });
+        autoTraderTokenCache = { token: null, expiresAt: null };
+        res.status(500).json({ error: err.message || 'Failed to sync forecourt stock from Auto Trader' });
     }
 });
 

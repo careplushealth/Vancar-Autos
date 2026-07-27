@@ -272,7 +272,7 @@ export default function Enquiries() {
                                                         <div className="admin-enquiries__autotrader-valuation-box" style={{ marginTop: '15px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
                                                             <div style={{ backgroundColor: '#002F6C', color: 'white', padding: '6px 12px', fontSize: '11px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                                 <span>AUTO TRADER CONNECT VALUATION</span>
-                                                                <span style={{ fontSize: '9px', opacity: 0.8 }}>Sandbox Active</span>
+                                                                <span style={{ fontSize: '9px', opacity: 0.8 }}>Live Active</span>
                                                             </div>
                                                             <div style={{ padding: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px' }}>
                                                                 <div>

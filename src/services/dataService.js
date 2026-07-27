@@ -531,9 +531,16 @@ export async function syncAutoTraderStock() {
             method: 'POST'
         });
         if (!response.ok) {
-            throw new Error('Failed to synchronize forecourt stock with Auto Trader.');
+            let errorMsg = 'Failed to synchronize forecourt stock with Auto Trader.';
+            try {
+                const errData = await response.json();
+                if (errData && errData.error) errorMsg = errData.error;
+            } catch (_) {}
+            throw new Error(errorMsg);
         }
-        return await response.json();
+        const data = await response.json();
+        await syncDataFromServer();
+        return data;
     } catch (err) {
         console.error('Error syncing stock:', err);
         throw err;
