@@ -132,9 +132,14 @@ export default function CarDetails() {
 
                         <div className="car-details__price-row">
                             <span className="car-details__price">{formatPrice(car.price)}</span>
-                            <span className="car-details__monthly-badge bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
-                                ✓ 12-Month Warranty Included
-                            </span>
+                            <div className="car-details__warranty-badge flex flex-col items-start bg-emerald-50 border border-emerald-100 px-3.5 py-1.5 rounded-xl">
+                                <span className="text-emerald-800 font-bold text-xs flex items-center gap-1">
+                                    ✓ 30 Days Warranty Included
+                                </span>
+                                <span className="text-slate-500 text-[10px] font-medium">
+                                    Optional Extended Warranty Available (Additional Charges Apply)
+                                </span>
+                            </div>
                         </div>
 
                         {/* Specs Grid */}
@@ -232,7 +237,10 @@ export default function CarDetails() {
                             <h4>Vancar Quality Promise</h4>
                             <div className="car-details__finance-detail" style={{ borderBottom: '1px solid var(--color-border-primary)', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold' }}>🛡️ Warranty</span>
-                                <strong style={{ color: 'var(--color-accent-primary)' }}>12 Months Included</strong>
+                                <div className="flex flex-col items-end text-right">
+                                    <strong style={{ color: 'var(--color-accent-primary)' }}>30 Days Included</strong>
+                                    <span className="text-[10px] text-slate-500 font-normal">Optional Extended Available</span>
+                                </div>
                             </div>
                             <div className="car-details__finance-detail" style={{ borderBottom: '1px solid var(--color-border-primary)', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold' }}>🔍 Inspection</span>
@@ -240,7 +248,7 @@ export default function CarDetails() {
                             </div>
                             <div className="car-details__finance-detail" style={{ borderBottom: '1px solid var(--color-border-primary)', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold' }}>📜 History</span>
-                                <strong>HPI Cleared</strong>
+                                <strong>History Audited</strong>
                             </div>
                             <div className="car-details__finance-detail" style={{ paddingBottom: '0.25rem' }}>
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold' }}>🚚 Delivery</span>

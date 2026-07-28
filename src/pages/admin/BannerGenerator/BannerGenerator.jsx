@@ -22,7 +22,7 @@ export default function BannerGenerator() {
         { id: 1, icon: 'speedometer', heading: 'Mileage', value: '156000 Miles' },
         { id: 2, icon: 'document', heading: 'MOT', value: '12 Months MOT' },
         { id: 3, icon: 'key', heading: 'Keys', value: 'V5 Present' },
-        { id: 4, icon: 'shield', heading: 'HPI Status', value: 'HPI Clear' }
+        { id: 4, icon: 'shield', heading: 'History Audit', value: 'History Checked' }
     ]);
 
     const handleBadgeChange = (id, field, value) => {
@@ -98,7 +98,7 @@ export default function BannerGenerator() {
                 { id: 1, icon: 'speedometer', heading: 'Mileage', value: car.mileage ? `${car.mileage.toLocaleString('en-GB')} Miles` : '' },
                 { id: 2, icon: 'document', heading: 'MOT', value: '12 Months MOT' },
                 { id: 3, icon: 'key', heading: 'Keys', value: 'V5 Present' },
-                { id: 4, icon: 'shield', heading: 'HPI Status', value: 'HPI Clear' }
+                { id: 4, icon: 'shield', heading: 'History Audit', value: 'History Checked' }
             ]);
 
             // Set vehicle image if available
@@ -485,7 +485,7 @@ export default function BannerGenerator() {
             { icon: 'speedometer', heading: 'Mileage', value: '156,000 Miles' },
             { icon: 'document', heading: 'MOT', value: '12 Months MOT' },
             { icon: 'key', heading: 'Keys', value: 'V5 Present' },
-            { icon: 'shield', heading: 'HPI Status', value: 'HPI Clear' }
+            { icon: 'shield', heading: 'History Audit', value: 'History Checked' }
         ];
 
         badgeSlots.forEach((badge, index) => {

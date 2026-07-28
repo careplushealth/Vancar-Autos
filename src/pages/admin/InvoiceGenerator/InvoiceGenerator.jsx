@@ -53,7 +53,7 @@ export default function InvoiceGenerator() {
 
     const [notes, setNotes] = useState({
         deliveryDetails: '',
-        warrantyInfo: '3 Months Comprehensive Dealer Warranty included.',
+        warrantyInfo: '30 Days Warranty Included. Optional Extended Warranty Available (Additional Charges Apply).',
         additionalComments: '',
         termsOfSale: 'Please make payment by the due date shown on this invoice. Title to the vehicle remains with Vancar Autos until funds are cleared in full.'
     });
@@ -212,7 +212,7 @@ export default function InvoiceGenerator() {
         // Reset Notes
         setNotes({
             deliveryDetails: '',
-            warrantyInfo: '3 Months Comprehensive Dealer Warranty included.',
+            warrantyInfo: '30 Days Warranty Included. Optional Extended Warranty Available (Additional Charges Apply).',
             additionalComments: '',
             termsOfSale: 'Please make payment by the due date shown on this invoice. Title to the vehicle remains with Vancar Autos until funds are cleared in full.'
         });

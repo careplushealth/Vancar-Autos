@@ -215,7 +215,7 @@ export default function CarCard({ car }) {
                                 <div className="car-card__value-badge text-right flex flex-col justify-center">
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Guarantee</span>
                                     <span className="text-[var(--color-accent)] font-bold text-xs flex items-center gap-1 justify-end mt-1">
-                                        🛡️ 12M Warranty
+                                        🛡️ 30 Days Warranty
                                     </span>
                                 </div>
                             )}
@@ -280,7 +280,7 @@ export default function CarCard({ car }) {
                                     <span className="quick-view-modal__price">{formatPrice(car.price)}</span>
                                     {car.status !== 'sold' && (
                                         <span className="quick-view-modal__monthly">
-                                            Includes <strong>12-Month Warranty</strong> & 150-Point Inspection
+                                            <strong>30 Days Warranty Included</strong> • Extended Options Available
                                         </span>
                                     )}
                                 </div>

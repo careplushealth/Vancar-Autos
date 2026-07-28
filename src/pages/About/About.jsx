@@ -79,8 +79,8 @@ export default function About() {
                         </div>
                         <div className="about__value-card">
                             <div className="about__value-icon">🛡️</div>
-                            <h3>Worry-Free Warranty</h3>
-                            <p>Every vehicle comes with a comprehensive warranty package so you can drive away with peace of mind.</p>
+                            <h3>30 Days Warranty Included</h3>
+                            <p>Every vehicle includes 30 Days Warranty as standard, with optional extended warranty packages available (additional charges apply).</p>
                         </div>
                         <div className="about__value-card">
                             <div className="about__value-icon">⭐</div>

@@ -129,9 +129,9 @@ export default function Home() {
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
                         {[
                           { title: "Quality Approved", desc: "Thoroughly inspected stock", icon: "🔍" },
-                          { title: "HPI Checked", desc: "Complete history report", icon: "📜" },
+                          { title: "History Audited", desc: "Complete vehicle report", icon: "📜" },
                           { title: "Part Exchange", desc: "Instant value valuations", icon: "🔄" },
-                          { title: "Warranty Included", desc: "Drive away protected", icon: "🛡️" },
+                          { title: "30 Days Warranty Included", desc: "Optional Extended Available", icon: "🛡️" },
                           { title: "Nationwide Delivery", desc: "Straight to your door", icon: "🚚" },
                           { title: "5-Star Service", desc: "Honest customer care", icon: "⭐" },
                         ].map((badge, idx) => (
@@ -308,7 +308,7 @@ export default function Home() {
                                 Vancar Autos is a leading independent used car dealership in Manchester. Over the last 15 years, we have built our reputation on providing high-quality, pre-owned vehicles backed by honest advice and absolute transparency.
                             </p>
                             <p className="text-slate-600 mb-8 leading-relaxed">
-                                Every single car in our inventory undergoes a rigorous safety check, comes with a complete history audit, and includes a comprehensive warranty, ensuring you can drive away with total peace of mind.
+                                Every single car in our inventory undergoes a rigorous safety check, comes with a complete history audit, and includes 30 Days Warranty Included (with optional extended warranty available), ensuring you can drive away with total peace of mind.
                             </p>
                             
                             <div className="grid grid-cols-3 gap-6 text-center border-t border-slate-100 pt-6">
