@@ -2,6 +2,31 @@ import { useState, useEffect, useRef } from 'react';
 import { getCars, getInvoices, createInvoice, updateInvoice, deleteInvoice } from '../../../services/dataService';
 import './InvoiceGenerator.css';
 
+const formatMakeModelTitleCase = (makeStr, modelStr) => {
+    const formatWord = (w) => {
+        if (!w) return '';
+        const upper = w.toUpperCase();
+        if (['BMW', 'VW', 'MINI', 'MG', 'GT-R', 'RS', 'M3', 'M4', 'M5', 'AMG', 'SUV', 'SLK', 'TT'].includes(upper)) {
+            return upper;
+        }
+        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    };
+
+    const formattedMake = (makeStr || '').split(/\s+/).map(formatWord).join(' ');
+    const formattedModel = (modelStr || '').split(/\s+/).map(w => {
+        const upper = w.toUpperCase();
+        if (['BMW', 'VW', 'MINI', 'MG', 'TDI', 'CDTI', 'TFSI', 'DCI', 'HDI', 'S-LINE', 'AMG', 'RS'].includes(upper)) {
+            return upper;
+        }
+        if (/^[0-9]+[a-z]+$/i.test(w)) {
+            return w.toLowerCase();
+        }
+        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    }).join(' ');
+
+    return { make: formattedMake || '[Make]', model: formattedModel || '[Model]' };
+};
+
 export default function InvoiceGenerator() {
     const [invoicesList, setInvoicesList] = useState([]);
     const [carsList, setCarsList] = useState([]);
@@ -101,7 +126,6 @@ export default function InvoiceGenerator() {
         };
 
         // Delay slightly to allow DOM to render and stabilize
-        const timer = setTimeout(updateScale, 100);
 
         const observer = new ResizeObserver(() => {
             updateScale();
@@ -274,6 +298,15 @@ export default function InvoiceGenerator() {
     const handleSaveInvoice = () => {
         if (!customerDetails.name.trim()) {
             alert('Please enter a Customer Name.');
+            return;
+        }
+        if (!customerDetails.email || !customerDetails.email.trim()) {
+            alert('Customer Email is mandatory. Please enter a valid email address.');
+            return;
+        }
+        const emailRegex = /^\S+@\S+\.\S+$/;
+        if (!emailRegex.test(customerDetails.email.trim())) {
+            alert('Please enter a valid Customer Email address (e.g. customer@example.com).');
             return;
         }
         if (!saleDetails.invoiceNumber.trim()) {
@@ -595,6 +628,9 @@ export default function InvoiceGenerator() {
         return number.includes(query) || name.includes(query) || reg.includes(query) || make.includes(query) || model.includes(query);
     });
 
+    const formattedMakeModel = formatMakeModelTitleCase(vehicleDetails.make, vehicleDetails.model);
+    const formattedReg = (vehicleDetails.registration || '').toUpperCase();
+
     return (
         <div className="invoice-generator bg-slate-50 min-h-screen">
             <header className="invoice-generator__header mb-8 flex justify-between items-center">
@@ -778,13 +814,14 @@ export default function InvoiceGenerator() {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Email</label>
+                                    <label className="form-label">Customer Email <span className="text-red-500">*</span></label>
                                     <input 
                                         type="email" 
                                         className="form-input" 
                                         value={customerDetails.email} 
                                         onChange={(e) => setCustomerDetails(prev => ({ ...prev, email: e.target.value }))}
                                         placeholder="e.g. john@example.com"
+                                        required
                                     />
                                 </div>
                             </div>
@@ -800,7 +837,7 @@ export default function InvoiceGenerator() {
                                         type="text" 
                                         className="form-input uppercase" 
                                         value={vehicleDetails.registration} 
-                                        onChange={(e) => setVehicleDetails(prev => ({ ...prev, registration: e.target.value }))}
+                                        onChange={(e) => setVehicleDetails(prev => ({ ...prev, registration: e.target.value.toUpperCase() }))}
                                         placeholder="e.g. YT67BXH"
                                     />
                                 </div>
@@ -1120,7 +1157,7 @@ export default function InvoiceGenerator() {
                                     </div>
                                 </div>
 
-                                <div className="invoice-pdf-bill-to mb-6">
+                                <div className="invoice-pdf-bill-to mb-5">
                                     <h2 className="invoice-pdf-section-title">Bill To</h2>
                                     <div className="invoice-pdf-client-address">
                                         <strong>{customerDetails.name || 'Customer Name'}</strong><br />
@@ -1128,11 +1165,11 @@ export default function InvoiceGenerator() {
                                         {customerDetails.address2 && <>{customerDetails.address2}<br /></>}
                                         {customerDetails.city || 'Town/City'}, {customerDetails.postcode || 'Postcode'}<br />
                                         {customerDetails.phone && <>Phone: {customerDetails.phone}<br /></>}
-                                        {customerDetails.email && <>Email: {customerDetails.email}</>}
+                                        <strong>Email: {customerDetails.email || 'Required'}</strong>
                                     </div>
                                 </div>
 
-                                <table className="invoice-pdf-table mb-6">
+                                <table className="invoice-pdf-table mb-5">
                                     <thead>
                                         <tr>
                                             <th>Description</th>
@@ -1145,8 +1182,8 @@ export default function InvoiceGenerator() {
                                         <tr>
                                             <td className="item-description">
                                                 <strong>Vehicle Sale</strong><br />
-                                                {vehicleDetails.year || '[Year]'} {vehicleDetails.make || '[Make]'} {vehicleDetails.model || '[Model]'} {vehicleDetails.trim ? `- ${vehicleDetails.trim}` : ''}<br />
-                                                <span className="item-sub-desc">Reg: {vehicleDetails.registration || 'N/A'} | Mileage: {vehicleDetails.mileage ? parseFloat(vehicleDetails.mileage).toLocaleString('en-GB') : '0'} Miles</span>
+                                                {vehicleDetails.year || '[Year]'} {formattedMakeModel.make} {formattedMakeModel.model} {vehicleDetails.trim ? `- ${vehicleDetails.trim}` : ''}<br />
+                                                <span className="item-sub-desc">Reg: {formattedReg || 'N/A'} | Mileage: {vehicleDetails.mileage ? parseFloat(vehicleDetails.mileage).toLocaleString('en-GB') : '0'} Miles</span>
                                             </td>
                                             <td className="text-center">1</td>
                                             <td className="text-right">£{(saleDetails.cashPrice || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
@@ -1155,13 +1192,13 @@ export default function InvoiceGenerator() {
                                     </tbody>
                                 </table>
 
-                                <div className="invoice-pdf-details-block mb-6">
+                                <div className="invoice-pdf-details-block mb-5">
                                     <div className="invoice-pdf-vehicle-grid-box">
                                         <h2 className="invoice-pdf-section-title">Vehicle Details</h2>
                                         <div className="vehicle-details-grid">
-                                            <div className="grid-cell"><strong>Registration:</strong> {vehicleDetails.registration || '-'}</div>
-                                            <div className="grid-cell"><strong>Make:</strong> {vehicleDetails.make || '-'}</div>
-                                            <div className="grid-cell"><strong>Model:</strong> {vehicleDetails.model || '-'}</div>
+                                            <div className="grid-cell"><strong>Registration:</strong> {formattedReg || '-'}</div>
+                                            <div className="grid-cell"><strong>Make:</strong> {formattedMakeModel.make}</div>
+                                            <div className="grid-cell"><strong>Model:</strong> {formattedMakeModel.model}</div>
                                             <div className="grid-cell"><strong>Colour:</strong> {vehicleDetails.colour || '-'}</div>
                                             <div className="grid-cell font-mono"><strong>VIN:</strong> {vehicleDetails.vin || '-'}</div>
                                             <div className="grid-cell"><strong>Engine No:</strong> {vehicleDetails.engineNo || '-'}</div>
@@ -1202,13 +1239,13 @@ export default function InvoiceGenerator() {
                                 </div>
 
                                 {(notes.deliveryDetails || notes.additionalComments) && (
-                                    <div className="invoice-pdf-additional-box mb-6">
+                                    <div className="invoice-pdf-additional-box mb-4">
                                         {notes.deliveryDetails && <div><strong>Delivery Details:</strong> {notes.deliveryDetails}</div>}
                                         {notes.additionalComments && <div style={{ marginTop: '4px' }}><strong>Additional Comments:</strong> {notes.additionalComments}</div>}
                                     </div>
                                 )}
 
-                                <div className="invoice-pdf-notes mb-8">
+                                <div className="invoice-pdf-notes mb-6">
                                     <h2 className="invoice-pdf-section-title-light">Terms & Conditions</h2>
                                     <p className="invoice-pdf-terms-text">
                                         {notes.termsOfSale}

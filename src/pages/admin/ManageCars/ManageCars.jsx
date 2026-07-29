@@ -85,7 +85,7 @@ export default function ManageCars() {
             alert(`Stock synchronized successfully! Synced ${res.count} active vehicle(s).`);
         } catch (err) {
             console.error(err);
-            alert('Failed to synchronize forecourt stock from Auto Trader. Please check console logs.');
+            alert(`Failed to synchronize forecourt stock from Auto Trader:\n\n${err.message || 'Please check API credentials or network connection.'}`);
         } finally {
             setSyncing(false);
         }

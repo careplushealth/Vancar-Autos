@@ -570,6 +570,7 @@ let autoTraderTokenCache = {
 const isAutoTraderMock = () => {
     const key = process.env.AUTOTRADER_KEY;
     const secret = process.env.AUTOTRADER_SECRET;
+    if (process.env.AUTOTRADER_MOCK === 'true') return true;
     return !key || !secret || key.includes('your-');
 };
 
@@ -597,7 +598,16 @@ const getAutoTraderToken = async () => {
         });
 
         if (!response.ok) {
-            throw new Error(`Auth failed with status ${response.status}`);
+            let errorText = '';
+            try {
+                const errData = await response.json();
+                if (errData && errData.message) errorText = errData.message;
+            } catch (_) {}
+            
+            if (response.status === 401) {
+                throw new Error(`AutoTrader Authentication Failed (401): ${errorText || 'Invalid Key/Secret or credentials not yet active on production gateway.'}`);
+            }
+            throw new Error(`AutoTrader Auth Failed (${response.status}): ${errorText || 'Unexpected error'}`);
         }
 
         const data = await response.json();
@@ -609,7 +619,7 @@ const getAutoTraderToken = async () => {
 
         return autoTraderTokenCache.token;
     } catch (err) {
-        console.error("Auto Trader Authentication Error:", err);
+        console.error("Auto Trader Authentication Error:", err.message);
         throw err;
     }
 };
@@ -1146,9 +1156,10 @@ app.post('/api/autotrader/sync-stock', async (req, res) => {
         
         res.json({ success: true, count: syncedCount });
     } catch (err) {
-        console.error('Auto Trader stock sync error:', err);
+        console.error('Auto Trader stock sync error:', err.message);
         autoTraderTokenCache = { token: null, expiresAt: null };
-        res.status(500).json({ error: err.message || 'Failed to sync forecourt stock from Auto Trader' });
+        const isAuthErr = err.message && (err.message.includes('401') || err.message.includes('Auth Failed'));
+        res.status(isAuthErr ? 401 : 500).json({ error: err.message || 'Failed to sync forecourt stock from Auto Trader' });
     }
 });
 

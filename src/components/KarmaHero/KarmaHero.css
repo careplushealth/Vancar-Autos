@@ -166,117 +166,106 @@
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(85, 160, 31, 0); }
 }
 
-/* Overlay Glass Card */
+/* Overlay Glass Card - Compact & Thinner Design */
 .karma-hero__overlay-card {
     position: absolute;
-    bottom: 20px;
-    left: 20px;
-    right: 20px;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
     z-index: 2;
     background: rgba(15, 23, 42, 0.85);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: var(--radius-xl);
-    padding: 20px 24px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: var(--radius-lg);
+    padding: 10px 14px;
     color: #ffffff;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
     transition: transform 0.3s ease, background 0.3s ease;
 }
 
 .karma-hero__card-link:hover .karma-hero__overlay-card {
-    background: rgba(15, 23, 42, 0.92);
+    background: rgba(15, 23, 42, 0.94);
     transform: translateY(-2px);
     border-color: rgba(85, 160, 31, 0.4);
 }
 
-.karma-hero__overlay-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-}
-
-.karma-hero__overlay-year {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--color-accent);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    display: block;
-    margin-bottom: 2px;
-}
-
-.karma-hero__overlay-title {
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: #ffffff;
-    margin: 0;
-    line-height: 1.25;
-}
-
-.karma-hero__overlay-price {
-    font-size: 1.45rem;
-    font-weight: 900;
-    color: #ffffff;
-    white-space: nowrap;
-    background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.karma-hero__overlay-trim {
-    font-size: 0.85rem;
-    color: #94a3b8;
-    margin: 4px 0 12px 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.karma-hero__overlay-specs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #cbd5e1;
-    margin-bottom: 14px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.karma-hero__overlay-specs span {
-    background: rgba(255, 255, 255, 0.08);
-    padding: 3px 10px;
-    border-radius: var(--radius-md);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.karma-hero__overlay-footer {
+.karma-hero__overlay-main {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
 }
 
-.karma-hero__warranty-pill {
-    font-size: 0.75rem;
+.karma-hero__overlay-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.karma-hero__overlay-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.karma-hero__overlay-year {
+    font-size: 10px;
     font-weight: 700;
     color: var(--color-accent);
-    background: rgba(85, 160, 31, 0.12);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(85, 160, 31, 0.15);
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
     border: 1px solid rgba(85, 160, 31, 0.25);
-    padding: 4px 10px;
-    border-radius: var(--radius-pill);
+    flex-shrink: 0;
+}
+
+.karma-hero__overlay-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.karma-hero__overlay-mileage {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.karma-hero__overlay-pricing {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.karma-hero__overlay-price {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #ffffff;
+    white-space: nowrap;
 }
 
 .karma-hero__cta-button {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 700;
     color: #ffffff;
     background: var(--color-accent);
-    padding: 6px 14px;
+    padding: 6px 12px;
     border-radius: var(--radius-md);
+    white-space: nowrap;
     transition: background 0.2s ease, transform 0.2s ease;
 }
 
@@ -291,21 +280,21 @@
     top: 50%;
     transform: translateY(-50%);
     z-index: 10;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background: rgba(15, 23, 42, 0.65);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: #ffffff;
-    font-size: 1.1rem;
+    font-size: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    opacity: 0.7;
+    opacity: 0.75;
 }
 
 .karma-hero__slider-container:hover .karma-hero__nav-btn {
@@ -318,23 +307,23 @@
     transform: translateY(-50%) scale(1.08);
 }
 
-.karma-hero__nav-btn--prev { left: 16px; }
-.karma-hero__nav-btn--next { right: 16px; }
+.karma-hero__nav-btn--prev { left: 12px; }
+.karma-hero__nav-btn--next { right: 12px; }
 
 /* Pagination Dots */
 .karma-hero__dots {
     position: absolute;
-    bottom: -28px;
+    bottom: -24px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 8px;
+    gap: 6px;
     z-index: 10;
 }
 
 .karma-hero__dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: rgba(148, 163, 184, 0.4);
     border: none;
@@ -344,11 +333,10 @@
 }
 
 .karma-hero__dot--active {
-    width: 28px;
-    border-radius: 5px;
+    width: 24px;
+    border-radius: 4px;
     background: var(--color-accent);
 }
-
 
 /* Responsive Media Queries */
 @media (max-width: 1200px) {
@@ -359,19 +347,19 @@
     }
     
     .karma-hero__grid {
-        grid-template-columns: 1.2fr 0.8fr;
+        grid-template-columns: 1.1fr 0.9fr;
         gap: var(--spacing-xl);
     }
 
     .karma-hero__visual {
-        height: 440px;
+        height: 460px;
     }
 }
 
 @media (max-width: 1024px) {
     .karma-hero {
         min-height: auto;
-        padding-top: calc(var(--header-height) + var(--spacing-2xl));
+        padding-top: calc(var(--header-height) + var(--spacing-xl));
         padding-bottom: var(--spacing-4xl);
     }
 
@@ -395,7 +383,7 @@
     }
 
     .karma-hero__visual {
-        height: 380px;
+        height: 420px;
         order: -1;
     }
 }
@@ -407,6 +395,64 @@
     }
 
     .karma-hero__visual {
-        height: 260px;
+        height: 320px;
+    }
+
+    .karma-hero__stock-tag {
+        top: 10px;
+        left: 10px;
+        padding: 4px 10px;
+        font-size: 9px;
+    }
+
+    .karma-hero__overlay-card {
+        bottom: 8px;
+        left: 8px;
+        right: 8px;
+        padding: 8px 10px;
+    }
+
+    .karma-hero__overlay-title {
+        font-size: 0.92rem;
+    }
+
+    .karma-hero__overlay-mileage {
+        font-size: 0.7rem;
+    }
+
+    .karma-hero__overlay-price {
+        font-size: 1.1rem;
+    }
+
+    .karma-hero__cta-button {
+        font-size: 0.7rem;
+        padding: 4px 9px;
+    }
+
+    .karma-hero__nav-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
+
+    .karma-hero__nav-btn--prev { left: 6px; }
+    .karma-hero__nav-btn--next { right: 6px; }
+}
+
+@media (max-width: 420px) {
+    .karma-hero__visual {
+        height: 280px;
+    }
+
+    .karma-hero__overlay-main {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .karma-hero__overlay-pricing {
+        width: 100%;
+        justify-content: space-between;
     }
 }
+

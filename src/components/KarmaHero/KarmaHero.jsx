@@ -119,37 +119,28 @@ export default function KarmaHero() {
                       <span className="karma-hero__pulse-dot"></span> IN STOCK • READY TODAY
                     </span>
 
-                    {/* Vehicle Overlay Specs Card */}
+                    {/* Compact Vehicle Overlay Card */}
                     <div className="karma-hero__overlay-card">
-                      <div className="karma-hero__overlay-header">
-                        <div className="karma-hero__overlay-title-group">
-                          <span className="karma-hero__overlay-year">{currentCar.year}</span>
-                          <h3 className="karma-hero__overlay-title">
-                            {currentCar.make} {currentCar.model}
-                          </h3>
+                      <div className="karma-hero__overlay-main">
+                        <div className="karma-hero__overlay-info">
+                          <div className="karma-hero__overlay-title-row">
+                            <span className="karma-hero__overlay-year">{currentCar.year}</span>
+                            <h3 className="karma-hero__overlay-title">
+                              {currentCar.make} {currentCar.model}
+                            </h3>
+                          </div>
+                          <span className="karma-hero__overlay-mileage">
+                            🛣️ {formatMileage(currentCar.mileage)} mi
+                          </span>
                         </div>
-                        <span className="karma-hero__overlay-price">
-                          {formatPrice(currentCar.price)}
-                        </span>
-                      </div>
-
-                      {currentCar.trim && (
-                        <p className="karma-hero__overlay-trim">{currentCar.trim}</p>
-                      )}
-
-                      <div className="karma-hero__overlay-specs">
-                        <span>🛣️ {formatMileage(currentCar.mileage)} mi</span>
-                        <span>⛽ {currentCar.fuel || 'Petrol'}</span>
-                        <span>⚙️ {currentCar.transmission || 'Manual'}</span>
-                      </div>
-
-                      <div className="karma-hero__overlay-footer">
-                        <span className="karma-hero__warranty-pill">
-                          🛡️ 30 Days Warranty Included
-                        </span>
-                        <span className="karma-hero__cta-button">
-                          View Vehicle &rsaquo;
-                        </span>
+                        <div className="karma-hero__overlay-pricing">
+                          <span className="karma-hero__overlay-price">
+                            {formatPrice(currentCar.price)}
+                          </span>
+                          <span className="karma-hero__cta-button">
+                            View Vehicle &rsaquo;
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
