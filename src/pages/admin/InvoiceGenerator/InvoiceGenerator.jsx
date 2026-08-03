@@ -27,6 +27,44 @@ const formatMakeModelTitleCase = (makeStr, modelStr) => {
     return { make: formattedMake || '[Make]', model: formattedModel || '[Model]' };
 };
 
+const parseInvoiceNotes = (rawNotes) => {
+    if (!rawNotes) {
+        return {
+            deliveryDetails: '',
+            warrantyInfo: '30 Days Warranty Included. Optional Extended Warranty Available (Additional Charges Apply).',
+            additionalComments: '',
+            termsOfSale: 'Please make payment by the due date shown on this invoice. Title to the vehicle remains with Vancar Autos until funds are cleared in full.'
+        };
+    }
+    let notesObj = rawNotes;
+    if (typeof rawNotes === 'string') {
+        try {
+            notesObj = JSON.parse(rawNotes);
+        } catch (e) {
+            return {
+                deliveryDetails: rawNotes !== '[object Object]' ? rawNotes : '',
+                warrantyInfo: '',
+                additionalComments: '',
+                termsOfSale: ''
+            };
+        }
+    }
+    if (typeof notesObj !== 'object' || notesObj === null) {
+        return {
+            deliveryDetails: '',
+            warrantyInfo: '',
+            additionalComments: '',
+            termsOfSale: ''
+        };
+    }
+    return {
+        deliveryDetails: notesObj.deliveryDetails || '',
+        warrantyInfo: notesObj.warrantyInfo || '',
+        additionalComments: notesObj.additionalComments || '',
+        termsOfSale: notesObj.termsOfSale || ''
+    };
+};
+
 export default function InvoiceGenerator() {
     const [invoicesList, setInvoicesList] = useState([]);
     const [carsList, setCarsList] = useState([]);
@@ -136,7 +174,6 @@ export default function InvoiceGenerator() {
 
         window.addEventListener('resize', updateScale);
         return () => {
-            clearTimeout(timer);
             observer.disconnect();
             window.removeEventListener('resize', updateScale);
         };
@@ -260,12 +297,7 @@ export default function InvoiceGenerator() {
             financeAmount: invoice.sale_details.financeAmount,
             balanceDue: invoice.sale_details.balanceDue
         });
-        setNotes({
-            deliveryDetails: invoice.notes?.deliveryDetails || '',
-            warrantyInfo: invoice.notes?.warrantyInfo || '',
-            additionalComments: invoice.notes?.additionalComments || '',
-            termsOfSale: invoice.notes?.termsOfSale || ''
-        });
+        setNotes(parseInvoiceNotes(invoice.notes));
         setViewMode('form');
     };
 
@@ -285,12 +317,7 @@ export default function InvoiceGenerator() {
             financeAmount: invoice.sale_details.financeAmount,
             balanceDue: invoice.sale_details.balanceDue
         });
-        setNotes({
-            deliveryDetails: invoice.notes?.deliveryDetails || '',
-            warrantyInfo: invoice.notes?.warrantyInfo || '',
-            additionalComments: invoice.notes?.additionalComments || '',
-            termsOfSale: invoice.notes?.termsOfSale || ''
-        });
+        setNotes(parseInvoiceNotes(invoice.notes));
         setViewMode('form');
     };
 
@@ -377,7 +404,7 @@ export default function InvoiceGenerator() {
         const vehicle = invoiceData.vehicle_details;
         const customer = invoiceData.customer_details;
         const sale = invoiceData.sale_details;
-        const invNotes = invoiceData.notes;
+        const invNotes = parseInvoiceNotes(invoiceData.notes);
 
         const subtotalFormatted = (parseFloat(sale.cashPrice) || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const depositFormatted = (parseFloat(sale.deposit) || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -505,7 +532,7 @@ export default function InvoiceGenerator() {
                 </div>
 
                 ${invNotes.deliveryDetails || invNotes.additionalComments ? `
-                <div style="margin-bottom: 25px; background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 12px; font-size: 10px; line-height: 1.4; color: #475569;">
+                <div style="margin-bottom: 25px; background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 12px; font-size: 10px; line-height: 1.4; color: #475569; white-space: pre-wrap;">
                     ${invNotes.deliveryDetails ? `<div><strong>Delivery Details:</strong> ${invNotes.deliveryDetails}</div>` : ''}
                     ${invNotes.additionalComments ? `<div style="margin-top:4px;"><strong>Additional Comments:</strong> ${invNotes.additionalComments}</div>` : ''}
                 </div>` : ''}
@@ -1239,7 +1266,7 @@ export default function InvoiceGenerator() {
                                 </div>
 
                                 {(notes.deliveryDetails || notes.additionalComments) && (
-                                    <div className="invoice-pdf-additional-box mb-4">
+                                    <div className="invoice-pdf-additional-box mb-4" style={{ whiteSpace: 'pre-wrap' }}>
                                         {notes.deliveryDetails && <div><strong>Delivery Details:</strong> {notes.deliveryDetails}</div>}
                                         {notes.additionalComments && <div style={{ marginTop: '4px' }}><strong>Additional Comments:</strong> {notes.additionalComments}</div>}
                                     </div>

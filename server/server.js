@@ -453,7 +453,21 @@ app.delete('/api/contact-submissions/:id', async (req, res) => {
 app.get('/api/invoices', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM invoices ORDER BY created_at DESC');
-        res.json(result.rows);
+        const rows = result.rows.map(row => {
+            let parsedNotes = row.notes;
+            if (typeof row.notes === 'string') {
+                try {
+                    parsedNotes = JSON.parse(row.notes);
+                } catch (e) {
+                    parsedNotes = row.notes;
+                }
+            }
+            return {
+                ...row,
+                notes: parsedNotes
+            };
+        });
+        res.json(rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -462,11 +476,12 @@ app.get('/api/invoices', async (req, res) => {
 
 app.post('/api/invoices', async (req, res) => {
     const { id, invoice_number, invoice_date, due_date, customer_details, vehicle_details, sale_details, notes } = req.body;
+    const formattedNotes = typeof notes === 'object' ? JSON.stringify(notes) : (notes || '');
     try {
         const result = await db.query(
             `INSERT INTO invoices (id, invoice_number, invoice_date, due_date, customer_details, vehicle_details, sale_details, notes, created_at, updated_at)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()) RETURNING *`,
-            [id, invoice_number, invoice_date, due_date, JSON.stringify(customer_details), JSON.stringify(vehicle_details), JSON.stringify(sale_details), notes]
+            [id, invoice_number, invoice_date, due_date, JSON.stringify(customer_details), JSON.stringify(vehicle_details), JSON.stringify(sale_details), formattedNotes]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -478,12 +493,13 @@ app.post('/api/invoices', async (req, res) => {
 app.put('/api/invoices/:id', async (req, res) => {
     const { id } = req.params;
     const { invoice_number, invoice_date, due_date, customer_details, vehicle_details, sale_details, notes } = req.body;
+    const formattedNotes = typeof notes === 'object' ? JSON.stringify(notes) : (notes || '');
     try {
         const result = await db.query(
             `UPDATE invoices 
              SET invoice_number=$1, invoice_date=$2, due_date=$3, customer_details=$4, vehicle_details=$5, sale_details=$6, notes=$7, updated_at=NOW()
              WHERE id=$8 RETURNING *`,
-            [invoice_number, invoice_date, due_date, JSON.stringify(customer_details), JSON.stringify(vehicle_details), JSON.stringify(sale_details), notes, id]
+            [invoice_number, invoice_date, due_date, JSON.stringify(customer_details), JSON.stringify(vehicle_details), JSON.stringify(sale_details), formattedNotes, id]
         );
         res.json(result.rows[0]);
     } catch (err) {
