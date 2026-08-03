@@ -107,6 +107,7 @@ export default function InvoiceGenerator() {
         invoiceDate: new Date().toISOString().split('T')[0],
         dueDate: new Date().toISOString().split('T')[0],
         cashPrice: 0,
+        deliveryFee: 0,
         deposit: 0,
         partExchange: 0,
         settlementFigure: 0,
@@ -130,18 +131,19 @@ export default function InvoiceGenerator() {
     // Handle calculation of totals
     useEffect(() => {
         const cashPrice = parseFloat(saleDetails.cashPrice) || 0;
+        const deliveryFee = parseFloat(saleDetails.deliveryFee) || 0;
         const deposit = parseFloat(saleDetails.deposit) || 0;
         const px = parseFloat(saleDetails.partExchange) || 0;
         const settlement = parseFloat(saleDetails.settlementFigure) || 0;
         const finance = parseFloat(saleDetails.financeAmount) || 0;
 
-        // Balance Due = Cash Price - Deposit - Part Exchange + Settlement Figure - Finance Amount
-        const balance = cashPrice - deposit - px + settlement - finance;
+        // Balance Due = Cash Price + Delivery Amount - Deposit - Part Exchange + Settlement Figure - Finance Amount
+        const balance = cashPrice + deliveryFee - deposit - px + settlement - finance;
         setSaleDetails(prev => ({
             ...prev,
             balanceDue: balance
         }));
-    }, [saleDetails.cashPrice, saleDetails.deposit, saleDetails.partExchange, saleDetails.settlementFigure, saleDetails.financeAmount]);
+    }, [saleDetails.cashPrice, saleDetails.deliveryFee, saleDetails.deposit, saleDetails.partExchange, saleDetails.settlementFigure, saleDetails.financeAmount]);
 
     // Calculate live preview scaling dynamically to fit screens
     useEffect(() => {
@@ -263,6 +265,7 @@ export default function InvoiceGenerator() {
             invoiceDate: new Date().toISOString().split('T')[0],
             dueDate: new Date().toISOString().split('T')[0],
             cashPrice: 0,
+            deliveryFee: 0,
             deposit: 0,
             partExchange: 0,
             settlementFigure: 0,
@@ -291,6 +294,7 @@ export default function InvoiceGenerator() {
             invoiceDate: invoice.invoice_date,
             dueDate: invoice.due_date,
             cashPrice: invoice.sale_details.cashPrice,
+            deliveryFee: invoice.sale_details.deliveryFee || 0,
             deposit: invoice.sale_details.deposit,
             partExchange: invoice.sale_details.partExchange,
             settlementFigure: invoice.sale_details.settlementFigure,
@@ -311,6 +315,7 @@ export default function InvoiceGenerator() {
             invoiceDate: new Date().toISOString().split('T')[0],
             dueDate: new Date().toISOString().split('T')[0],
             cashPrice: invoice.sale_details.cashPrice,
+            deliveryFee: invoice.sale_details.deliveryFee || 0,
             deposit: invoice.sale_details.deposit,
             partExchange: invoice.sale_details.partExchange,
             settlementFigure: invoice.sale_details.settlementFigure,
@@ -349,6 +354,7 @@ export default function InvoiceGenerator() {
             vehicle_details: vehicleDetails,
             sale_details: {
                 cashPrice: saleDetails.cashPrice,
+                deliveryFee: saleDetails.deliveryFee || 0,
                 deposit: saleDetails.deposit,
                 partExchange: saleDetails.partExchange,
                 settlementFigure: saleDetails.settlementFigure,
@@ -385,6 +391,7 @@ export default function InvoiceGenerator() {
             vehicle_details: vehicleDetails,
             sale_details: {
                 cashPrice: saleDetails.cashPrice,
+                deliveryFee: saleDetails.deliveryFee || 0,
                 deposit: saleDetails.deposit,
                 partExchange: saleDetails.partExchange,
                 settlementFigure: saleDetails.settlementFigure,
@@ -407,6 +414,7 @@ export default function InvoiceGenerator() {
         const invNotes = parseInvoiceNotes(invoiceData.notes);
 
         const subtotalFormatted = (parseFloat(sale.cashPrice) || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const deliveryFeeFormatted = (parseFloat(sale.deliveryFee) || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const depositFormatted = (parseFloat(sale.deposit) || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const pxFormatted = (parseFloat(sale.partExchange) || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const settlementFormatted = (parseFloat(sale.settlementFigure) || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -506,6 +514,11 @@ export default function InvoiceGenerator() {
                                 <strong style="color:#475569;">Subtotal:</strong>
                                 <span style="color:#0f172a;">£${subtotalFormatted}</span>
                             </div>
+                            ${parseFloat(sale.deliveryFee) > 0 ? `
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 4px 0;">
+                                <strong style="color:#475569;">Delivery Amount:</strong>
+                                <span style="color:#0f172a;">+ £${deliveryFeeFormatted}</span>
+                            </div>` : ''}
                             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 4px 0;">
                                 <strong style="color:#475569;">Deposit Paid:</strong>
                                 <span style="color:#55A01F; font-weight: 500;">- £${depositFormatted}</span>
@@ -1025,6 +1038,16 @@ export default function InvoiceGenerator() {
                                     />
                                 </div>
                                 <div className="form-group">
+                                    <label className="form-label">Delivery Amount (£)</label>
+                                    <input 
+                                        type="number" 
+                                        className="form-input" 
+                                        value={saleDetails.deliveryFee || ''} 
+                                        onChange={(e) => setSaleDetails(prev => ({ ...prev, deliveryFee: parseFloat(e.target.value) || 0 }))}
+                                        placeholder="e.g. 150"
+                                    />
+                                </div>
+                                <div className="form-group">
                                     <label className="form-label">Deposit (£)</label>
                                     <input 
                                         type="number" 
@@ -1240,6 +1263,12 @@ export default function InvoiceGenerator() {
                                             <span>Subtotal:</span>
                                             <span>£{(saleDetails.cashPrice || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         </div>
+                                        {saleDetails.deliveryFee > 0 && (
+                                            <div className="totals-row">
+                                                <span>Delivery Amount:</span>
+                                                <span>+ £{(saleDetails.deliveryFee || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                            </div>
+                                        )}
                                         <div className="totals-row accent-row">
                                             <span>Deposit Paid:</span>
                                             <span>- £{(saleDetails.deposit || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
