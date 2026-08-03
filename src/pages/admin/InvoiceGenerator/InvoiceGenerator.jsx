@@ -546,14 +546,13 @@ export default function InvoiceGenerator() {
 
                 <div style="margin-bottom: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 8px; font-size: 9.5px; line-height: 1.35; color: #334155;">
                     <h2 style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #55A01F; margin: 0 0 4px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px; letter-spacing: 0.5px;">Bank Payment Details</h2>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px 8px;">
-                        <div><strong style="color: #64748b;">Account Name:</strong> VanCar Autos Limited</div>
-                        <div><strong style="color: #64748b;">Sort Code:</strong> 20-76-92</div>
-                        <div><strong style="color: #64748b;">Account No:</strong> 13887405</div>
-                        <div><strong style="color: #64748b;">Account Type:</strong> Business</div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px 12px;">
+                        <div><strong style="color: #64748b;">Account Name:</strong> VanCar Autos Limited (Business)</div>
                         <div><strong style="color: #64748b;">Bank:</strong> Barclays</div>
-                        <div><strong style="color: #64748b;">Bank Address:</strong> 86-88 Market Street, Manchester, M1 1PD</div>
-                        <div style="grid-column: span 3;"><strong style="color: #64748b;">Registered Address:</strong> 1 Hardman Street, Manchester, United Kingdom, M3 3HF</div>
+                        <div><strong style="color: #64748b;">Sort Code:</strong> 20-76-92</div>
+                        <div><strong style="color: #64748b;">Account Number:</strong> 13887405</div>
+                        <div style="grid-column: span 2;"><strong style="color: #64748b;">Bank Address:</strong> 86-88 Market Street, Manchester, M1 1PD</div>
+                        <div style="grid-column: span 2;"><strong style="color: #64748b;">Company Address:</strong> 1 Hardman Street, Manchester, United Kingdom, M3 3HF</div>
                     </div>
                 </div>
 
@@ -568,7 +567,7 @@ export default function InvoiceGenerator() {
                 <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 9.5px;">
                     <div style="width: 45%;">
                         <div style="height: 22px; border-bottom: 1px solid #94a3b8; margin-bottom: 3px;"></div>
-                        <strong style="color: #475569;">Authorized Signature (Vancar Autos)</strong>
+                        <strong style="color: #475569;">Authorised Signature (Vancar Autos)</strong>
                     </div>
                     <div style="width: 45%;">
                         <div style="height: 22px; border-bottom: 1px solid #94a3b8; margin-bottom: 3px;"></div>
@@ -1311,13 +1310,12 @@ export default function InvoiceGenerator() {
                                 <div className="invoice-pdf-bank-box mb-2">
                                     <h2 className="invoice-pdf-section-title">Bank Payment Details</h2>
                                     <div className="bank-details-grid">
-                                        <div><strong>Account Name:</strong> VanCar Autos Limited</div>
-                                        <div><strong>Sort Code:</strong> 20-76-92</div>
-                                        <div><strong>Account No:</strong> 13887405</div>
-                                        <div><strong>Account Type:</strong> Business</div>
+                                        <div><strong>Account Name:</strong> VanCar Autos Limited (Business)</div>
                                         <div><strong>Bank:</strong> Barclays</div>
-                                        <div><strong>Bank Address:</strong> 86-88 Market Street, Manchester, M1 1PD</div>
-                                        <div className="span-3"><strong>Account Address:</strong> 1 Hardman Street, Manchester, United Kingdom, M3 3HF</div>
+                                        <div><strong>Sort Code:</strong> 20-76-92</div>
+                                        <div><strong>Account Number:</strong> 13887405</div>
+                                        <div className="span-2"><strong>Bank Address:</strong> 86-88 Market Street, Manchester, M1 1PD</div>
+                                        <div className="span-2"><strong>Company Address:</strong> 1 Hardman Street, Manchester, United Kingdom, M3 3HF</div>
                                     </div>
                                 </div>
 
@@ -1332,7 +1330,7 @@ export default function InvoiceGenerator() {
                                 <div className="invoice-pdf-signatures">
                                     <div className="sig-block">
                                         <div className="sig-line"></div>
-                                        <strong>Authorized Signature (Vancar Autos)</strong>
+                                        <strong>Authorised Signature (Vancar Autos)</strong>
                                     </div>
                                     <div className="sig-block">
                                         <div className="sig-line"></div>
