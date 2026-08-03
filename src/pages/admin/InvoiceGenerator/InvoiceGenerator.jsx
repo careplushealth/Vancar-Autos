@@ -426,27 +426,24 @@ export default function InvoiceGenerator() {
         const firstRegFormatted = vehicle.firstRegDate ? new Date(vehicle.firstRegDate).toLocaleDateString('en-GB') : '';
 
         tempDiv.innerHTML = `
-            <div id="invoice-pdf-template-download" style="width: 210mm; min-height: 297mm; padding: 20mm; box-sizing: border-box; background: white; font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #0f172a; line-height: 1.5;">
-                <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #55A01F; padding-bottom: 20px; margin-bottom: 25px;">
+            <div id="invoice-pdf-template-download" style="width: 210mm; padding: 10mm 12mm; box-sizing: border-box; background: white; font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #0f172a; line-height: 1.35;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #55A01F; padding-bottom: 8px; margin-bottom: 10px;">
                     <div>
-                        <img src="/images/logo.png" alt="Vancar Autos" style="height: 55px; margin-bottom: 12px; display: block;" />
-                        <div style="font-size: 11px; color: #475569; line-height: 1.4;">
+                        <img src="/images/logo.png" alt="Vancar Autos" style="height: 40px; margin-bottom: 4px; display: block;" />
+                        <div style="font-size: 10px; color: #475569; line-height: 1.3;">
                             <strong>Vancar Autos Ltd</strong><br />
-                            Yard 14, Midland Street<br />
-                            Manchester, M12 6LB<br />
-                            Phone: 07386 533337<br />
-                            Email: hellovancarautos@gmail.com<br />
-                            Web: www.vancarautos.co.uk
+                            Yard 14, Midland Street, Manchester, M12 6LB<br />
+                            Phone: 07386 533337 | Email: hellovancarautos@gmail.com
                         </div>
                     </div>
-                    <div style="text-align: right; min-width: 220px;">
-                        <h1 style="font-size: 32px; font-weight: bold; color: #55A01F; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Invoice</h1>
-                        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 11px; line-height: 1.5; text-align: left;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <div style="text-align: right; min-width: 200px;">
+                        <h1 style="font-size: 26px; font-weight: bold; color: #55A01F; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Invoice</h1>
+                        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 10px; font-size: 9.5px; line-height: 1.4; text-align: left;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
                                 <strong style="color: #475569;">Invoice No:</strong>
                                 <span style="color: #0f172a; font-weight: 600;">${invoiceData.invoice_number}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
                                 <strong style="color: #475569;">Invoice Date:</strong>
                                 <span style="color: #0f172a;">${invoiceDateFormatted}</span>
                             </div>
@@ -458,44 +455,41 @@ export default function InvoiceGenerator() {
                     </div>
                 </div>
 
-                <div style="margin-bottom: 25px;">
-                    <h2 style="font-size: 12px; text-transform: uppercase; color: #55A01F; margin: 0 0 8px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; letter-spacing: 0.5px;">Bill To</h2>
-                    <div style="font-size: 12px; color: #0f172a; line-height: 1.5;">
+                <div style="margin-bottom: 10px;">
+                    <h2 style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #55A01F; margin: 0 0 4px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px; letter-spacing: 0.5px;">Bill To</h2>
+                    <div style="font-size: 10.5px; color: #0f172a; line-height: 1.35;">
                         <strong>${customer.name || 'Customer Name'}</strong><br />
-                        ${customer.address1 || 'Address Line 1'}${customer.address2 ? `<br />${customer.address2}` : ''}<br />
-                        ${customer.city || 'City'}, ${customer.postcode || 'Postcode'}<br />
-                        ${customer.phone ? `Phone: ${customer.phone}<br />` : ''}
-                        ${customer.email ? `Email: ${customer.email}` : ''}
+                        ${customer.address1 || 'Address Line 1'}${customer.address2 ? `, ${customer.address2}` : ''}, ${customer.city || 'City'}, ${customer.postcode || 'Postcode'}<br />
+                        ${customer.phone ? `Phone: ${customer.phone} | ` : ''}${customer.email ? `Email: ${customer.email}` : ''}
                     </div>
                 </div>
 
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 11px;">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10px;">
                     <thead>
                         <tr style="background-color: #55A01F; color: white;">
-                            <th style="text-align: left; padding: 10px; border-radius: 4px 0 0 4px; font-weight: 600; text-transform: uppercase; border: none;">Description</th>
-                            <th style="text-align: center; padding: 10px; width: 80px; font-weight: 600; text-transform: uppercase; border: none;">Qty</th>
-                            <th style="text-align: right; padding: 10px; width: 100px; font-weight: 600; text-transform: uppercase; border: none;">Rate</th>
-                            <th style="text-align: right; padding: 10px; width: 110px; border-radius: 0 4px 4px 0; font-weight: 600; text-transform: uppercase; border: none;">Amount</th>
+                            <th style="text-align: left; padding: 6px 8px; border-radius: 4px 0 0 4px; font-weight: 600; text-transform: uppercase; border: none;">Description</th>
+                            <th style="text-align: center; padding: 6px 8px; width: 60px; font-weight: 600; text-transform: uppercase; border: none;">Qty</th>
+                            <th style="text-align: right; padding: 6px 8px; width: 90px; font-weight: 600; text-transform: uppercase; border: none;">Rate</th>
+                            <th style="text-align: right; padding: 6px 8px; width: 100px; border-radius: 0 4px 4px 0; font-weight: 600; text-transform: uppercase; border: none;">Amount</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr style="border-bottom: 1px solid #e2e8f0;">
-                            <td style="padding: 12px 10px; font-size: 12px; color: #0f172a; line-height: 1.4;">
-                                <strong>Vehicle Sale</strong><br />
-                                ${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''} ${vehicle.trim ? `- ${vehicle.trim}` : ''}<br />
-                                <span style="color: #64748b; font-size: 10px;">Reg: ${vehicle.registration || 'N/A'} | Mileage: ${vehicle.mileage ? parseFloat(vehicle.mileage).toLocaleString('en-GB') : 'N/A'} Miles</span>
+                            <td style="padding: 6px 8px; font-size: 10.5px; color: #0f172a; line-height: 1.35;">
+                                <strong>Vehicle Sale</strong> - ${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''} ${vehicle.trim ? `- ${vehicle.trim}` : ''}<br />
+                                <span style="color: #64748b; font-size: 9.5px;">Reg: ${vehicle.registration || 'N/A'} | Mileage: ${vehicle.mileage ? parseFloat(vehicle.mileage).toLocaleString('en-GB') : 'N/A'} Miles</span>
                             </td>
-                            <td style="text-align: center; padding: 12px 10px; font-size: 12px; color: #0f172a;">1</td>
-                            <td style="text-align: right; padding: 12px 10px; font-size: 12px; color: #0f172a;">£${subtotalFormatted}</td>
-                            <td style="text-align: right; padding: 12px 10px; font-size: 12px; color: #0f172a; font-weight: 600;">£${subtotalFormatted}</td>
+                            <td style="text-align: center; padding: 6px 8px; font-size: 10.5px; color: #0f172a;">1</td>
+                            <td style="text-align: right; padding: 6px 8px; font-size: 10.5px; color: #0f172a;">£${subtotalFormatted}</td>
+                            <td style="text-align: right; padding: 6px 8px; font-size: 10.5px; color: #0f172a; font-weight: 600;">£${subtotalFormatted}</td>
                         </tr>
                     </tbody>
                 </table>
 
-                <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
-                    <div style="width: 48%;">
-                        <h2 style="font-size: 12px; text-transform: uppercase; color: #55A01F; margin: 0 0 8px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; letter-spacing: 0.5px;">Vehicle Details</h2>
-                        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 10px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <div style="width: 50%;">
+                        <h2 style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #55A01F; margin: 0 0 4px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px; letter-spacing: 0.5px;">Vehicle Details</h2>
+                        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 8px; font-size: 9.5px;">
                             <div><strong style="color:#64748b;">Registration:</strong> <span style="color:#0f172a; font-weight:500;">${vehicle.registration || '-'}</span></div>
                             <div><strong style="color:#64748b;">Make:</strong> <span style="color:#0f172a; font-weight:500;">${vehicle.make || '-'}</span></div>
                             <div><strong style="color:#64748b;">Model:</strong> <span style="color:#0f172a; font-weight:500;">${vehicle.model || '-'}</span></div>
@@ -509,34 +503,34 @@ export default function InvoiceGenerator() {
                     </div>
 
                     <div style="width: 45%; margin-left: auto;">
-                        <div style="font-size: 11px; line-height: 1.8;">
-                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+                        <div style="font-size: 10px; line-height: 1.5;">
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">
                                 <strong style="color:#475569;">Subtotal:</strong>
                                 <span style="color:#0f172a;">£${subtotalFormatted}</span>
                             </div>
                             ${parseFloat(sale.deliveryFee) > 0 ? `
-                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 4px 0;">
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 2px 0;">
                                 <strong style="color:#475569;">Delivery Amount:</strong>
                                 <span style="color:#0f172a;">+ £${deliveryFeeFormatted}</span>
                             </div>` : ''}
-                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 4px 0;">
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 2px 0;">
                                 <strong style="color:#475569;">Deposit Paid:</strong>
                                 <span style="color:#55A01F; font-weight: 500;">- £${depositFormatted}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 4px 0;">
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 2px 0;">
                                 <strong style="color:#475569;">Part Exchange:</strong>
                                 <span style="color:#55A01F; font-weight: 500;">- £${pxFormatted}</span>
                             </div>
                             ${parseFloat(sale.settlementFigure) > 0 ? `
-                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 4px 0;">
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 2px 0;">
                                 <strong style="color:#475569;">PX Settlement:</strong>
                                 <span style="color:#ef4444;">+ £${settlementFormatted}</span>
                             </div>` : ''}
-                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 4px 0;">
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 2px 0;">
                                 <strong style="color:#475569;">Finance Amount:</strong>
                                 <span style="color:#55A01F; font-weight: 500;">- £${financeFormatted}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding-top: 8px; font-size: 14px;">
+                            <div style="display: flex; justify-content: space-between; padding-top: 4px; font-size: 13px;">
                                 <strong style="color:#55A01F; font-weight: 700;">Balance Due:</strong>
                                 <span style="color:#0f172a; font-weight: 700; border-bottom: 2px double #0f172a;">£${balanceFormatted}</span>
                             </div>
@@ -545,26 +539,39 @@ export default function InvoiceGenerator() {
                 </div>
 
                 ${invNotes.deliveryDetails || invNotes.additionalComments ? `
-                <div style="margin-bottom: 25px; background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 12px; font-size: 10px; line-height: 1.4; color: #475569; white-space: pre-wrap;">
+                <div style="margin-bottom: 8px; background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 6px 8px; font-size: 9.5px; line-height: 1.3; color: #475569; white-space: pre-wrap;">
                     ${invNotes.deliveryDetails ? `<div><strong>Delivery Details:</strong> ${invNotes.deliveryDetails}</div>` : ''}
-                    ${invNotes.additionalComments ? `<div style="margin-top:4px;"><strong>Additional Comments:</strong> ${invNotes.additionalComments}</div>` : ''}
+                    ${invNotes.additionalComments ? `<div style="margin-top:2px;"><strong>Additional Comments:</strong> ${invNotes.additionalComments}</div>` : ''}
                 </div>` : ''}
 
-                <div style="margin-bottom: 40px;">
-                    <h2 style="font-size: 10px; text-transform: uppercase; color: #64748b; margin: 0 0 6px 0; letter-spacing: 0.5px;">Terms & Conditions</h2>
-                    <p style="font-size: 9px; color: #94a3b8; line-height: 1.4; margin: 0;">
+                <div style="margin-bottom: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 8px; font-size: 9.5px; line-height: 1.35; color: #334155;">
+                    <h2 style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #55A01F; margin: 0 0 4px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px; letter-spacing: 0.5px;">Bank Payment Details</h2>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px 8px;">
+                        <div><strong style="color: #64748b;">Account Name:</strong> VanCar Autos Limited</div>
+                        <div><strong style="color: #64748b;">Sort Code:</strong> 20-76-92</div>
+                        <div><strong style="color: #64748b;">Account No:</strong> 13887405</div>
+                        <div><strong style="color: #64748b;">Account Type:</strong> Business</div>
+                        <div><strong style="color: #64748b;">Bank:</strong> Barclays</div>
+                        <div><strong style="color: #64748b;">Bank Address:</strong> 86-88 Market Street, Manchester, M1 1PD</div>
+                        <div style="grid-column: span 3;"><strong style="color: #64748b;">Registered Address:</strong> 1 Hardman Street, Manchester, United Kingdom, M3 3HF</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <h2 style="font-size: 9.5px; font-weight: 600; text-transform: uppercase; color: #64748b; margin: 0 0 2px 0; letter-spacing: 0.5px;">Terms & Conditions</h2>
+                    <p style="font-size: 8.5px; color: #64748b; line-height: 1.3; margin: 0;">
                         ${invNotes.termsOfSale || 'Please make payment by the due date shown on this invoice.'}
                         ${invNotes.warrantyInfo ? ` Warranty: ${invNotes.warrantyInfo}` : ''}
                     </p>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; padding-top: 30px; border-top: 1px solid #e2e8f0; font-size: 11px;">
+                <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 9.5px;">
                     <div style="width: 45%;">
-                        <div style="height: 40px; border-bottom: 1px solid #94a3b8; margin-bottom: 6px;"></div>
+                        <div style="height: 22px; border-bottom: 1px solid #94a3b8; margin-bottom: 3px;"></div>
                         <strong style="color: #475569;">Authorized Signature (Vancar Autos)</strong>
                     </div>
                     <div style="width: 45%;">
-                        <div style="height: 40px; border-bottom: 1px solid #94a3b8; margin-bottom: 6px;"></div>
+                        <div style="height: 22px; border-bottom: 1px solid #94a3b8; margin-bottom: 3px;"></div>
                         <strong style="color: #475569;">Customer Signature</strong>
                     </div>
                 </div>
@@ -573,11 +580,11 @@ export default function InvoiceGenerator() {
 
         const downloadAction = () => {
             const opt = {
-                margin:       [0.25, 0.25, 0.25, 0.25],
+                margin:       0,
                 filename:     `Vancar-Autos-INV-${invoiceData.invoice_number}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
+                html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
             };
             const pdfElement = document.getElementById('invoice-pdf-template-download');
@@ -1295,13 +1302,26 @@ export default function InvoiceGenerator() {
                                 </div>
 
                                 {(notes.deliveryDetails || notes.additionalComments) && (
-                                    <div className="invoice-pdf-additional-box mb-4" style={{ whiteSpace: 'pre-wrap' }}>
+                                    <div className="invoice-pdf-additional-box mb-2" style={{ whiteSpace: 'pre-wrap' }}>
                                         {notes.deliveryDetails && <div><strong>Delivery Details:</strong> {notes.deliveryDetails}</div>}
-                                        {notes.additionalComments && <div style={{ marginTop: '4px' }}><strong>Additional Comments:</strong> {notes.additionalComments}</div>}
+                                        {notes.additionalComments && <div style={{ marginTop: '2px' }}><strong>Additional Comments:</strong> {notes.additionalComments}</div>}
                                     </div>
                                 )}
 
-                                <div className="invoice-pdf-notes mb-6">
+                                <div className="invoice-pdf-bank-box mb-2">
+                                    <h2 className="invoice-pdf-section-title">Bank Payment Details</h2>
+                                    <div className="bank-details-grid">
+                                        <div><strong>Account Name:</strong> VanCar Autos Limited</div>
+                                        <div><strong>Sort Code:</strong> 20-76-92</div>
+                                        <div><strong>Account No:</strong> 13887405</div>
+                                        <div><strong>Account Type:</strong> Business</div>
+                                        <div><strong>Bank:</strong> Barclays</div>
+                                        <div><strong>Bank Address:</strong> 86-88 Market Street, Manchester, M1 1PD</div>
+                                        <div className="span-3"><strong>Account Address:</strong> 1 Hardman Street, Manchester, United Kingdom, M3 3HF</div>
+                                    </div>
+                                </div>
+
+                                <div className="invoice-pdf-notes mb-3">
                                     <h2 className="invoice-pdf-section-title-light">Terms & Conditions</h2>
                                     <p className="invoice-pdf-terms-text">
                                         {notes.termsOfSale}
