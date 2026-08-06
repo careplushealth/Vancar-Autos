@@ -8,6 +8,7 @@ const EXPENSES_KEY = 'vancar_vehicle_expenses';
 const GENERAL_EXPENSES_KEY = 'vancar_general_expenses';
 const INVOICES_KEY = 'vancar_invoices';
 const DEPOSIT_SLIPS_KEY = 'vancar_deposit_slips';
+const DISTANCE_SALE_FORMS_KEY = 'vancar_distance_sale_forms';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const syncNeon = (endpoint, method, data = null) => {
@@ -605,5 +606,45 @@ export function deleteDepositSlip(id) {
     saveData(DEPOSIT_SLIPS_KEY, slips);
     syncNeon(`/deposit-slips/${id}`, 'DELETE');
 }
+
+// === Distance Sale Right to Cancel Forms ===
+export function getDistanceSaleForms() {
+    return initData(DISTANCE_SALE_FORMS_KEY, []);
+}
+
+export function createDistanceSaleForm(data) {
+    const forms = getDistanceSaleForms();
+    const nowStr = new Date().toISOString();
+    const newForm = {
+        ...data,
+        id: data.id || generateId(),
+        created_at: nowStr,
+        updated_at: nowStr
+    };
+    forms.unshift(newForm);
+    saveData(DISTANCE_SALE_FORMS_KEY, forms);
+    return newForm;
+}
+
+export function updateDistanceSaleForm(id, data) {
+    const forms = getDistanceSaleForms();
+    const idx = forms.findIndex(f => f.id === id);
+    if (idx === -1) return null;
+    const nowStr = new Date().toISOString();
+    forms[idx] = {
+        ...forms[idx],
+        ...data,
+        id,
+        updated_at: nowStr
+    };
+    saveData(DISTANCE_SALE_FORMS_KEY, forms);
+    return forms[idx];
+}
+
+export function deleteDistanceSaleForm(id) {
+    const forms = getDistanceSaleForms().filter(f => f.id !== id);
+    saveData(DISTANCE_SALE_FORMS_KEY, forms);
+}
+
 
 

@@ -71,6 +71,7 @@ const EXPENSE_TYPES = [
 export default function BusinessAnalytics() {
     const [vehicleExpenses, setVehicleExpenses] = useState(() => getVehicleExpenses());
     const [generalExpenses, setGeneralExpenses] = useState(() => getGeneralExpenses());
+    const [inventoryCars, setInventoryCars] = useState(() => getCars());
 
     // Filters
     const [periodFilter, setPeriodFilter] = useState('all');
@@ -89,6 +90,7 @@ export default function BusinessAnalytics() {
     useEffect(() => {
         setVehicleExpenses(getVehicleExpenses());
         setGeneralExpenses(getGeneralExpenses());
+        setInventoryCars(getCars());
     }, []);
 
     const now = new Date();
@@ -134,14 +136,15 @@ export default function BusinessAnalytics() {
         return true;
     };
 
-    // Filter vehicle expenses strictly by all selected filters
+    // Filter vehicle records strictly by selected filters
     const filteredVehicle = useMemo(() => {
         return vehicleExpenses.filter(r => {
             const normMake = normalizeMake(r.make);
             if (filterMake !== 'All' && normMake !== filterMake) return false;
+            const isSold = r.status === 'Sold' || r.status === 'sold';
             if (filterStatus !== 'All') {
-                if (filterStatus === 'Sold' && r.status !== 'Sold') return false;
-                if (filterStatus === 'In Stock' && r.status === 'Sold') return false;
+                if (filterStatus === 'Sold' && !isSold) return false;
+                if (filterStatus === 'In Stock' && isSold) return false;
             }
             if (filterVatScheme !== 'All' && (r.vat_scheme || 'VAT Margin') !== filterVatScheme) return false;
             if (filterExpType !== 'All') {
@@ -156,12 +159,11 @@ export default function BusinessAnalytics() {
             if (minProfit !== '' && pL < parseFloat(minProfit)) return false;
             if (maxProfit !== '' && pL > parseFloat(maxProfit)) return false;
 
-            // Filter date: use sale/creation date
             return isWithinPeriod(r.created_at);
         });
     }, [vehicleExpenses, filterMake, filterStatus, filterVatScheme, filterExpType, minRevenue, maxRevenue, minProfit, maxProfit, periodFilter, dateFrom, dateTo]);
 
-    // Filter general expenses strictly by selected filters
+    // Filter general expenses
     const filteredGeneral = useMemo(() => {
         return generalExpenses.filter(r => {
             if (filterGenCat !== 'All' && r.category !== filterGenCat) return false;
@@ -169,32 +171,54 @@ export default function BusinessAnalytics() {
         });
     }, [generalExpenses, filterGenCat, periodFilter, dateFrom, dateTo]);
 
-    // KPI calculations based strictly on filtered datasets
+    // Comprehensive Financial Metrics Audit
     const kpis = useMemo(() => {
-        const soldVehicles = filteredVehicle.filter(r => r.status === 'Sold');
-        const totalRevenue = soldVehicles.reduce((s, r) => s + parseFloat(r.selling_price || 0), 0);
-        const totalBuyingCost = filteredVehicle.reduce((s, r) => s + parseFloat(r.buying_price || 0), 0);
+        const soldVehicles = filteredVehicle.filter(r => r.status === 'Sold' || r.status === 'sold');
+        const inStockVehicles = filteredVehicle.filter(r => r.status !== 'Sold' && r.status !== 'sold');
 
-        let totalGrossVehicleExpenses = 0;
+        // Revenue & Cost of Goods Sold (COGS)
+        const totalRevenue = soldVehicles.reduce((s, r) => s + parseFloat(r.selling_price || 0), 0);
+        const soldVehiclesBuyingCost = soldVehicles.reduce((s, r) => s + parseFloat(r.buying_price || 0), 0);
+
+        // Current Stock Capital Cost (buying cost of available stock)
+        const currentStockCapital = inStockVehicles.reduce((s, r) => {
+            const buying = parseFloat(r.buying_price || 0);
+            if (buying > 0) return s + buying;
+            // Fallback to stock price from inventory if buying price not specified
+            const matchedCar = inventoryCars.find(c => c.registration && r.registration && c.registration.toUpperCase() === r.registration.toUpperCase());
+            const fallbackPrice = matchedCar ? parseFloat(matchedCar.price || 0) : 0;
+            return s + fallbackPrice;
+        }, 0);
+
+        // Separate Sold Vehicles Expenses vs In-Stock Expenses
+        let soldVehiclesExpenses = 0;
+        let inStockVehiclesExpenses = 0;
         let totalReclaimableVehicleVat = 0;
 
         filteredVehicle.forEach(r => {
+            const isSold = r.status === 'Sold' || r.status === 'sold';
             (r.expenses || []).forEach(e => {
                 const net = parseFloat(e.netAmount ?? e.amount ?? 0);
                 const vat = e.vatAmount !== undefined ? parseFloat(e.vatAmount || 0) : (e.calculateVat ? net * 0.20 : 0);
                 const gross = e.grossAmount !== undefined ? parseFloat(e.grossAmount || 0) : (net + vat);
-                totalGrossVehicleExpenses += gross;
+
+                if (isSold) {
+                    soldVehiclesExpenses += gross;
+                } else {
+                    inStockVehiclesExpenses += gross;
+                }
                 totalReclaimableVehicleVat += vat;
             });
         });
 
-        const totalNetVehicleExpenses = totalGrossVehicleExpenses - totalReclaimableVehicleVat;
+        const totalGrossVehicleExpenses = soldVehiclesExpenses + inStockVehiclesExpenses;
         const totalGeneralExpenses = filteredGeneral.reduce((s, r) => s + parseFloat(r.amount || 0), 0);
-        const totalExpenses = totalBuyingCost + totalGrossVehicleExpenses + totalGeneralExpenses;
+        const totalExpenses = soldVehiclesBuyingCost + totalGrossVehicleExpenses + totalGeneralExpenses;
 
+        // Output VAT Calculations on Sales
         let totalOutputVatMargin = 0;
         let totalOutputVatCommercial = 0;
-        let totalNetProfit = 0;
+        let totalNetProfitOnSales = 0;
 
         soldVehicles.forEach(r => {
             const selling = parseFloat(r.selling_price || 0);
@@ -213,27 +237,40 @@ export default function BusinessAnalytics() {
             }
 
             const pL = selling - buying - netExp - outVat;
-            totalNetProfit += pL;
+            totalNetProfitOnSales += pL;
         });
 
-        const grossProfit = totalRevenue - totalBuyingCost;
-        const netProfitOverall = totalNetProfit - totalGeneralExpenses;
+        const grossProfit = totalRevenue - soldVehiclesBuyingCost;
+        const netProfitOverall = totalNetProfitOnSales - totalGeneralExpenses;
         const vehiclesSold = soldVehicles.length;
-        const avgProfitPerVehicle = vehiclesSold > 0 ? totalNetProfit / vehiclesSold : 0;
+        const avgProfitPerVehicle = vehiclesSold > 0 ? totalNetProfitOnSales / vehiclesSold : 0;
 
         const totalOutputVat = totalOutputVatMargin + totalOutputVatCommercial;
         const netVatPayable = totalOutputVat - totalReclaimableVehicleVat;
 
         return {
-            totalRevenue, totalGrossVehicleExpenses, totalReclaimableVehicleVat, totalBuyingCost, totalGeneralExpenses,
-            totalExpenses, totalNetProfit: netProfitOverall, grossProfit,
-            vehiclesSold, avgProfitPerVehicle,
-            totalOutputVatMargin, totalOutputVatCommercial, totalOutputVat, netVatPayable,
-            inStockCount: filteredVehicle.filter(r => r.status !== 'Sold').length
+            totalRevenue,
+            grossProfit,
+            totalNetProfit: netProfitOverall,
+            soldVehiclesBuyingCost,
+            currentStockCapital,
+            soldVehiclesExpenses,
+            inStockVehiclesExpenses,
+            totalGrossVehicleExpenses,
+            totalGeneralExpenses,
+            totalExpenses,
+            vehiclesSold,
+            avgProfitPerVehicle,
+            totalOutputVatMargin,
+            totalOutputVatCommercial,
+            totalOutputVat,
+            totalReclaimableVehicleVat,
+            netVatPayable,
+            inStockCount: inStockVehicles.length
         };
-    }, [filteredVehicle, filteredGeneral]);
+    }, [filteredVehicle, filteredGeneral, inventoryCars]);
 
-    // Monthly Chart Data built strictly from FILTERED datasets
+    // Monthly Chart Data
     const monthlyChartData = useMemo(() => {
         const months = [];
         for (let i = 11; i >= 0; i--) {
@@ -243,7 +280,7 @@ export default function BusinessAnalytics() {
 
         const revenues = months.map(({ year, month }) =>
             filteredVehicle
-                .filter(r => r.status === 'Sold' && new Date(r.created_at).getFullYear() === year && new Date(r.created_at).getMonth() === month)
+                .filter(r => (r.status === 'Sold' || r.status === 'sold') && new Date(r.created_at).getFullYear() === year && new Date(r.created_at).getMonth() === month)
                 .reduce((s, r) => s + parseFloat(r.selling_price || 0), 0)
         );
 
@@ -271,7 +308,7 @@ export default function BusinessAnalytics() {
         };
     }, [filteredVehicle, filteredGeneral, thisYear, thisMonth]);
 
-    // Vehicle expense type breakdown (from filtered dataset)
+    // Vehicle expense breakdown
     const vehicleExpBreakdown = useMemo(() => {
         const byType = {};
         filteredVehicle.forEach(r => {
@@ -282,7 +319,7 @@ export default function BusinessAnalytics() {
         return Object.entries(byType).sort((a, b) => b[1] - a[1]).slice(0, 8);
     }, [filteredVehicle]);
 
-    // General expense category breakdown (from filtered dataset)
+    // General expense breakdown
     const genExpBreakdown = useMemo(() => {
         const byCat = {};
         filteredGeneral.forEach(r => {
@@ -291,15 +328,15 @@ export default function BusinessAnalytics() {
         return Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 8);
     }, [filteredGeneral]);
 
-    // Top profitable vehicles (from filtered dataset)
+    // Top profitable vehicles
     const topVehicles = useMemo(() =>
         filteredVehicle
-            .filter(r => r.status === 'Sold')
+            .filter(r => r.status === 'Sold' || r.status === 'sold')
             .sort((a, b) => parseFloat(b.profit_loss || 0) - parseFloat(a.profit_loss || 0))
             .slice(0, 8),
         [filteredVehicle]);
 
-    // Lead Source Analytics (Vehicles sold by channel & average Auto Trader days)
+    // Lead Source Analytics
     const leadSourceAnalytics = useMemo(() => {
         const cars = getCars().filter(c => c.status === 'sold' && (c.lead_source || c.leadSource));
         const counts = {};
@@ -338,30 +375,32 @@ export default function BusinessAnalytics() {
     // Export CSV
     const exportCSV = () => {
         const rows = [
-            ['Metric', 'Value'],
-            ['Total Revenue', kpis.totalRevenue.toFixed(2)],
-            ['Gross Profit', kpis.grossProfit.toFixed(2)],
-            ['Net Profit', kpis.totalNetProfit.toFixed(2)],
-            ['Vehicles Sold', kpis.vehiclesSold],
-            ['Average Profit Per Vehicle', kpis.avgProfitPerVehicle.toFixed(2)],
-            ['Gross Vehicle Expenses', kpis.totalGrossVehicleExpenses.toFixed(2)],
-            ['Reclaimable Expense VAT', kpis.totalReclaimableVehicleVat.toFixed(2)],
-            ['General Expenses', kpis.totalGeneralExpenses.toFixed(2)],
-            ['Total Output VAT (Margin)', kpis.totalOutputVatMargin.toFixed(2)],
-            ['Total Output VAT (Commercial)', kpis.totalOutputVatCommercial.toFixed(2)],
-            ['Net VAT Payable to HMRC', kpis.netVatPayable.toFixed(2)],
+            ['Metric', 'Value', 'Calculation Description'],
+            ['Total Sales Revenue', kpis.totalRevenue.toFixed(2), 'Sum of selling prices for all sold vehicles'],
+            ['Gross Profit', kpis.grossProfit.toFixed(2), 'Revenue minus purchase buying cost of sold vehicles'],
+            ['Net Profit', kpis.totalNetProfit.toFixed(2), 'Gross profit minus sold car expenses, VAT liability, and general overheads'],
+            ['Current Stock Capital Cost', kpis.currentStockCapital.toFixed(2), 'Total purchase cost of currently available vehicles in stock'],
+            ['Sold Cars Expenses Only', kpis.soldVehiclesExpenses.toFixed(2), 'Workshop & prep expenses incurred strictly on sold vehicles'],
+            ['In-Stock Vehicles Expenses', kpis.inStockVehiclesExpenses.toFixed(2), 'Workshop & prep expenses on in-stock vehicles'],
+            ['General Expenses', kpis.totalGeneralExpenses.toFixed(2), 'General operational business overheads'],
+            ['Vehicles Sold', kpis.vehiclesSold, 'Count of completed vehicle sales'],
+            ['Average Profit Per Vehicle', kpis.avgProfitPerVehicle.toFixed(2), 'Net Profit on sold vehicles divided by vehicles sold'],
+            ['Total Output VAT (Margin)', kpis.totalOutputVatMargin.toFixed(2), '1/6th VAT on margin of margin-scheme sales'],
+            ['Total Output VAT (Commercial)', kpis.totalOutputVatCommercial.toFixed(2), '20% VAT on commercial vehicle sales'],
+            ['Input VAT Reclaimed', kpis.totalReclaimableVehicleVat.toFixed(2), 'Reclaimable 20% VAT on qualified expense receipts'],
+            ['Net VAT Payable to HMRC', kpis.netVatPayable.toFixed(2), 'Total Output VAT minus Reclaimable Input VAT']
         ];
-        const csv = rows.map(r => r.join(',')).join('\n');
+        const csv = rows.map(r => r.map(cell => `"${cell}"`).join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `analytics-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.download = `analytics-report-${new Date().toISOString().slice(0, 10)}.csv`;
         a.click();
         URL.revokeObjectURL(url);
     };
 
-    const KPICard = ({ label, value, subtitle, color, icon }) => (
+    const KPICard = ({ label, value, subtitle, formula, color, icon }) => (
         <div className="ba-kpi-card">
             <div className="ba-kpi-top">
                 <div className="ba-kpi-icon" style={{ background: `${color}18`, color }}>
@@ -373,6 +412,12 @@ export default function BusinessAnalytics() {
                     {subtitle && <span className="ba-kpi-sub">{subtitle}</span>}
                 </div>
             </div>
+            {formula && (
+                <div className="ba-kpi-formula">
+                    <span className="ba-kpi-formula-tag">Calculated as:</span>
+                    <span className="ba-kpi-formula-text">{formula}</span>
+                </div>
+            )}
         </div>
     );
 
@@ -382,10 +427,10 @@ export default function BusinessAnalytics() {
             <header className="ba-header">
                 <div>
                     <h1>Business Analytics</h1>
-                    <p>Dynamic KPI reporting, VAT Margin & Commercial tracking, and real-time profitability analytics.</p>
+                    <p>Dynamic KPI reporting, stock capital tracking, sold car expense breakdowns, and HMRC VAT compliance.</p>
                 </div>
                 <button className="ba-export-btn" onClick={exportCSV}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="1" x2="12" y2="3" /></svg>
                     Export Report
                 </button>
             </header>
@@ -470,32 +515,124 @@ export default function BusinessAnalytics() {
                 )}
             </section>
 
-            {/* KPI Grid */}
+            {/* KPI Grid with Detailed Calculation Explanations */}
             <section className="ba-kpi-grid">
-                <KPICard label="Total Revenue" value={fmt(kpis.totalRevenue)} subtitle="From vehicle sales" color={GREEN}
-                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>} />
-                <KPICard label="Gross Profit" value={fmt(kpis.grossProfit)} subtitle="Revenue minus buying cost" color={GREEN_DARK}
-                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>} />
-                <KPICard label="Net Profit" value={fmt(kpis.totalNetProfit)} subtitle="After expenses & VAT" color={kpis.totalNetProfit >= 0 ? GREEN : RED}
-                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>} />
-                <KPICard label="Vehicles Sold" value={kpis.vehiclesSold} subtitle={`${kpis.inStockCount} in stock`} color={ORANGE}
-                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>} />
-                <KPICard label="Avg Profit / Vehicle" value={fmt(kpis.avgProfitPerVehicle)} subtitle="Sold vehicles only" color={PURPLE}
-                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>} />
-                <KPICard label="Gross Vehicle Expenses" value={fmt(kpis.totalGrossVehicleExpenses)} subtitle="Workshop & prep costs" color={AMBER}
-                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>} />
-                <KPICard label="General Expenses" value={fmt(kpis.totalGeneralExpenses)} subtitle="Business overheads" color={PINK}
-                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="9" y1="21" x2="9" y2="9" /></svg>} />
-                <KPICard label="Total Combined Expenses" value={fmt(kpis.totalExpenses)} subtitle="Buying + Vehicle + General" color={RED}
-                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6" /><polyline points="17 18 23 18 23 12" /></svg>} />
-                <KPICard label="Total Output VAT" value={fmt(kpis.totalOutputVat)} subtitle={`Margin (${fmt(kpis.totalOutputVatMargin)}) + Comm (${fmt(kpis.totalOutputVatCommercial)})`} color={CYAN}
-                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>} />
-                <KPICard label="Input VAT Reclaimed" value={fmt(kpis.totalReclaimableVehicleVat)} subtitle="Reclaimable expense VAT" color={GREEN}
-                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>} />
-                <KPICard label="Net VAT Payable" value={fmt(kpis.netVatPayable)} subtitle="Output VAT - Input VAT" color={kpis.netVatPayable >= 0 ? AMBER : GREEN}
-                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>} />
-                <KPICard label="Stock Buying Capital" value={fmt(kpis.totalBuyingCost)} subtitle="Acquisition value" color={ORANGE}
-                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /></svg>} />
+                <KPICard
+                    label="Total Sales Revenue"
+                    value={fmt(kpis.totalRevenue)}
+                    subtitle="From completed vehicle sales"
+                    formula="Sum of cash selling prices for all vehicles sold within the selected period."
+                    color={GREEN}
+                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>}
+                />
+
+                <KPICard
+                    label="Gross Sales Profit"
+                    value={fmt(kpis.grossProfit)}
+                    subtitle="Revenue minus vehicle buying cost"
+                    formula="Total Sales Revenue minus Purchase Buying Cost of Sold Vehicles (Revenue - COGS)."
+                    color={GREEN_DARK}
+                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
+                />
+
+                <KPICard
+                    label="Net Profit"
+                    value={fmt(kpis.totalNetProfit)}
+                    subtitle="After prep costs, VAT & overheads"
+                    formula="Gross Sales Profit minus Sold Vehicle Expenses, Net Output VAT liability, and General Business Overheads."
+                    color={kpis.totalNetProfit >= 0 ? GREEN : RED}
+                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>}
+                />
+
+                <KPICard
+                    label="Current Stock Capital Cost"
+                    value={fmt(kpis.currentStockCapital)}
+                    subtitle={`${kpis.inStockCount} available vehicles in inventory`}
+                    formula="Total purchase / acquisition cost invested in vehicles currently in stock and available for sale."
+                    color={ORANGE}
+                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /></svg>}
+                />
+
+                <KPICard
+                    label="Sold Cars Expenses Only"
+                    value={fmt(kpis.soldVehiclesExpenses)}
+                    subtitle="Prep & workshop costs for sold cars"
+                    formula="Total workshop, MOT, repairs, valeting, transport & tyre costs incurred strictly on sold vehicles."
+                    color={AMBER}
+                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>}
+                />
+
+                <KPICard
+                    label="In-Stock Vehicles Expenses"
+                    value={fmt(kpis.inStockVehiclesExpenses)}
+                    subtitle="Prep & workshop costs for stock"
+                    formula="Total prep, MOT, transport & refurbishment costs invested in vehicles currently available in stock."
+                    color={CYAN}
+                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>}
+                />
+
+                <KPICard
+                    label="General Business Expenses"
+                    value={fmt(kpis.totalGeneralExpenses)}
+                    subtitle="Operational overheads"
+                    formula="Sum of operational business expenses (Rent, Utilities, Software, Advertising, Salaries, Admin)."
+                    color={PINK}
+                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="9" y1="21" x2="9" y2="9" /></svg>}
+                />
+
+                <KPICard
+                    label="Total Combined Expenses"
+                    value={fmt(kpis.totalExpenses)}
+                    subtitle="Buying + Vehicle + General"
+                    formula="Sum of Purchase Buying Cost of Sold Cars + All Gross Vehicle Prep Costs + General Overheads."
+                    color={RED}
+                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6" /><polyline points="17 18 23 18 23 12" /></svg>}
+                />
+
+                <KPICard
+                    label="Vehicles Sold"
+                    value={kpis.vehiclesSold}
+                    subtitle={`${kpis.inStockCount} currently in stock`}
+                    formula="Total count of completed vehicle sales transactions recorded in the selected time period."
+                    color={PURPLE}
+                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>}
+                />
+
+                <KPICard
+                    label="Avg Profit / Vehicle"
+                    value={fmt(kpis.avgProfitPerVehicle)}
+                    subtitle="Sold vehicles average"
+                    formula="Net Profit from vehicle sales divided by total number of vehicles sold (Net Profit ÷ Vehicles Sold)."
+                    color={GREEN}
+                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>}
+                />
+
+                <KPICard
+                    label="Total Output VAT"
+                    value={fmt(kpis.totalOutputVat)}
+                    subtitle={`Margin (${fmt(kpis.totalOutputVatMargin)}) + Comm (${fmt(kpis.totalOutputVatCommercial)})`}
+                    formula="Sum of VAT Margin Output (1/6th of gross profit margin) + Commercial VAT Output (20% of sale price)."
+                    color={CYAN}
+                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
+                />
+
+                <KPICard
+                    label="Input VAT Reclaimed"
+                    value={fmt(kpis.totalReclaimableVehicleVat)}
+                    subtitle="Reclaimable expense VAT"
+                    formula="Total 20% VAT reclaimed on qualifying workshop, repair & vehicle expense purchase invoices."
+                    color={GREEN}
+                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>}
+                />
+
+                <KPICard
+                    label="Net VAT Payable to HMRC"
+                    value={fmt(kpis.netVatPayable)}
+                    subtitle="Output VAT minus Input VAT"
+                    formula="Total Output VAT liability minus Reclaimable Input VAT (Output VAT - Input VAT)."
+                    color={kpis.netVatPayable >= 0 ? AMBER : GREEN}
+                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>}
+                />
             </section>
 
             {/* VAT Compliance Summary Banner */}
@@ -524,7 +661,7 @@ export default function BusinessAnalytics() {
                 </div>
             </section>
 
-            {/* Charts Row 1: Revenue vs Expenses + Profit Trend */}
+            {/* Charts Row 1 */}
             <div className="ba-charts-row">
                 <div className="ba-chart-card ba-chart-card--wide">
                     <div className="ba-chart-header">
@@ -613,7 +750,7 @@ export default function BusinessAnalytics() {
                 </div>
             </div>
 
-            {/* Charts Row 2: Breakdown donuts + VAT breakdown bar */}
+            {/* Charts Row 2 */}
             <div className="ba-charts-row ba-charts-row--3col">
                 <div className="ba-chart-card">
                     <div className="ba-chart-header">
@@ -733,7 +870,7 @@ export default function BusinessAnalytics() {
             {/* Top Profitable Vehicles Table */}
             <div className="ba-table-card">
                 <div className="ba-table-header">
-                    <h3>Most Profitable Vehicles ({filteredVehicle.filter(r => r.status === 'Sold').length} Sold)</h3>
+                    <h3>Most Profitable Vehicles ({filteredVehicle.filter(r => r.status === 'Sold' || r.status === 'sold').length} Sold)</h3>
                 </div>
                 {topVehicles.length === 0 ? (
                     <div className="ba-chart-empty">No sold vehicles match your filter criteria.</div>

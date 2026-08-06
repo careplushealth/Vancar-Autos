@@ -261,6 +261,31 @@
     margin-top: 2px;
 }
 
+/* KPI Formula Explanation Box */
+.ba-kpi-formula {
+    margin-top: 0.875rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--color-border);
+    font-size: 0.75rem;
+    line-height: 1.35;
+}
+
+.ba-kpi-formula-tag {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #55A01F;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+}
+
+.ba-kpi-formula-text {
+    display: block;
+    color: #64748b;
+    font-weight: 500;
+}
+
 /* Chart Rows */
 .ba-charts-row {
     display: grid;

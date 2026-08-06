@@ -1,0 +1,501 @@
+/* DistanceSaleGenerator.css */
+
+.vdg-container {
+    padding: 1.5rem;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.vdg-header {
+    margin-bottom: 1.5rem;
+
+    .vdg-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.25rem;
+    }
+
+    .vdg-subtitle {
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+}
+
+.vdg-main-grid {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 1200px) {
+    .vdg-main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Left Form Card */
+.vdg-form-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.vdg-form-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.vdg-form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.vdg-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.vdg-field-group {
+    margin-bottom: 1rem;
+}
+
+.vdg-field-group:last-child {
+    margin-bottom: 0;
+}
+
+.vdg-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #475569;
+    margin-bottom: 0.35rem;
+}
+
+.vdg-input,
+.vdg-select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.9rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #0f172a;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.vdg-input:focus,
+.vdg-select:focus {
+    outline: none;
+    border-color: #49A921;
+    box-shadow: 0 0 0 3px rgba(73, 169, 33, 0.15);
+}
+
+/* Radio Signature Selector */
+.vdg-sig-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.vdg-radio-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    background: #f8fafc;
+    color: #334155;
+    transition: all 0.15s ease;
+}
+
+.vdg-radio-btn--active {
+    background: #f0fdf4;
+    border-color: #49A921;
+    color: #166534;
+    font-weight: 600;
+}
+
+.vdg-canvas-wrapper {
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+
+    canvas {
+        display: block;
+        width: 100%;
+        height: 120px;
+        touch-action: none;
+        cursor: crosshair;
+    }
+}
+
+.vdg-sig-typed {
+    font-family: 'Dancing Script', 'Caveat', 'Great Vibes', cursive, sans-serif;
+    font-size: 1.5rem;
+    color: #0f172a;
+}
+
+.vdg-action-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.vdg-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.85rem 1.25rem;
+    background-color: #49A921;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(73, 169, 33, 0.25);
+    transition: all 0.15s ease;
+}
+
+.vdg-btn-primary:hover {
+    background-color: #3f931d;
+    box-shadow: 0 4px 8px rgba(73, 169, 33, 0.35);
+}
+
+.vdg-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.vdg-btn-secondary:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+/* Saved History Drawer / List */
+.vdg-history-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.vdg-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.vdg-history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+/* Right Panel: Live Document Preview */
+.vdg-preview-panel {
+    background: #475569;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: auto;
+}
+
+.vdg-zoom-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #1e293b;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    color: #ffffff;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.vdg-zoom-bar button {
+    background: transparent;
+    border: none;
+    color: #cbd5e1;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0 0.25rem;
+}
+
+.vdg-zoom-bar button:hover {
+    color: #ffffff;
+}
+
+/* Document Container & Page Layout (Landscape A4: 297mm x 210mm) */
+.vdg-doc-scale-wrapper {
+    transform-origin: top center;
+    transition: transform 0.2s ease;
+}
+
+.vdg-document-page {
+    width: 297mm;
+    height: 210mm;
+    background: #ffffff;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    padding: 8mm 12mm;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #222222;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    font-size: 8.5pt;
+    line-height: 1.22;
+}
+
+/* Document Content Components */
+.vdg-doc-header {
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.vdg-doc-logo {
+    max-height: 44px;
+    margin: 0 auto 3px auto;
+    display: block;
+}
+
+.vdg-doc-title {
+    font-size: 13pt;
+    font-weight: bold;
+    color: #222222;
+    margin: 2px 0 1px 0;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.vdg-doc-subtitle {
+    font-size: 8.5pt;
+    color: #666666;
+    margin: 0 0 6px 0;
+}
+
+/* Top Information Grid Table */
+.vdg-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 8px;
+    font-size: 8pt;
+}
+
+.vdg-info-table td {
+    border: 1px solid #666666;
+    padding: 3px 6px;
+    vertical-align: top;
+}
+
+.vdg-info-table .vdg-col-label {
+    width: 12%;
+    background-color: #f4f9f1;
+    font-weight: bold;
+    color: #49A921;
+}
+
+.vdg-info-table .vdg-col-val1 {
+    width: 38%;
+}
+
+.vdg-info-table .vdg-col-val2 {
+    width: 38%;
+}
+
+.vdg-doc-val {
+    font-weight: 600;
+    color: #000000;
+}
+
+.vdg-doc-underline {
+    display: inline-block;
+    border-bottom: 1px solid #333333;
+    padding-bottom: 1px;
+    min-width: 80px;
+    font-weight: bold;
+}
+
+/* 2-Column Body Layout */
+.vdg-body-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    flex-grow: 1;
+}
+
+.vdg-body-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.vdg-section-h2 {
+    font-size: 9.5pt;
+    font-weight: bold;
+    color: #49A921;
+    margin: 4px 0 3px 0;
+}
+
+.vdg-p {
+    font-size: 8pt;
+    color: #222222;
+    margin: 0 0 4px 0;
+    line-height: 1.22;
+}
+
+.vdg-bullet-p {
+    font-size: 7.5pt;
+    color: #222222;
+    margin: 0 0 3px 0;
+    padding-left: 8px;
+    text-indent: -8px;
+    line-height: 1.18;
+}
+
+.vdg-agreed-box {
+    background-color: #efefef;
+    border: 1px solid #d0d0d0;
+    padding: 4px 8px;
+    font-size: 8pt;
+    font-weight: bold;
+    color: #222222;
+    margin: 6px 0 8px 0;
+}
+
+/* Signature Block Table */
+.vdg-sig-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+    font-size: 8pt;
+}
+
+.vdg-sig-table td {
+    padding: 3px 4px;
+    vertical-align: bottom;
+}
+
+.vdg-sig-label {
+    font-weight: bold;
+    color: #49A921;
+    width: 65px;
+}
+
+.vdg-sig-line-cell {
+    border-bottom: 1px solid #666666;
+    height: 30px;
+    vertical-align: bottom;
+    padding-bottom: 2px;
+}
+
+.vdg-sig-img-render {
+    max-height: 28px;
+    max-width: 170px;
+    object-fit: contain;
+}
+
+.vdg-sig-text-render {
+    font-family: 'Dancing Script', 'Caveat', cursive, sans-serif;
+    font-size: 14pt;
+    color: #0f172a;
+    line-height: 1;
+}
+
+/* Document Footer */
+.vdg-doc-footer {
+    text-align: center;
+    font-size: 7.5pt;
+    color: #555555;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 4px;
+    margin-top: 4px;
+}
+
+/* Print CSS overrides */
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 0;
+    }
+
+    body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .admin-layout__sidebar,
+    .vdg-header,
+    .vdg-form-card,
+    .vdg-zoom-bar,
+    .no-print {
+        display: none !important;
+    }
+
+    .vdg-main-grid {
+        display: block !important;
+    }
+
+    .vdg-preview-panel {
+        background: transparent !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .vdg-doc-scale-wrapper {
+        transform: none !important;
+        height: auto !important;
+    }
+
+    .vdg-document-page {
+        width: 297mm !important;
+        height: 210mm !important;
+        box-shadow: none !important;
+        margin: 0 auto !important;
+    }
+}

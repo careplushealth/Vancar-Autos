@@ -1,9 +1,10 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const db = require('./db');
 const bcrypt = require('bcryptjs');
 const { sendInquiryEmail } = require('./email');
-require('dotenv').config();
 
 const app = express();
 app.use(cors());
@@ -614,6 +615,7 @@ const getAutoTraderToken = async () => {
         });
 
         if (!response.ok) {
+            autoTraderTokenCache = { token: null, expiresAt: null };
             let errorText = '';
             try {
                 const errData = await response.json();
@@ -1124,21 +1126,13 @@ app.post('/api/autotrader/sync-stock', async (req, res) => {
             const features = JSON.stringify(featuresArr);
             
             let imagesArr = [];
-            if (item.media?.images && Array.isArray(item.media.images)) {
-                imagesArr = item.media.images.map(img => {
-                    const href = img.href || '';
+            const rawImages = item.media?.images || item.vehicle?.images || item.images || [];
+            if (Array.isArray(rawImages)) {
+                imagesArr = rawImages.map(img => {
+                    if (typeof img === 'string') return img;
+                    const href = img?.href || img?.url || '';
                     return href.replace('{resize}', 'w800');
-                });
-            } else if (item.vehicle?.images && Array.isArray(item.vehicle.images)) {
-                imagesArr = item.vehicle.images.map(img => {
-                    const href = img.href || '';
-                    return href.replace('{resize}', 'w800');
-                });
-            } else if (item.images && Array.isArray(item.images)) {
-                imagesArr = item.images.map(img => {
-                    const href = img.href || '';
-                    return href.replace('{resize}', 'w800');
-                });
+                }).filter(Boolean);
             }
             const images = JSON.stringify(imagesArr);
             
@@ -1163,19 +1157,17 @@ app.post('/api/autotrader/sync-stock', async (req, res) => {
         
         if (activeIds.length > 0) {
             await db.query(
-                `UPDATE cars SET status = 'sold' WHERE id LIKE 'at-%' AND id NOT IN (${activeIds.map((_, i) => `$${i + 1}`).join(',')})`,
-                activeIds
+                `UPDATE cars SET status = 'sold' WHERE id LIKE 'at-%' AND NOT (id = ANY($1::text[]))`,
+                [activeIds]
             );
         } else {
             await db.query(`UPDATE cars SET status = 'sold' WHERE id LIKE 'at-%'`);
         }
         
-        res.json({ success: true, count: syncedCount });
+        return res.json({ success: true, count: syncedCount, mock: false });
     } catch (err) {
-        console.error('Auto Trader stock sync error:', err.message);
-        autoTraderTokenCache = { token: null, expiresAt: null };
-        const isAuthErr = err.message && (err.message.includes('401') || err.message.includes('Auth Failed'));
-        res.status(isAuthErr ? 401 : 500).json({ error: err.message || 'Failed to sync forecourt stock from Auto Trader' });
+        console.error('AutoTrader Stock Sync Detailed Error:', err);
+        return res.status(500).json({ error: String(err?.message || err), stack: String(err?.stack || '') });
     }
 });
 
