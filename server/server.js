@@ -10,6 +10,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/', (req, res) => {
+    res.json({ status: 'ok', message: 'Vancar Autos API is running' });
+});
+
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok' });
+});
+
 // Initialize Database Tables
 const initDB = async () => {
     try {
@@ -1225,7 +1233,15 @@ app.delete('/api/general-expenses/:id', async (req, res) => {
 });
 
 
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception thrown:', err);
+});
+
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`API Backend running securely on port ${PORT}`);
 });

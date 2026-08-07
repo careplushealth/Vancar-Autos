@@ -9,6 +9,10 @@ const pool = new Pool({
   }
 });
 
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle DB client:', err.message || err);
+});
+
 function formatSql(text, params) {
   if (!params || !params.length) return text;
   return text.replace(/\$(\d+)/g, (_, i) => {
