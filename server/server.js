@@ -1157,7 +1157,7 @@ app.post('/api/autotrader/sync-stock', async (req, res) => {
         
         if (activeIds.length > 0) {
             await db.query(
-                `UPDATE cars SET status = 'sold' WHERE id LIKE 'at-%' AND NOT (id = ANY($1::text[]))`,
+                `UPDATE cars SET status = 'sold' WHERE id LIKE 'at-%' AND id NOT IN ($1)`,
                 [activeIds]
             );
         } else {
