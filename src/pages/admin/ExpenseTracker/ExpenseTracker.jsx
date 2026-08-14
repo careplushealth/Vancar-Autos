@@ -168,14 +168,16 @@ export default function ExpenseTracker() {
         let models = [];
         const normFormMake = normalizeMake(formState.make);
 
-        // Check autotrader dataset case-insensitively
-        const matchKey = Object.keys(autotraderMakesModels).find(k => k.toLowerCase() === normFormMake.toLowerCase());
+        // Check autotrader dataset case-insensitively & normalized
+        const matchKey = Object.keys(autotraderMakesModels).find(k => 
+            normalizeMake(k).toLowerCase() === normFormMake.toLowerCase()
+        );
         if (matchKey && autotraderMakesModels[matchKey]) {
             models = [...autotraderMakesModels[matchKey]];
         }
         try {
             const recordModels = records
-                .filter(r => normalizeMake(r.make) === normFormMake)
+                .filter(r => normalizeMake(r.make).toLowerCase() === normFormMake.toLowerCase())
                 .map(r => r.model);
             models = [...new Set([...models, ...recordModels])];
         } catch (err) {

@@ -1,5 +1,3 @@
-// Helper utility for vehicle make normalization and deduplication
-
 const ACRONYMS = new Set(['BMW', 'VW', 'MG', 'BYD', 'SEAT', 'GMC', 'RAM', 'BAC']);
 
 const MULTI_WORD_MAKES = {
@@ -10,7 +8,11 @@ const MULTI_WORD_MAKES = {
   'rolls-royce': 'Rolls-Royce',
   'mercedes benz': 'Mercedes-Benz',
   'mercedes-benz': 'Mercedes-Benz',
-  'great wall': 'Great Wall'
+  'great wall': 'Great Wall',
+  'citroen': 'Citroen',
+  'citroën': 'Citroen',
+  'skoda': 'Skoda',
+  'škoda': 'Skoda'
 };
 
 /**
@@ -22,20 +24,21 @@ export function normalizeMake(makeStr) {
   const trimmed = makeStr.trim();
   if (!trimmed) return '';
 
-  const lower = trimmed.toLowerCase();
+  const deaccented = trimmed.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const lower = deaccented.toLowerCase();
 
-  // Check known multi-word makes
-  if (MULTI_WORD_MAKES[lower]) {
-    return MULTI_WORD_MAKES[lower];
+  // Check known multi-word / special makes
+  if (MULTI_WORD_MAKES[lower] || MULTI_WORD_MAKES[trimmed.toLowerCase()]) {
+    return MULTI_WORD_MAKES[lower] || MULTI_WORD_MAKES[trimmed.toLowerCase()];
   }
 
   // Check acronyms
-  if (ACRONYMS.has(trimmed.toUpperCase())) {
-    return trimmed.toUpperCase();
+  if (ACRONYMS.has(deaccented.toUpperCase())) {
+    return deaccented.toUpperCase();
   }
 
   // General Title Case
-  return trimmed
+  return deaccented
     .split(/[\s-]+/)
     .map(word => {
       const u = word.toUpperCase();
