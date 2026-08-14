@@ -993,11 +993,13 @@ const handleMockSyncStock = async () => {
 
     let syncedCount = 0;
     for (const car of mockCars) {
-        const check = await db.query('SELECT id FROM cars WHERE id = $1', [car.id]);
+        const check = await db.query('SELECT id, status FROM cars WHERE id = $1', [car.id]);
         if (check.rows.length > 0) {
+            const existingStatus = check.rows[0].status;
+            const carStatus = (existingStatus === 'sold' || existingStatus === 'reserved') ? existingStatus : car.status;
             await db.query(
                 `UPDATE cars SET title=$1, make=$2, model=$3, trim=$4, year=$5, price=$6, mileage=$7, fuel=$8, transmission=$9, "bodyType"=$10, colour=$11, engine=$12, doors=$13, seats=$14, description=$15, features=$16, images=$17, status=$18, featured=$19 WHERE id=$20`,
-                [car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, car.features, car.images, car.status, car.featured, car.id]
+                [car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, car.features, car.images, carStatus, car.featured, car.id]
             );
         } else {
             await db.query(
@@ -1144,20 +1146,29 @@ app.post('/api/autotrader/sync-stock', async (req, res) => {
             }
             const images = JSON.stringify(imagesArr);
             
-            const status = 'available';
             const featured = false;
+
+            let finalStatus = 'available';
+            const atLifecycle = (item.metadata?.lifecycleState || '').toUpperCase();
+            if (atLifecycle === 'SOLD' || atLifecycle === 'WASTE' || atLifecycle === 'ARCHIVED') {
+                finalStatus = 'sold';
+            }
             
-            const check = await db.query('SELECT id FROM cars WHERE id = $1', [dbId]);
+            const check = await db.query('SELECT id, status FROM cars WHERE id = $1', [dbId]);
             if (check.rows.length > 0) {
+                const existingStatus = check.rows[0].status;
+                if (existingStatus === 'sold' || existingStatus === 'reserved') {
+                    finalStatus = existingStatus;
+                }
                 await db.query(
                     `UPDATE cars SET title=$1, make=$2, model=$3, trim=$4, year=$5, price=$6, mileage=$7, fuel=$8, transmission=$9, "bodyType"=$10, colour=$11, engine=$12, doors=$13, seats=$14, description=$15, features=$16, images=$17, status=$18, featured=$19 WHERE id=$20`,
-                    [title, make, model, trim, year, price, mileage, fuel, transmission, bodyType, colour, engine, doors, seats, description, features, images, status, featured, dbId]
+                    [title, make, model, trim, year, price, mileage, fuel, transmission, bodyType, colour, engine, doors, seats, description, features, images, finalStatus, featured, dbId]
                 );
             } else {
                 await db.query(
                     `INSERT INTO cars (id, title, make, model, trim, year, price, mileage, fuel, transmission, "bodyType", colour, engine, doors, seats, description, features, images, status, featured)
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
-                    [dbId, title, make, model, trim, year, price, mileage, fuel, transmission, bodyType, colour, engine, doors, seats, description, features, images, status, featured]
+                    [dbId, title, make, model, trim, year, price, mileage, fuel, transmission, bodyType, colour, engine, doors, seats, description, features, images, finalStatus, featured]
                 );
             }
             syncedCount++;
