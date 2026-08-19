@@ -114,7 +114,7 @@ export default function Contact() {
                     <div className="contact__info">
                         <div className="contact__info-card">
                             <h4>📍 Visit Us</h4>
-                            <p>VANCAR AUTOS LIMITED<br />14 MIDLAND STREET<br />MANCHESTER, M12 6LB</p>
+                            <p>VANCAR AUTOS LIMITED<br />Yard 1, midland street<br />MANCHESTER, M12 6LB</p>
                         </div>
                         <div className="contact__info-card">
                             <h4>📞 Call Us</h4>
@@ -135,7 +135,7 @@ export default function Contact() {
                 <div className="contact__map">
                     <iframe
                         title="Vancar Autos Location Map"
-                        src="https://maps.google.com/maps?q=14%20Midland%20Street%2C%20Manchester%2C%20M12%206LB&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                        src="https://maps.google.com/maps?q=Yard%201%2C%20midland%20street%2C%20Manchester%2C%20M12%206LB&t=&z=15&ie=UTF8&iwloc=&output=embed"
                         width="100%"
                         height="400"
                         style={{ border: 0, borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}

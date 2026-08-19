@@ -121,6 +121,7 @@ export default function ManageCars() {
                             <th>Image</th>
                             <th>Vehicle</th>
                             <th>Price</th>
+                            <th>Purchaser</th>
                             <th>Status</th>
                             <th>Lead Source</th>
                             <th>Actions</th>
@@ -130,6 +131,7 @@ export default function ManageCars() {
                         {cars.map(car => {
                             const source = car.lead_source || car.leadSource;
                             const days = car.autotrader_days_advertised ?? car.autotraderDaysAdvertised;
+                            const purchaser = car.purchase_attribution || car.purchaseAttribution;
 
                             return (
                                 <tr key={car.id}>
@@ -143,6 +145,25 @@ export default function ManageCars() {
                                         </div>
                                     </td>
                                     <td>£{car.price.toLocaleString()}</td>
+                                    <td>
+                                        {purchaser ? (
+                                            <span style={{ 
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                padding: '3px 8px',
+                                                borderRadius: '12px',
+                                                fontSize: '11px',
+                                                fontWeight: '600',
+                                                background: purchaser.includes('Abbas') ? 'rgba(59, 130, 246, 0.15)' : 'rgba(168, 85, 247, 0.15)',
+                                                color: purchaser.includes('Abbas') ? '#3b82f6' : '#a855f7',
+                                                border: `1px solid ${purchaser.includes('Abbas') ? 'rgba(59, 130, 246, 0.3)' : 'rgba(168, 85, 247, 0.3)'}`
+                                            }}>
+                                                👤 {purchaser}
+                                            </span>
+                                        ) : (
+                                            <span style={{ opacity: 0.4, fontSize: '12px' }}>Unassigned</span>
+                                        )}
+                                    </td>
                                     <td>
                                         <span className={`manage-cars__status manage-cars__status--${car.status}`}>
                                             {car.status}

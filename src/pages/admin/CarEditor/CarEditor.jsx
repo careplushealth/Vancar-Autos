@@ -20,7 +20,7 @@ const INITIAL_FORM = {
     price: '', mileage: '', fuel: 'Petrol', transmission: 'Automatic',
     bodyType: 'SUV', colour: '', engine: '', doors: 5, seats: 5,
     description: '', features: [], images: [], status: 'available', featured: false,
-    lead_source: '', autotrader_days_advertised: ''
+    lead_source: '', autotrader_days_advertised: '', purchase_attribution: ''
 };
 
 export default function CarEditor() {
@@ -102,8 +102,12 @@ export default function CarEditor() {
 
         setLoading(true);
 
+        const attr = form.purchase_attribution || form.purchaseAttribution || null;
+
         const payload = {
             ...form,
+            purchase_attribution: attr,
+            purchaseAttribution: attr,
             lead_source: form.status === 'sold' ? (form.lead_source || form.leadSource) : form.lead_source,
             leadSource: form.status === 'sold' ? (form.lead_source || form.leadSource) : form.leadSource,
             autotrader_days_advertised: (form.status === 'sold' && (form.lead_source || form.leadSource) === 'Auto Trader') ? parseInt(form.autotrader_days_advertised ?? form.autotraderDaysAdvertised) : null,
@@ -169,7 +173,20 @@ export default function CarEditor() {
                                 <option value="sold">Sold</option>
                             </select>
                         </div>
-                        <div className="form-group checkbox-group">
+                        <div className="form-group">
+                            <label className="form-label">Purchase Attribution</label>
+                            <select 
+                                name="purchase_attribution" 
+                                className="form-select" 
+                                value={form.purchase_attribution || form.purchaseAttribution || ''} 
+                                onChange={(e) => setForm(prev => ({ ...prev, purchase_attribution: e.target.value, purchaseAttribution: e.target.value }))}
+                            >
+                                <option value="">-- Select Purchaser --</option>
+                                <option value="Abbas purchase">Abbas purchase</option>
+                                <option value="Mehraan purchase">Mehraan purchase</option>
+                            </select>
+                        </div>
+                        <div className="form-group checkbox-group" style={{ alignSelf: 'flex-end' }}>
                             <label className="checkbox-label">
                                 <input type="checkbox" name="featured" checked={form.featured} onChange={handleChange} />
                                 <span>Featured on Homepage</span>

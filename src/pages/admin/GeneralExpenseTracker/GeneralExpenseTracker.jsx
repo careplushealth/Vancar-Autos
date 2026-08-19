@@ -35,6 +35,7 @@ const INITIAL_FORM = {
     description: '',
     notes: '',
     receipt_url: '',
+    purchase_attribution: '',
 };
 
 const fmt = (n) =>
@@ -49,6 +50,7 @@ export default function GeneralExpenseTracker() {
     // Filters
     const [searchQuery, setSearchQuery] = useState('');
     const [filterCategory, setFilterCategory] = useState('All');
+    const [filterPurchaser, setFilterPurchaser] = useState('All');
     const [filterMonth, setFilterMonth] = useState('');
     const [filterYear, setFilterYear] = useState('All');
 
@@ -87,6 +89,8 @@ export default function GeneralExpenseTracker() {
             return;
         }
 
+        const attr = form.purchase_attribution || form.purchaseAttribution || null;
+
         const payload = {
             category: form.category,
             amount,
@@ -94,6 +98,8 @@ export default function GeneralExpenseTracker() {
             description: form.description.trim(),
             notes: form.notes.trim(),
             receipt_url: form.receipt_url.trim(),
+            purchase_attribution: attr,
+            purchaseAttribution: attr,
         };
 
         if (isEditing && editId) {
@@ -120,6 +126,7 @@ export default function GeneralExpenseTracker() {
             description: record.description || '',
             notes: record.notes || '',
             receipt_url: record.receipt_url || '',
+            purchase_attribution: record.purchase_attribution || record.purchaseAttribution || '',
         });
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -170,9 +177,10 @@ export default function GeneralExpenseTracker() {
                 (r.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (r.notes || '').toLowerCase().includes(searchQuery.toLowerCase());
             const matchCat = filterCategory === 'All' || r.category === filterCategory;
+            const matchPurchaser = filterPurchaser === 'All' || (r.purchase_attribution || r.purchaseAttribution) === filterPurchaser;
             const matchMonth = !filterMonth || (r.date || '').startsWith(filterMonth);
             const matchYear = filterYear === 'All' || (r.date || '').startsWith(filterYear);
-            return matchSearch && matchCat && matchMonth && matchYear;
+            return matchSearch && matchCat && matchPurchaser && matchMonth && matchYear;
         });
 
         list.sort((a, b) => {
@@ -345,6 +353,20 @@ export default function GeneralExpenseTracker() {
                             </div>
 
                             <div className="gen-expense__field">
+                                <label className="gen-expense__label">Purchase Attribution</label>
+                                <select 
+                                    name="purchase_attribution" 
+                                    value={form.purchase_attribution || form.purchaseAttribution || ''} 
+                                    onChange={handleInput} 
+                                    className="gen-expense__select"
+                                >
+                                    <option value="">-- Select Purchaser --</option>
+                                    <option value="Abbas purchase">Abbas purchase</option>
+                                    <option value="Mehraan purchase">Mehraan purchase</option>
+                                </select>
+                            </div>
+
+                            <div className="gen-expense__field">
                                 <label className="gen-expense__label">Description</label>
                                 <input
                                     type="text"
@@ -428,6 +450,11 @@ export default function GeneralExpenseTracker() {
                                 <option key={c} value={c}>{c}</option>
                             ))}
                         </select>
+                        <select value={filterPurchaser} onChange={e => setFilterPurchaser(e.target.value)} className="gen-expense__filter-select">
+                            <option value="All">All Purchasers</option>
+                            <option value="Abbas purchase">Abbas purchase</option>
+                            <option value="Mehraan purchase">Mehraan purchase</option>
+                        </select>
                         <select value={filterYear} onChange={e => setFilterYear(e.target.value)} className="gen-expense__filter-select">
                             <option value="All">All Years</option>
                             {years.map(y => <option key={y} value={y}>{y}</option>)}
@@ -439,9 +466,9 @@ export default function GeneralExpenseTracker() {
                             className="gen-expense__filter-select"
                             placeholder="Filter by month"
                         />
-                        {(searchQuery || filterCategory !== 'All' || filterMonth || filterYear !== 'All') && (
+                        {(searchQuery || filterCategory !== 'All' || filterPurchaser !== 'All' || filterMonth || filterYear !== 'All') && (
                             <button className="gen-expense__clear-btn" onClick={() => {
-                                setSearchQuery(''); setFilterCategory('All'); setFilterMonth(''); setFilterYear('All');
+                                setSearchQuery(''); setFilterCategory('All'); setFilterPurchaser('All'); setFilterMonth(''); setFilterYear('All');
                             }}>
                                 Clear Filters
                             </button>
@@ -469,6 +496,7 @@ export default function GeneralExpenseTracker() {
                                         <th onClick={() => handleSort('category')} className="gen-expense__th gen-expense__th--sortable">
                                             Category {sortIcon('category')}
                                         </th>
+                                        <th className="gen-expense__th">Purchaser</th>
                                         <th className="gen-expense__th">Description</th>
                                         <th onClick={() => handleSort('amount')} className="gen-expense__th gen-expense__th--sortable gen-expense__th--right">
                                             Amount {sortIcon('amount')}
@@ -478,16 +506,37 @@ export default function GeneralExpenseTracker() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredRecords.map(r => (
-                                        <tr key={r.id} className={`gen-expense__tr ${editId === r.id ? 'gen-expense__tr--editing' : ''}`}>
-                                            <td className="gen-expense__td">
-                                                <span className="gen-expense__date-badge">
-                                                    {r.date ? new Date(r.date + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
-                                                </span>
-                                            </td>
-                                            <td className="gen-expense__td">
-                                                <span className="gen-expense__cat-badge">{r.category}</span>
-                                            </td>
+                                    {filteredRecords.map(r => {
+                                        const purchaser = r.purchase_attribution || r.purchaseAttribution;
+                                        return (
+                                            <tr key={r.id} className={`gen-expense__tr ${editId === r.id ? 'gen-expense__tr--editing' : ''}`}>
+                                                <td className="gen-expense__td">
+                                                    <span className="gen-expense__date-badge">
+                                                        {r.date ? new Date(r.date + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                                                    </span>
+                                                </td>
+                                                <td className="gen-expense__td">
+                                                    <span className="gen-expense__cat-badge">{r.category}</span>
+                                                </td>
+                                                <td className="gen-expense__td">
+                                                    {purchaser ? (
+                                                        <span style={{ 
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            padding: '2px 7px',
+                                                            borderRadius: '10px',
+                                                            fontSize: '11px',
+                                                            fontWeight: '600',
+                                                            background: purchaser.includes('Abbas') ? 'rgba(59, 130, 246, 0.15)' : 'rgba(168, 85, 247, 0.15)',
+                                                            color: purchaser.includes('Abbas') ? '#3b82f6' : '#a855f7',
+                                                            border: `1px solid ${purchaser.includes('Abbas') ? 'rgba(59, 130, 246, 0.3)' : 'rgba(168, 85, 247, 0.3)'}`
+                                                        }}>
+                                                            👤 {purchaser}
+                                                        </span>
+                                                    ) : (
+                                                        <span style={{ opacity: 0.4, fontSize: '12px' }}>Unassigned</span>
+                                                    )}
+                                                </td>
                                             <td className="gen-expense__td">
                                                 <span className="gen-expense__desc">{r.description || '—'}</span>
                                                 {r.notes && <span className="gen-expense__notes">{r.notes}</span>}
@@ -514,11 +563,12 @@ export default function GeneralExpenseTracker() {
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))}
+                                    );
+                                })}
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colSpan="3" className="gen-expense__td gen-expense__tfoot-label">
+                                        <td colSpan="4" className="gen-expense__td gen-expense__tfoot-label">
                                             Total ({stats.count} items)
                                         </td>
                                         <td className="gen-expense__td gen-expense__td--right gen-expense__tfoot-total">

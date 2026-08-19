@@ -66,7 +66,7 @@ export default function Footer() {
                             <h4 className="footer__heading">Contact & Location</h4>
                             <p className="footer__contact-text">
                                 <strong>Vancar Autos Showroom</strong><br/>
-                                14 Midland Street<br/>
+                                Yard 1, midland street<br/>
                                 Manchester, M12 6LB
                             </p>
                             <ul className="footer__contact-info-list">

@@ -292,7 +292,7 @@ export default function DistanceSaleGenerator() {
                                     <td style="width: 12%; background-color: #f4f9f1; font-weight: bold; color: #49A921; border: 1px solid #666666; padding: 2.5px 5px; vertical-align: top;">Trader</td>
                                     <td style="width: 38%; border: 1px solid #666666; padding: 2.5px 5px; vertical-align: top;">
                                         <strong>VanCar Autos Limited</strong><br />
-                                        Yard on Midland Street, Manchester, M12 6LB
+                                        Yard 1, midland street, Manchester, M12 6LB
                                     </td>
                                     <td style="width: 12%; background-color: #f4f9f1; font-weight: bold; color: #49A921; border: 1px solid #666666; padding: 2.5px 5px; vertical-align: top;">Contact</td>
                                     <td style="width: 38%; border: 1px solid #666666; padding: 2.5px 5px; vertical-align: top;">
@@ -399,7 +399,7 @@ export default function DistanceSaleGenerator() {
 
                     <!-- Footer -->
                     <div style="text-align: center; font-size: 7pt; color: #555555; border-top: 1px solid #e2e8f0; padding-top: 3px; margin-top: 3px;">
-                        VanCar Autos Limited trading as VanCar Autos | Yard on Midland Street, Manchester, M12 6LB
+                        VanCar Autos Limited trading as VanCar Autos | Yard 1, midland street, Manchester, M12 6LB
                     </div>
                 </div>
             `;
@@ -793,7 +793,7 @@ export default function DistanceSaleGenerator() {
                                             <td className="vdg-col-label">Trader</td>
                                             <td className="vdg-col-val1">
                                                 <strong>VanCar Autos Limited</strong><br />
-                                                Yard on Midland Street, Manchester, M12 6LB
+                                                Yard 1, midland street, Manchester, M12 6LB
                                             </td>
                                             <td className="vdg-col-label">Contact</td>
                                             <td className="vdg-col-val2">
@@ -902,7 +902,7 @@ export default function DistanceSaleGenerator() {
 
                             {/* Footer */}
                             <div className="vdg-doc-footer">
-                                VanCar Autos Limited trading as VanCar Autos | Yard on Midland Street, Manchester, M12 6LB
+                                VanCar Autos Limited trading as VanCar Autos | Yard 1, midland street, Manchester, M12 6LB
                             </div>
 
                         </div>

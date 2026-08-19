@@ -82,6 +82,7 @@ export default function BusinessAnalytics() {
     const [filterStatus, setFilterStatus] = useState('All');
     const [filterVatScheme, setFilterVatScheme] = useState('All');
     const [filterExpType, setFilterExpType] = useState('All');
+    const [filterPurchaseAttribution, setFilterPurchaseAttribution] = useState('All');
     const [minRevenue, setMinRevenue] = useState('');
     const [maxRevenue, setMaxRevenue] = useState('');
     const [minProfit, setMinProfit] = useState('');
@@ -151,6 +152,10 @@ export default function BusinessAnalytics() {
                 const hasType = (r.expenses || []).some(e => e.type === filterExpType);
                 if (!hasType) return false;
             }
+            if (filterPurchaseAttribution !== 'All') {
+                const attr = r.purchase_attribution || r.purchaseAttribution;
+                if (attr !== filterPurchaseAttribution) return false;
+            }
             const rev = parseFloat(r.selling_price || 0);
             if (minRevenue !== '' && rev < parseFloat(minRevenue)) return false;
             if (maxRevenue !== '' && rev > parseFloat(maxRevenue)) return false;
@@ -161,15 +166,78 @@ export default function BusinessAnalytics() {
 
             return isWithinPeriod(r.created_at);
         });
-    }, [vehicleExpenses, filterMake, filterStatus, filterVatScheme, filterExpType, minRevenue, maxRevenue, minProfit, maxProfit, periodFilter, dateFrom, dateTo]);
+    }, [vehicleExpenses, filterMake, filterStatus, filterVatScheme, filterExpType, filterPurchaseAttribution, minRevenue, maxRevenue, minProfit, maxProfit, periodFilter, dateFrom, dateTo]);
 
     // Filter general expenses
     const filteredGeneral = useMemo(() => {
         return generalExpenses.filter(r => {
             if (filterGenCat !== 'All' && r.category !== filterGenCat) return false;
+            if (filterPurchaseAttribution !== 'All') {
+                const attr = r.purchase_attribution || r.purchaseAttribution;
+                if (attr !== filterPurchaseAttribution) return false;
+            }
             return isWithinPeriod(r.date);
         });
-    }, [generalExpenses, filterGenCat, periodFilter, dateFrom, dateTo]);
+    }, [generalExpenses, filterGenCat, filterPurchaseAttribution, periodFilter, dateFrom, dateTo]);
+
+    // Overall purchaser spend summary for comparison
+    const purchaserSpendSummary = useMemo(() => {
+        let abbasVehicles = 0;
+        let abbasVehiclesBuy = 0;
+        let abbasVehiclesPrep = 0;
+        let abbasGenExp = 0;
+
+        let mehraanVehicles = 0;
+        let mehraanVehiclesBuy = 0;
+        let mehraanVehiclesPrep = 0;
+        let mehraanGenExp = 0;
+
+        vehicleExpenses.forEach(r => {
+            if (!isWithinPeriod(r.created_at)) return;
+            const attr = r.purchase_attribution || r.purchaseAttribution;
+            const buy = parseFloat(r.buying_price || 0);
+            const prep = (r.expenses || []).reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+
+            if (attr === 'Abbas purchase') {
+                abbasVehicles++;
+                abbasVehiclesBuy += buy;
+                abbasVehiclesPrep += prep;
+            } else if (attr === 'Mehraan purchase') {
+                mehraanVehicles++;
+                mehraanVehiclesBuy += buy;
+                mehraanVehiclesPrep += prep;
+            }
+        });
+
+        generalExpenses.forEach(r => {
+            if (!isWithinPeriod(r.date)) return;
+            const attr = r.purchase_attribution || r.purchaseAttribution;
+            const amt = parseFloat(r.amount || 0);
+
+            if (attr === 'Abbas purchase') {
+                abbasGenExp += amt;
+            } else if (attr === 'Mehraan purchase') {
+                mehraanGenExp += amt;
+            }
+        });
+
+        return {
+            abbas: {
+                count: abbasVehicles,
+                buy: abbasVehiclesBuy,
+                prep: abbasVehiclesPrep,
+                general: abbasGenExp,
+                total: abbasVehiclesBuy + abbasVehiclesPrep + abbasGenExp
+            },
+            mehraan: {
+                count: mehraanVehicles,
+                buy: mehraanVehiclesBuy,
+                prep: mehraanVehiclesPrep,
+                general: mehraanGenExp,
+                total: mehraanVehiclesBuy + mehraanVehiclesPrep + mehraanGenExp
+            }
+        };
+    }, [vehicleExpenses, generalExpenses, periodFilter, dateFrom, dateTo]);
 
     // Comprehensive Financial Metrics Audit
     const kpis = useMemo(() => {
@@ -463,6 +531,14 @@ export default function BusinessAnalytics() {
                     </>
                 )}
                 <div className="ba-filters__group">
+                    <label className="ba-filters__label">Purchase Attribution</label>
+                    <select value={filterPurchaseAttribution} onChange={e => setFilterPurchaseAttribution(e.target.value)} className="ba-filters__select">
+                        <option value="All">All Purchases</option>
+                        <option value="Abbas purchase">Abbas purchase</option>
+                        <option value="Mehraan purchase">Mehraan purchase</option>
+                    </select>
+                </div>
+                <div className="ba-filters__group">
                     <label className="ba-filters__label">Make</label>
                     <select value={filterMake} onChange={e => setFilterMake(e.target.value)} className="ba-filters__select">
                         {makes.map(m => <option key={m} value={m}>{m}</option>)}
@@ -504,15 +580,90 @@ export default function BusinessAnalytics() {
                     <label className="ba-filters__label">Min Profit (£)</label>
                     <input type="number" placeholder="e.g. 500" value={minProfit} onChange={e => setMinProfit(e.target.value)} className="ba-filters__input" />
                 </div>
-                {(filterMake !== 'All' || filterStatus !== 'All' || filterVatScheme !== 'All' || filterExpType !== 'All' || filterGenCat !== 'All' || minRevenue || maxRevenue || minProfit || maxProfit || periodFilter !== 'all') && (
+                {(filterMake !== 'All' || filterStatus !== 'All' || filterVatScheme !== 'All' || filterExpType !== 'All' || filterGenCat !== 'All' || filterPurchaseAttribution !== 'All' || minRevenue || maxRevenue || minProfit || maxProfit || periodFilter !== 'all') && (
                     <button className="ba-clear-filters-btn" onClick={() => {
                         setPeriodFilter('all'); setFilterMake('All'); setFilterStatus('All'); setFilterVatScheme('All');
-                        setFilterExpType('All'); setFilterGenCat('All'); setMinRevenue(''); setMaxRevenue('');
+                        setFilterExpType('All'); setFilterGenCat('All'); setFilterPurchaseAttribution('All'); setMinRevenue(''); setMaxRevenue('');
                         setMinProfit(''); setMaxProfit(''); setDateFrom(''); setDateTo('');
                     }}>
                         Reset Filters
                     </button>
                 )}
+            </section>
+
+            {/* Purchaser Spend Summary Cards */}
+            <section style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+                    {/* Abbas Spend Card */}
+                    <div style={{
+                        background: 'var(--color-bg-card)',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        borderRadius: 'var(--radius-xl)',
+                        padding: '20px',
+                        boxShadow: 'var(--shadow-sm)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#3b82f6' }}>
+                                👤 Abbas Purchase Summary
+                            </span>
+                            <span style={{ fontSize: '12px', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', padding: '2px 8px', borderRadius: '10px', fontWeight: '600' }}>
+                                {purchaserSpendSummary.abbas.count} Vehicles
+                            </span>
+                        </div>
+                        <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-text)', marginBottom: '12px' }}>
+                            {fmtFull(purchaserSpendSummary.abbas.total)} <span style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--color-text-secondary)' }}>Total Spend</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', fontSize: '12px', borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
+                            <div>
+                                <span style={{ color: 'var(--color-text-tertiary)', display: 'block', fontSize: '11px' }}>Buying Cost</span>
+                                <strong>{fmt(purchaserSpendSummary.abbas.buy)}</strong>
+                            </div>
+                            <div>
+                                <span style={{ color: 'var(--color-text-tertiary)', display: 'block', fontSize: '11px' }}>Prep Expenses</span>
+                                <strong>{fmt(purchaserSpendSummary.abbas.prep)}</strong>
+                            </div>
+                            <div>
+                                <span style={{ color: 'var(--color-text-tertiary)', display: 'block', fontSize: '11px' }}>General Overheads</span>
+                                <strong>{fmt(purchaserSpendSummary.abbas.general)}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mehraan Spend Card */}
+                    <div style={{
+                        background: 'var(--color-bg-card)',
+                        border: '1px solid rgba(168, 85, 247, 0.3)',
+                        borderRadius: 'var(--radius-xl)',
+                        padding: '20px',
+                        boxShadow: 'var(--shadow-sm)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#a855f7' }}>
+                                👤 Mehraan Purchase Summary
+                            </span>
+                            <span style={{ fontSize: '12px', background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', padding: '2px 8px', borderRadius: '10px', fontWeight: '600' }}>
+                                {purchaserSpendSummary.mehraan.count} Vehicles
+                            </span>
+                        </div>
+                        <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-text)', marginBottom: '12px' }}>
+                            {fmtFull(purchaserSpendSummary.mehraan.total)} <span style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--color-text-secondary)' }}>Total Spend</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', fontSize: '12px', borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
+                            <div>
+                                <span style={{ color: 'var(--color-text-tertiary)', display: 'block', fontSize: '11px' }}>Buying Cost</span>
+                                <strong>{fmt(purchaserSpendSummary.mehraan.buy)}</strong>
+                            </div>
+                            <div>
+                                <span style={{ color: 'var(--color-text-tertiary)', display: 'block', fontSize: '11px' }}>Prep Expenses</span>
+                                <strong>{fmt(purchaserSpendSummary.mehraan.prep)}</strong>
+                            </div>
+                            <div>
+                                <span style={{ color: 'var(--color-text-tertiary)', display: 'block', fontSize: '11px' }}>General Overheads</span>
+                                <strong>{fmt(purchaserSpendSummary.mehraan.general)}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             {/* KPI Grid with Detailed Calculation Explanations */}

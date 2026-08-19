@@ -32,6 +32,7 @@ const INITIAL_FORM_STATE = {
     status: 'In Stock',
     sellingPrice: '',
     vat_scheme: 'VAT Margin',
+    purchase_attribution: '',
     expenses: [] // Array of { type, amount, date, description, calculateVat, netAmount, vatAmount }
 };
 
@@ -61,6 +62,7 @@ export default function ExpenseTracker() {
     const [filterMake, setFilterMake] = useState('All');
     const [filterStatus, setFilterStatus] = useState('All');
     const [filterVatScheme, setFilterVatScheme] = useState('All');
+    const [filterPurchaser, setFilterPurchaser] = useState('All');
     const [dashboardFilter, setDashboardFilter] = useState('All');
 
     // Sorting State
@@ -419,6 +421,8 @@ export default function ExpenseTracker() {
 
         const profitLoss = formState.status === 'Sold' ? (selling - buying - totalNetExp - outputVat) : -totalCost;
 
+        const attr = formState.purchase_attribution || formState.purchaseAttribution || null;
+
         const payload = {
             make: finalMake,
             model: finalModel,
@@ -427,6 +431,8 @@ export default function ExpenseTracker() {
             status: formState.status,
             selling_price: formState.status === 'Sold' ? selling : 0,
             vat_scheme: formState.vat_scheme,
+            purchase_attribution: attr,
+            purchaseAttribution: attr,
             profit_loss: profitLoss,
             expenses: formState.expenses
         };
@@ -478,6 +484,7 @@ export default function ExpenseTracker() {
             status: record.status,
             sellingPrice: record.status === 'Sold' ? record.selling_price : '',
             vat_scheme: record.vat_scheme || 'VAT Margin',
+            purchase_attribution: record.purchase_attribution || record.purchaseAttribution || '',
             expenses: (record.expenses || []).map(e => ({
                 ...e,
                 date: e.date || (record.created_at ? record.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10)),
@@ -533,8 +540,9 @@ export default function ExpenseTracker() {
             }
 
             const matchesVatScheme = filterVatScheme === 'All' || (r.vat_scheme || 'VAT Margin') === filterVatScheme;
+            const matchesPurchaser = filterPurchaser === 'All' || (r.purchase_attribution || r.purchaseAttribution) === filterPurchaser;
 
-            return matchesSearch && matchesMake && matchesStatus && matchesVatScheme;
+            return matchesSearch && matchesMake && matchesStatus && matchesVatScheme && matchesPurchaser;
         });
 
         // 2. Sort
@@ -758,7 +766,7 @@ export default function ExpenseTracker() {
                                 </div>
                             </div>
 
-                            {/* VAT Scheme & Status */}
+                            {/* VAT Scheme, Status & Purchase Attribution */}
                             <div className="form-row">
                                 <div className="form-group">
                                     <label className="form-label">VAT Scheme</label>
@@ -782,6 +790,19 @@ export default function ExpenseTracker() {
                                     >
                                         <option value="In Stock">In Stock</option>
                                         <option value="Sold">Sold</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Purchase Attribution</label>
+                                    <select
+                                        name="purchase_attribution"
+                                        value={formState.purchase_attribution || formState.purchaseAttribution || ''}
+                                        onChange={handleInputChange}
+                                        className="form-select"
+                                    >
+                                        <option value="">-- Select Purchaser --</option>
+                                        <option value="Abbas purchase">Abbas purchase</option>
+                                        <option value="Mehraan purchase">Mehraan purchase</option>
                                     </select>
                                 </div>
                             </div>
@@ -1036,6 +1057,15 @@ export default function ExpenseTracker() {
                                     <option value="VAT Margin">VAT Margin</option>
                                     <option value="VAT Commercial">VAT Commercial</option>
                                 </select>
+                                <select 
+                                    value={filterPurchaser} 
+                                    onChange={(e) => setFilterPurchaser(e.target.value)} 
+                                    className="form-select expense-tracker__filter-select"
+                                >
+                                    <option value="All">All Purchasers</option>
+                                    <option value="Abbas purchase">Abbas purchase</option>
+                                    <option value="Mehraan purchase">Mehraan purchase</option>
+                                </select>
                             </div>
                         </div>
 
@@ -1053,6 +1083,7 @@ export default function ExpenseTracker() {
                                             <th onClick={() => handleSort('model')} style={{ cursor: 'pointer' }}>
                                                 Model {renderSortIcon('model')}
                                             </th>
+                                            <th>Purchaser</th>
                                             <th onClick={() => handleSort('vat_scheme')} style={{ cursor: 'pointer' }}>
                                                 VAT Scheme {renderSortIcon('vat_scheme')}
                                             </th>
@@ -1084,6 +1115,7 @@ export default function ExpenseTracker() {
                                             const totalCost = parseFloat(rec.buying_price || 0) + totalExp;
                                             const pL = parseFloat(rec.profit_loss || 0);
                                             const scheme = rec.vat_scheme || 'VAT Margin';
+                                            const purchaser = rec.purchase_attribution || rec.purchaseAttribution;
 
                                             return (
                                                 <tr key={rec.id}>
@@ -1092,6 +1124,25 @@ export default function ExpenseTracker() {
                                                     </td>
                                                     <td><strong>{normMake}</strong></td>
                                                     <td>{rec.model}</td>
+                                                    <td>
+                                                        {purchaser ? (
+                                                            <span style={{ 
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                padding: '3px 8px',
+                                                                borderRadius: '12px',
+                                                                fontSize: '11px',
+                                                                fontWeight: '600',
+                                                                background: purchaser.includes('Abbas') ? 'rgba(59, 130, 246, 0.15)' : 'rgba(168, 85, 247, 0.15)',
+                                                                color: purchaser.includes('Abbas') ? '#3b82f6' : '#a855f7',
+                                                                border: `1px solid ${purchaser.includes('Abbas') ? 'rgba(59, 130, 246, 0.3)' : 'rgba(168, 85, 247, 0.3)'}`
+                                                            }}>
+                                                                👤 {purchaser}
+                                                            </span>
+                                                        ) : (
+                                                            <span style={{ opacity: 0.4, fontSize: '12px' }}>Unassigned</span>
+                                                        )}
+                                                    </td>
                                                     <td>
                                                         <span className="expense-tracker__scheme-badge">
                                                             {scheme}
@@ -1210,6 +1261,10 @@ export default function ExpenseTracker() {
                             <div className="expense-tracker__details-item">
                                 <span>VAT Scheme</span>
                                 <span className="expense-tracker__scheme-badge">{detailsRecord.vat_scheme || 'VAT Margin'}</span>
+                            </div>
+                            <div className="expense-tracker__details-item">
+                                <span>Purchase Attribution</span>
+                                <strong>{detailsRecord.purchase_attribution || detailsRecord.purchaseAttribution || 'Unassigned'}</strong>
                             </div>
                             <div className="expense-tracker__details-item">
                                 <span>Status</span>

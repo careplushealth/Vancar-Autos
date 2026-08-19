@@ -44,13 +44,15 @@ const initDB = async () => {
                 status VARCHAR(50) DEFAULT 'available',
                 featured BOOLEAN DEFAULT false,
                 lead_source VARCHAR(100),
-                autotrader_days_advertised INTEGER
+                autotrader_days_advertised INTEGER,
+                purchase_attribution VARCHAR(100)
             );
         `);
         
         await db.query(`
             ALTER TABLE cars ADD COLUMN IF NOT EXISTS lead_source VARCHAR(100);
             ALTER TABLE cars ADD COLUMN IF NOT EXISTS autotrader_days_advertised INTEGER;
+            ALTER TABLE cars ADD COLUMN IF NOT EXISTS purchase_attribution VARCHAR(100);
         `);
         
         await db.query(`
@@ -88,16 +90,18 @@ const initDB = async () => {
                 selling_price NUMERIC DEFAULT 0,
                 profit_loss NUMERIC NOT NULL,
                 vat_scheme VARCHAR(50) DEFAULT 'VAT Margin',
+                purchase_attribution VARCHAR(100),
                 expenses JSONB DEFAULT '[]',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
 
-        // Migration query to add registration & vat_scheme columns if the table already exists
+        // Migration query to add registration, vat_scheme & purchase_attribution columns if table exists
         await db.query(`
             ALTER TABLE vehicle_expenses ADD COLUMN IF NOT EXISTS registration VARCHAR(50);
             ALTER TABLE vehicle_expenses ADD COLUMN IF NOT EXISTS vat_scheme VARCHAR(50) DEFAULT 'VAT Margin';
+            ALTER TABLE vehicle_expenses ADD COLUMN IF NOT EXISTS purchase_attribution VARCHAR(100);
         `);
 
         // Create contact submissions table
@@ -142,9 +146,15 @@ const initDB = async () => {
                 description TEXT,
                 notes TEXT,
                 receipt_url TEXT,
+                purchase_attribution VARCHAR(100),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+        `);
+
+        // Migration query to add purchase_attribution column if general_expenses exists
+        await db.query(`
+            ALTER TABLE general_expenses ADD COLUMN IF NOT EXISTS purchase_attribution VARCHAR(100);
         `);
 
         // Create deposit slips table
@@ -191,7 +201,8 @@ app.get('/api/cars', async (req, res) => {
         const rows = result.rows.map(row => ({
             ...row,
             lead_source: row.lead_source || null,
-            autotrader_days_advertised: row.autotrader_days_advertised !== null ? parseInt(row.autotrader_days_advertised) : null
+            autotrader_days_advertised: row.autotrader_days_advertised !== null ? parseInt(row.autotrader_days_advertised) : null,
+            purchase_attribution: row.purchase_attribution || null
         }));
         res.json(rows);
     } catch (err) {
@@ -205,6 +216,7 @@ app.post('/api/cars', async (req, res) => {
     const leadSource = car.lead_source || car.leadSource || null;
     const rawDays = car.autotrader_days_advertised !== undefined ? car.autotrader_days_advertised : car.autotraderDaysAdvertised;
     const autotraderDays = (rawDays !== undefined && rawDays !== null && rawDays !== '') ? parseInt(rawDays) : null;
+    const purchaseAttribution = car.purchase_attribution || car.purchaseAttribution || null;
 
     if (car.status === 'sold') {
         if (!leadSource) {
@@ -217,9 +229,9 @@ app.post('/api/cars', async (req, res) => {
 
     try {
         const result = await db.query(
-            `INSERT INTO cars (id, title, make, model, trim, year, price, mileage, fuel, transmission, "bodyType", colour, engine, doors, seats, description, features, images, status, featured, lead_source, autotrader_days_advertised)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22) RETURNING *`,
-            [car.id, car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, leadSource, autotraderDays]
+            `INSERT INTO cars (id, title, make, model, trim, year, price, mileage, fuel, transmission, "bodyType", colour, engine, doors, seats, description, features, images, status, featured, lead_source, autotrader_days_advertised, purchase_attribution)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23) RETURNING *`,
+            [car.id, car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, leadSource, autotraderDays, purchaseAttribution]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -234,6 +246,7 @@ app.put('/api/cars/:id', async (req, res) => {
     const leadSource = car.lead_source || car.leadSource || null;
     const rawDays = car.autotrader_days_advertised !== undefined ? car.autotrader_days_advertised : car.autotraderDaysAdvertised;
     const autotraderDays = (rawDays !== undefined && rawDays !== null && rawDays !== '') ? parseInt(rawDays) : null;
+    const purchaseAttribution = car.purchase_attribution || car.purchaseAttribution || null;
 
     if (car.status === 'sold') {
         if (!leadSource) {
@@ -246,9 +259,9 @@ app.put('/api/cars/:id', async (req, res) => {
 
     try {
         const result = await db.query(
-            `UPDATE cars SET title=$1, make=$2, model=$3, trim=$4, year=$5, price=$6, mileage=$7, fuel=$8, transmission=$9, "bodyType"=$10, colour=$11, engine=$12, doors=$13, seats=$14, description=$15, features=$16, images=$17, status=$18, featured=$19, lead_source=$20, autotrader_days_advertised=$21
-             WHERE id=$22 RETURNING *`,
-            [car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, leadSource, autotraderDays, id]
+            `UPDATE cars SET title=$1, make=$2, model=$3, trim=$4, year=$5, price=$6, mileage=$7, fuel=$8, transmission=$9, "bodyType"=$10, colour=$11, engine=$12, doors=$13, seats=$14, description=$15, features=$16, images=$17, status=$18, featured=$19, lead_source=$20, autotrader_days_advertised=$21, purchase_attribution=$22
+             WHERE id=$23 RETURNING *`,
+            [car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, leadSource, autotraderDays, purchaseAttribution, id]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -350,13 +363,14 @@ app.get('/api/vehicle-expenses', async (req, res) => {
 });
 
 app.post('/api/vehicle-expenses', async (req, res) => {
-    const { id, make, model, registration, buying_price, status, selling_price, profit_loss, vat_scheme, expenses } = req.body;
+    const { id, make, model, registration, buying_price, status, selling_price, profit_loss, vat_scheme, purchase_attribution, purchaseAttribution, expenses } = req.body;
     const scheme = vat_scheme || 'VAT Margin';
+    const attr = purchase_attribution || purchaseAttribution || null;
     try {
         const result = await db.query(
-            `INSERT INTO vehicle_expenses (id, make, model, registration, buying_price, status, selling_price, profit_loss, vat_scheme, expenses, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()) RETURNING *`,
-            [id, make, model, registration, buying_price, status, selling_price, profit_loss, scheme, JSON.stringify(expenses)]
+            `INSERT INTO vehicle_expenses (id, make, model, registration, buying_price, status, selling_price, profit_loss, vat_scheme, purchase_attribution, expenses, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()) RETURNING *`,
+            [id, make, model, registration, buying_price, status, selling_price, profit_loss, scheme, attr, JSON.stringify(expenses)]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -367,14 +381,15 @@ app.post('/api/vehicle-expenses', async (req, res) => {
 
 app.put('/api/vehicle-expenses/:id', async (req, res) => {
     const { id } = req.params;
-    const { make, model, registration, buying_price, status, selling_price, profit_loss, vat_scheme, expenses } = req.body;
+    const { make, model, registration, buying_price, status, selling_price, profit_loss, vat_scheme, purchase_attribution, purchaseAttribution, expenses } = req.body;
     const scheme = vat_scheme || 'VAT Margin';
+    const attr = purchase_attribution || purchaseAttribution || null;
     try {
         const result = await db.query(
             `UPDATE vehicle_expenses 
-             SET make=$1, model=$2, registration=$3, buying_price=$4, status=$5, selling_price=$6, profit_loss=$7, vat_scheme=$8, expenses=$9, updated_at=NOW()
-             WHERE id=$10 RETURNING *`,
-            [make, model, registration, buying_price, status, selling_price, profit_loss, scheme, JSON.stringify(expenses), id]
+             SET make=$1, model=$2, registration=$3, buying_price=$4, status=$5, selling_price=$6, profit_loss=$7, vat_scheme=$8, purchase_attribution=$9, expenses=$10, updated_at=NOW()
+             WHERE id=$11 RETURNING *`,
+            [make, model, registration, buying_price, status, selling_price, profit_loss, scheme, attr, JSON.stringify(expenses), id]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -1204,12 +1219,13 @@ app.get('/api/general-expenses', async (req, res) => {
 });
 
 app.post('/api/general-expenses', async (req, res) => {
-    const { id, category, amount, date, description, notes, receipt_url, created_at, updated_at } = req.body;
+    const { id, category, amount, date, description, notes, receipt_url, purchase_attribution, purchaseAttribution, created_at, updated_at } = req.body;
+    const attr = purchase_attribution || purchaseAttribution || null;
     try {
         const result = await db.query(
-            `INSERT INTO general_expenses (id, category, amount, date, description, notes, receipt_url, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-            [id, category, amount, date, description || '', notes || '', receipt_url || '', created_at, updated_at]
+            `INSERT INTO general_expenses (id, category, amount, date, description, notes, receipt_url, purchase_attribution, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+            [id, category, amount, date, description || '', notes || '', receipt_url || '', attr, created_at, updated_at]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -1220,11 +1236,12 @@ app.post('/api/general-expenses', async (req, res) => {
 
 app.put('/api/general-expenses/:id', async (req, res) => {
     const { id } = req.params;
-    const { category, amount, date, description, notes, receipt_url, updated_at } = req.body;
+    const { category, amount, date, description, notes, receipt_url, purchase_attribution, purchaseAttribution, updated_at } = req.body;
+    const attr = purchase_attribution || purchaseAttribution || null;
     try {
         const result = await db.query(
-            `UPDATE general_expenses SET category=$1, amount=$2, date=$3, description=$4, notes=$5, receipt_url=$6, updated_at=$7 WHERE id=$8 RETURNING *`,
-            [category, amount, date, description || '', notes || '', receipt_url || '', updated_at, id]
+            `UPDATE general_expenses SET category=$1, amount=$2, date=$3, description=$4, notes=$5, receipt_url=$6, purchase_attribution=$7, updated_at=$8 WHERE id=$9 RETURNING *`,
+            [category, amount, date, description || '', notes || '', receipt_url || '', attr, updated_at, id]
         );
         res.json(result.rows[0]);
     } catch (err) {

@@ -77,7 +77,12 @@ function generateId() {
 
 // === Cars ===
 export function getCars() {
-  return initData(CARS_KEY, carsData);
+  const cars = initData(CARS_KEY, carsData);
+  return cars.map(car => ({
+    ...car,
+    purchase_attribution: car.purchase_attribution || car.purchaseAttribution || null,
+    purchaseAttribution: car.purchase_attribution || car.purchaseAttribution || null
+  }));
 }
 
 export function getCarById(id) {
@@ -177,7 +182,13 @@ export function searchCars(filters = {}) {
 
 export function createCar(carData) {
   const cars = getCars();
-  const newCar = { ...carData, id: generateId() };
+  const attr = carData.purchase_attribution || carData.purchaseAttribution || null;
+  const newCar = { 
+    ...carData, 
+    purchase_attribution: attr,
+    purchaseAttribution: attr,
+    id: generateId() 
+  };
   cars.push(newCar);
   saveData(CARS_KEY, cars);
   syncNeon('/cars', 'POST', newCar);
@@ -188,7 +199,14 @@ export function updateCar(id, carData) {
   const cars = getCars();
   const idx = cars.findIndex(c => c.id === id);
   if (idx === -1) return null;
-  cars[idx] = { ...cars[idx], ...carData, id };
+  const attr = carData.purchase_attribution !== undefined ? carData.purchase_attribution : (carData.purchaseAttribution !== undefined ? carData.purchaseAttribution : cars[idx].purchase_attribution);
+  cars[idx] = { 
+    ...cars[idx], 
+    ...carData, 
+    purchase_attribution: attr || null,
+    purchaseAttribution: attr || null,
+    id 
+  };
   saveData(CARS_KEY, cars);
   syncNeon(`/cars/${id}`, 'PUT', cars[idx]);
   return cars[idx];
@@ -269,11 +287,13 @@ export function deleteBlog(id) {
 // === Vehicle Expenses ===
 export function getVehicleExpenses() {
   const records = initData(EXPENSES_KEY, []);
-  // Ensure existing data is normalized and has vat_scheme
+  // Ensure existing data is normalized and has vat_scheme & purchase_attribution
   return records.map(r => ({
     ...r,
     make: normalizeMake(r.make),
     vat_scheme: r.vat_scheme || 'VAT Margin',
+    purchase_attribution: r.purchase_attribution || r.purchaseAttribution || null,
+    purchaseAttribution: r.purchase_attribution || r.purchaseAttribution || null,
     expenses: (r.expenses || []).map(e => ({
       ...e,
       date: e.date || (r.created_at ? r.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10)),
@@ -289,10 +309,13 @@ export function getVehicleExpenses() {
 export function createVehicleExpense(expenseData) {
   const expenses = getVehicleExpenses();
   const nowStr = new Date().toISOString();
+  const attr = expenseData.purchase_attribution || expenseData.purchaseAttribution || null;
   const newExpense = { 
     ...expenseData, 
     make: normalizeMake(expenseData.make),
     vat_scheme: expenseData.vat_scheme || 'VAT Margin',
+    purchase_attribution: attr,
+    purchaseAttribution: attr,
     id: generateId(),
     created_at: nowStr,
     updated_at: nowStr
@@ -308,11 +331,14 @@ export function updateVehicleExpense(id, expenseData) {
   const idx = expenses.findIndex(e => e.id === id);
   if (idx === -1) return null;
   const nowStr = new Date().toISOString();
+  const attr = expenseData.purchase_attribution !== undefined ? expenseData.purchase_attribution : (expenseData.purchaseAttribution !== undefined ? expenseData.purchaseAttribution : expenses[idx].purchase_attribution);
   expenses[idx] = { 
     ...expenses[idx], 
     ...expenseData, 
     make: normalizeMake(expenseData.make || expenses[idx].make),
     vat_scheme: expenseData.vat_scheme || expenses[idx].vat_scheme || 'VAT Margin',
+    purchase_attribution: attr || null,
+    purchaseAttribution: attr || null,
     id,
     updated_at: nowStr
   };
@@ -334,14 +360,22 @@ export function getModelsByMake(make) {
 
 // === General Expenses ===
 export function getGeneralExpenses() {
-  return initData(GENERAL_EXPENSES_KEY, []);
+  const records = initData(GENERAL_EXPENSES_KEY, []);
+  return records.map(r => ({
+    ...r,
+    purchase_attribution: r.purchase_attribution || r.purchaseAttribution || null,
+    purchaseAttribution: r.purchase_attribution || r.purchaseAttribution || null
+  }));
 }
 
 export function createGeneralExpense(data) {
   const expenses = getGeneralExpenses();
   const nowStr = new Date().toISOString();
+  const attr = data.purchase_attribution || data.purchaseAttribution || null;
   const newExpense = {
     ...data,
+    purchase_attribution: attr,
+    purchaseAttribution: attr,
     id: generateId(),
     created_at: nowStr,
     updated_at: nowStr
@@ -357,9 +391,12 @@ export function updateGeneralExpense(id, data) {
   const idx = expenses.findIndex(e => e.id === id);
   if (idx === -1) return null;
   const nowStr = new Date().toISOString();
+  const attr = data.purchase_attribution !== undefined ? data.purchase_attribution : (data.purchaseAttribution !== undefined ? data.purchaseAttribution : expenses[idx].purchase_attribution);
   expenses[idx] = {
     ...expenses[idx],
     ...data,
+    purchase_attribution: attr || null,
+    purchaseAttribution: attr || null,
     id,
     updated_at: nowStr
   };
