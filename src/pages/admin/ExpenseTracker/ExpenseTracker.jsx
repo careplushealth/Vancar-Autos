@@ -215,6 +215,8 @@ export default function ExpenseTracker() {
         const netAmount = amount;
         const grossAmount = calculateVat ? amount * 1.20 : amount;
 
+        const chosenAttribution = expensePurchaseAttribution || formState.purchase_attribution || formState.purchaseAttribution || null;
+
         const expenseItem = {
             type: expenseType,
             amount: amount,
@@ -223,7 +225,9 @@ export default function ExpenseTracker() {
             calculateVat,
             vatAmount,
             netAmount,
-            grossAmount
+            grossAmount,
+            purchase_attribution: chosenAttribution,
+            purchaseAttribution: chosenAttribution,
         };
 
         if (editingExpenseIdx !== null) {
@@ -246,6 +250,7 @@ export default function ExpenseTracker() {
         setExpenseAmount('');
         setExpenseDescription('');
         setExpenseCalculateVat(false);
+        setExpensePurchaseAttribution('');
         setExpenseDate(new Date().toISOString().slice(0, 10));
     };
 
@@ -256,6 +261,7 @@ export default function ExpenseTracker() {
         setExpenseDate(exp.date || new Date().toISOString().slice(0, 10));
         setExpenseDescription(exp.description || '');
         setExpenseCalculateVat(!!exp.calculateVat);
+        setExpensePurchaseAttribution(exp.purchase_attribution || exp.purchaseAttribution || '');
         setEditingExpenseIdx(idx);
     };
 
@@ -269,6 +275,7 @@ export default function ExpenseTracker() {
             setExpenseAmount('');
             setExpenseDescription('');
             setExpenseCalculateVat(false);
+            setExpensePurchaseAttribution('');
             setExpenseDate(new Date().toISOString().slice(0, 10));
         }
     };
@@ -868,7 +875,19 @@ export default function ExpenseTracker() {
                                             required
                                         />
                                     </div>
-                                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                    <div className="form-group">
+                                        <label className="form-label">Purchase Attribution</label>
+                                        <select 
+                                            value={expensePurchaseAttribution || formState.purchase_attribution || formState.purchaseAttribution || ''} 
+                                            onChange={(e) => setExpensePurchaseAttribution(e.target.value)} 
+                                            className="form-select"
+                                        >
+                                            <option value="">-- Inherit / Select Purchaser --</option>
+                                            <option value="Abbas purchase">Abbas purchase</option>
+                                            <option value="Mehraan purchase">Mehraan purchase</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
                                         <label className="form-label">Description / Notes</label>
                                         <input 
                                             type="text" 
@@ -906,6 +925,7 @@ export default function ExpenseTracker() {
                                                 <tr>
                                                     <th>Date</th>
                                                     <th>Type</th>
+                                                    <th>Purchaser</th>
                                                     <th>Description</th>
                                                     <th>Net</th>
                                                     <th>VAT</th>
@@ -914,34 +934,53 @@ export default function ExpenseTracker() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {formState.expenses.map((exp, idx) => (
-                                                    <tr key={idx}>
-                                                        <td>{exp.date}</td>
-                                                        <td><strong>{exp.type}</strong></td>
-                                                        <td>{exp.description || '—'}</td>
-                                                        <td>{fmt(exp.netAmount ?? exp.amount)}</td>
-                                                        <td>{exp.calculateVat ? <span className="expense-tracker__vat-badge">{fmt(exp.vatAmount ?? (exp.amount * 0.20))}</span> : '£0.00'}</td>
-                                                        <td><strong>{fmt(exp.grossAmount ?? (exp.calculateVat ? exp.amount * 1.20 : exp.amount))}</strong></td>
-                                                        <td>
-                                                            <div className="expense-tracker__temp-actions">
-                                                                <button 
-                                                                    type="button" 
-                                                                    onClick={() => handleEditExpense(idx)} 
-                                                                    className="expense-tracker__text-btn"
-                                                                >
-                                                                    Edit
-                                                                </button>
-                                                                <button 
-                                                                    type="button" 
-                                                                    onClick={() => handleDeleteExpense(idx)} 
-                                                                    className="expense-tracker__text-btn expense-tracker__text-btn--danger"
-                                                                >
-                                                                    Delete
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                {formState.expenses.map((exp, idx) => {
+                                                    const expAttr = exp.purchase_attribution || exp.purchaseAttribution || formState.purchase_attribution || formState.purchaseAttribution;
+                                                    return (
+                                                        <tr key={idx}>
+                                                            <td>{exp.date}</td>
+                                                            <td><strong>{exp.type}</strong></td>
+                                                            <td>
+                                                                {expAttr ? (
+                                                                    <span style={{ 
+                                                                        display: 'inline-flex',
+                                                                        alignItems: 'center',
+                                                                        padding: '1px 6px',
+                                                                        borderRadius: '8px',
+                                                                        fontSize: '11px',
+                                                                        fontWeight: '600',
+                                                                        background: expAttr.includes('Abbas') ? 'rgba(59, 130, 246, 0.15)' : 'rgba(168, 85, 247, 0.15)',
+                                                                        color: expAttr.includes('Abbas') ? '#3b82f6' : '#a855f7'
+                                                                    }}>
+                                                                        {expAttr}
+                                                                    </span>
+                                                                ) : <span style={{ opacity: 0.4, fontSize: '11px' }}>—</span>}
+                                                            </td>
+                                                            <td>{exp.description || '—'}</td>
+                                                            <td>{fmt(exp.netAmount ?? exp.amount)}</td>
+                                                            <td>{exp.calculateVat ? <span className="expense-tracker__vat-badge">{fmt(exp.vatAmount ?? (exp.amount * 0.20))}</span> : '£0.00'}</td>
+                                                            <td><strong>{fmt(exp.grossAmount ?? (exp.calculateVat ? exp.amount * 1.20 : exp.amount))}</strong></td>
+                                                            <td>
+                                                                <div className="expense-tracker__temp-actions">
+                                                                    <button 
+                                                                        type="button" 
+                                                                        onClick={() => handleEditExpense(idx)} 
+                                                                        className="expense-tracker__text-btn"
+                                                                    >
+                                                                        Edit
+                                                                    </button>
+                                                                    <button 
+                                                                        type="button" 
+                                                                        onClick={() => handleDeleteExpense(idx)} 
+                                                                        className="expense-tracker__text-btn expense-tracker__text-btn--danger"
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
                                             </tbody>
                                         </table>
                                         <div className="expense-tracker__temp-total">
@@ -1312,6 +1351,7 @@ export default function ExpenseTracker() {
                                         <tr>
                                             <th>Date</th>
                                             <th>Type</th>
+                                            <th>Purchaser</th>
                                             <th>Description</th>
                                             <th>Net</th>
                                             <th>VAT</th>
@@ -1319,16 +1359,35 @@ export default function ExpenseTracker() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {detailsRecord.expenses.map((exp, idx) => (
-                                            <tr key={idx}>
-                                                <td>{exp.date || '—'}</td>
-                                                <td><strong>{exp.type}</strong></td>
-                                                <td>{exp.description || '—'}</td>
-                                                <td>{fmt(exp.netAmount ?? exp.amount)}</td>
-                                                <td>{exp.calculateVat ? <span className="expense-tracker__vat-badge">{fmt(exp.vatAmount ?? (exp.amount * 0.20))}</span> : '£0.00'}</td>
-                                                <td><strong>{fmt(exp.grossAmount ?? (exp.calculateVat ? exp.amount * 1.20 : exp.amount))}</strong></td>
-                                            </tr>
-                                        ))}
+                                        {detailsRecord.expenses.map((exp, idx) => {
+                                            const expAttr = exp.purchase_attribution || exp.purchaseAttribution || detailsRecord.purchase_attribution || detailsRecord.purchaseAttribution;
+                                            return (
+                                                <tr key={idx}>
+                                                    <td>{exp.date || '—'}</td>
+                                                    <td><strong>{exp.type}</strong></td>
+                                                    <td>
+                                                        {expAttr ? (
+                                                            <span style={{ 
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                padding: '1px 6px',
+                                                                borderRadius: '8px',
+                                                                fontSize: '11px',
+                                                                fontWeight: '600',
+                                                                background: expAttr.includes('Abbas') ? 'rgba(59, 130, 246, 0.15)' : 'rgba(168, 85, 247, 0.15)',
+                                                                color: expAttr.includes('Abbas') ? '#3b82f6' : '#a855f7'
+                                                            }}>
+                                                                {expAttr}
+                                                            </span>
+                                                        ) : <span style={{ opacity: 0.4, fontSize: '11px' }}>—</span>}
+                                                    </td>
+                                                    <td>{exp.description || '—'}</td>
+                                                    <td>{fmt(exp.netAmount ?? exp.amount)}</td>
+                                                    <td>{exp.calculateVat ? <span className="expense-tracker__vat-badge">{fmt(exp.vatAmount ?? (exp.amount * 0.20))}</span> : '£0.00'}</td>
+                                                    <td><strong>{fmt(exp.grossAmount ?? (exp.calculateVat ? exp.amount * 1.20 : exp.amount))}</strong></td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             ) : (

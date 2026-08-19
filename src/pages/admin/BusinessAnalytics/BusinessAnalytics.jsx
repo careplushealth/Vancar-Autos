@@ -194,19 +194,26 @@ export default function BusinessAnalytics() {
 
         vehicleExpenses.forEach(r => {
             if (!isWithinPeriod(r.created_at)) return;
-            const attr = r.purchase_attribution || r.purchaseAttribution;
+            const carAttr = r.purchase_attribution || r.purchaseAttribution;
             const buy = parseFloat(r.buying_price || 0);
-            const prep = (r.expenses || []).reduce((s, e) => s + parseFloat(e.amount || 0), 0);
 
-            if (attr === 'Abbas purchase') {
+            if (carAttr === 'Abbas purchase') {
                 abbasVehicles++;
                 abbasVehiclesBuy += buy;
-                abbasVehiclesPrep += prep;
-            } else if (attr === 'Mehraan purchase') {
+            } else if (carAttr === 'Mehraan purchase') {
                 mehraanVehicles++;
                 mehraanVehiclesBuy += buy;
-                mehraanVehiclesPrep += prep;
             }
+
+            (r.expenses || []).forEach(e => {
+                const expAttr = e.purchase_attribution || e.purchaseAttribution || carAttr;
+                const amt = parseFloat(e.amount || 0);
+                if (expAttr === 'Abbas purchase') {
+                    abbasVehiclesPrep += amt;
+                } else if (expAttr === 'Mehraan purchase') {
+                    mehraanVehiclesPrep += amt;
+                }
+            });
         });
 
         generalExpenses.forEach(r => {
