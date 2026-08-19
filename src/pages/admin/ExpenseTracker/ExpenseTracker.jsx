@@ -55,6 +55,7 @@ export default function ExpenseTracker() {
     const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().slice(0, 10));
     const [expenseDescription, setExpenseDescription] = useState('');
     const [expenseCalculateVat, setExpenseCalculateVat] = useState(false);
+    const [expensePurchaseAttribution, setExpensePurchaseAttribution] = useState('');
     const [editingExpenseIdx, setEditingExpenseIdx] = useState(null);
 
     // Filter & Search State
