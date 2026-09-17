@@ -78,7 +78,7 @@ export default function KarmaHero() {
             {/* Value Proposition Paragraph */}
             <p className="karma-hero__desc">
               Explore our curated showroom of reliable, economical, and thoroughly inspected used vehicles. 
-              Every car comes with <strong>30 Days Warranty Included</strong> (optional extended warranty available), history audit, and nationwide delivery.
+              Every car comes with a complete history audit and nationwide delivery.
             </p>
 
             {/* CTAs */}

@@ -13,7 +13,7 @@ import './DepositSlipGenerator.css';
 
 const DEFAULT_SELLER = {
     name: 'VanCar Autos Limited',
-    address: 'Yard 1, midland street, Manchester, M12 6LB',
+    address: 'Yard 1, Midland Street, Manchester, M12 6LB',
     tel: '07386 533337',
     email: 'sales@vancarautos.co.uk'
 };
@@ -343,7 +343,7 @@ export default function DepositSlipGenerator() {
                                     <td style="width: 14%; background-color: #f4f9f1; font-weight: bold; color: #49A921; border: 1px solid #666666; padding: 3px 6px; vertical-align: top;">Seller</td>
                                     <td style="width: 36%; border: 1px solid #666666; padding: 3px 6px; vertical-align: top;">
                                         <strong>${sellerDetails.name || 'VanCar Autos Limited'}</strong><br />
-                                        ${sellerDetails.address || 'Yard 1, midland street, Manchester, M12 6LB'}<br />
+                                        ${sellerDetails.address || 'Yard 1, Midland Street, Manchester, M12 6LB'}<br />
                                         Tel: <strong>${sellerDetails.tel || '07386 533337'}</strong>
                                     </td>
                                     <td style="width: 14%; background-color: #f4f9f1; font-weight: bold; color: #49A921; border: 1px solid #666666; padding: 3px 6px; vertical-align: top;">Receipt Info</td>
@@ -449,7 +449,7 @@ export default function DepositSlipGenerator() {
 
                     <!-- Footer -->
                     <div style="text-align: center; font-size: 7.5pt; color: #555555; border-top: 1px solid #e2e8f0; padding-top: 4px; margin-top: 6px;">
-                        VanCar Autos Limited trading as VanCar Autos | Yard 1, midland street, Manchester, M12 6LB
+                        VanCar Autos Limited trading as VanCar Autos | Yard 1, Midland Street, Manchester, M12 6LB
                     </div>
                 </div>
             `;
@@ -883,7 +883,7 @@ export default function DepositSlipGenerator() {
                                                     <td className="vds-col-label" style={{ width: '14%' }}>Seller</td>
                                                     <td style={{ width: '36%' }}>
                                                         <strong>{sellerDetails.name || 'VanCar Autos Limited'}</strong><br />
-                                                        {sellerDetails.address || 'Yard 1, midland street, Manchester, M12 6LB'}<br />
+                                                        {sellerDetails.address || 'Yard 1, Midland Street, Manchester, M12 6LB'}<br />
                                                         Tel: <strong>{sellerDetails.tel || '07386 533337'}</strong>
                                                     </td>
                                                     <td className="vds-col-label" style={{ width: '14%' }}>Receipt Info</td>
@@ -995,7 +995,7 @@ export default function DepositSlipGenerator() {
 
                                     {/* Footer */}
                                     <div className="vds-doc-footer">
-                                        VanCar Autos Limited trading as VanCar Autos | Yard 1, midland street, Manchester, M12 6LB
+                                        VanCar Autos Limited trading as VanCar Autos | Yard 1, Midland Street, Manchester, M12 6LB
                                     </div>
 
                                 </div>

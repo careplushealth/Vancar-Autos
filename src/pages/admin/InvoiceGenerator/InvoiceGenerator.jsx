@@ -31,7 +31,7 @@ const parseInvoiceNotes = (rawNotes) => {
     if (!rawNotes) {
         return {
             deliveryDetails: '',
-            warrantyInfo: '30 Days Warranty Included. Optional Extended Warranty Available (Additional Charges Apply).',
+            warrantyInfo: '',
             additionalComments: '',
             termsOfSale: 'Please make payment by the due date shown on this invoice. Title to the vehicle remains with Vancar Autos until funds are cleared in full.'
         };
@@ -117,7 +117,7 @@ export default function InvoiceGenerator() {
 
     const [notes, setNotes] = useState({
         deliveryDetails: '',
-        warrantyInfo: '30 Days Warranty Included. Optional Extended Warranty Available (Additional Charges Apply).',
+        warrantyInfo: '',
         additionalComments: '',
         termsOfSale: 'Please make payment by the due date shown on this invoice. Title to the vehicle remains with Vancar Autos until funds are cleared in full.'
     });
@@ -276,7 +276,7 @@ export default function InvoiceGenerator() {
         // Reset Notes
         setNotes({
             deliveryDetails: '',
-            warrantyInfo: '30 Days Warranty Included. Optional Extended Warranty Available (Additional Charges Apply).',
+            warrantyInfo: '',
             additionalComments: '',
             termsOfSale: 'Please make payment by the due date shown on this invoice. Title to the vehicle remains with Vancar Autos until funds are cleared in full.'
         });
@@ -432,7 +432,7 @@ export default function InvoiceGenerator() {
                         <img src="/images/logo.png" alt="Vancar Autos" style="height: 40px; margin-bottom: 4px; display: block;" />
                         <div style="font-size: 10px; color: #475569; line-height: 1.3;">
                             <strong>Vancar Autos Ltd</strong><br />
-                            Yard 1, midland street, Manchester, M12 6LB<br />
+                            Yard 1, Midland Street, Manchester, M12 6LB<br />
                             Phone: 07386 533337 | Email: hellovancarautos@gmail.com
                         </div>
                     </div>
@@ -1187,7 +1187,7 @@ export default function InvoiceGenerator() {
                                         <img src="/images/logo.png" alt="Vancar Autos" className="invoice-pdf-logo" />
                                         <div className="invoice-pdf-company-info">
                                             <strong>Vancar Autos Ltd</strong><br />
-                                            Yard 1, midland street<br />
+                                            Yard 1, Midland Street,<br />
                                             Manchester, M12 6LB<br />
                                             Phone: 07386 533337<br />
                                             Email: hellovancarautos@gmail.com<br />

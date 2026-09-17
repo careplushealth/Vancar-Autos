@@ -114,7 +114,7 @@ export default function Contact() {
                     <div className="contact__info">
                         <div className="contact__info-card">
                             <h4>📍 Visit Us</h4>
-                            <p>VANCAR AUTOS LIMITED<br />Yard 1 Midland street<br />MANCHESTER, M12 6LB</p>
+                            <p>VANCAR AUTOS LIMITED<br />Yard 1, Midland Street,<br />MANCHESTER, M12 6LB</p>
                         </div>
                         <div className="contact__info-card">
                             <h4>📞 Call Us</h4>

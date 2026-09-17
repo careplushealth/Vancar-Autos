@@ -211,14 +211,6 @@ export default function CarCard({ car }) {
                                     {formatPrice(car.price)}
                                 </span>
                             </div>
-                            {car.status !== 'sold' && (
-                                <div className="car-card__value-badge text-right flex flex-col justify-center">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Guarantee</span>
-                                    <span className="text-[var(--color-accent)] font-bold text-xs flex items-center gap-1 justify-end mt-1">
-                                        🛡️ 30 Days Warranty
-                                    </span>
-                                </div>
-                            )}
                         </div>
 
                         {/* Interactive Footer */}
@@ -278,11 +270,6 @@ export default function CarCard({ car }) {
                                 
                                 <div className="quick-view-modal__pricing mb-6">
                                     <span className="quick-view-modal__price">{formatPrice(car.price)}</span>
-                                    {car.status !== 'sold' && (
-                                        <span className="quick-view-modal__monthly">
-                                            <strong>30 Days Warranty Included</strong> • Extended Options Available
-                                        </span>
-                                    )}
                                 </div>
 
                                 <div className="quick-view-modal__specs-grid mb-6">
