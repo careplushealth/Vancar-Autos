@@ -53,6 +53,26 @@ const initDB = async () => {
             ALTER TABLE cars ADD COLUMN IF NOT EXISTS lead_source VARCHAR(100);
             ALTER TABLE cars ADD COLUMN IF NOT EXISTS autotrader_days_advertised INTEGER;
             ALTER TABLE cars ADD COLUMN IF NOT EXISTS purchase_attribution VARCHAR(100);
+            ALTER TABLE cars ADD COLUMN IF NOT EXISTS customer_id VARCHAR(50);
+            ALTER TABLE cars ADD COLUMN IF NOT EXISTS customer_details JSONB;
+        `);
+        
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS customers (
+                id VARCHAR(50) PRIMARY KEY,
+                full_name VARCHAR(150) NOT NULL,
+                phone VARCHAR(50),
+                email VARCHAR(150),
+                address TEXT,
+                vehicle_id VARCHAR(50),
+                vehicle_name VARCHAR(255),
+                sale_price NUMERIC,
+                sale_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                lead_source VARCHAR(100),
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
         `);
         
         await db.query(`
@@ -228,10 +248,12 @@ app.post('/api/cars', async (req, res) => {
     }
 
     try {
+        const customerId = car.customer_id || car.customerId || null;
+        const customerDetails = car.customer_details || car.customerDetails ? JSON.stringify(car.customer_details || car.customerDetails) : null;
         const result = await db.query(
-            `INSERT INTO cars (id, title, make, model, trim, year, price, mileage, fuel, transmission, "bodyType", colour, engine, doors, seats, description, features, images, status, featured, lead_source, autotrader_days_advertised, purchase_attribution)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23) RETURNING *`,
-            [car.id, car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, leadSource, autotraderDays, purchaseAttribution]
+            `INSERT INTO cars (id, title, make, model, trim, year, price, mileage, fuel, transmission, "bodyType", colour, engine, doors, seats, description, features, images, status, featured, lead_source, autotrader_days_advertised, purchase_attribution, customer_id, customer_details)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25) RETURNING *`,
+            [car.id, car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, leadSource, autotraderDays, purchaseAttribution, customerId, customerDetails]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -247,6 +269,8 @@ app.put('/api/cars/:id', async (req, res) => {
     const rawDays = car.autotrader_days_advertised !== undefined ? car.autotrader_days_advertised : car.autotraderDaysAdvertised;
     const autotraderDays = (rawDays !== undefined && rawDays !== null && rawDays !== '') ? parseInt(rawDays) : null;
     const purchaseAttribution = car.purchase_attribution || car.purchaseAttribution || null;
+    const customerId = car.customer_id || car.customerId || null;
+    const customerDetails = car.customer_details || car.customerDetails ? JSON.stringify(car.customer_details || car.customerDetails) : null;
 
     if (car.status === 'sold') {
         if (!leadSource) {
@@ -259,9 +283,9 @@ app.put('/api/cars/:id', async (req, res) => {
 
     try {
         const result = await db.query(
-            `UPDATE cars SET title=$1, make=$2, model=$3, trim=$4, year=$5, price=$6, mileage=$7, fuel=$8, transmission=$9, "bodyType"=$10, colour=$11, engine=$12, doors=$13, seats=$14, description=$15, features=$16, images=$17, status=$18, featured=$19, lead_source=$20, autotrader_days_advertised=$21, purchase_attribution=$22
-             WHERE id=$23 RETURNING *`,
-            [car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, leadSource, autotraderDays, purchaseAttribution, id]
+            `UPDATE cars SET title=$1, make=$2, model=$3, trim=$4, year=$5, price=$6, mileage=$7, fuel=$8, transmission=$9, "bodyType"=$10, colour=$11, engine=$12, doors=$13, seats=$14, description=$15, features=$16, images=$17, status=$18, featured=$19, lead_source=$20, autotrader_days_advertised=$21, purchase_attribution=$22, customer_id=$23, customer_details=$24
+             WHERE id=$25 RETURNING *`,
+            [car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, leadSource, autotraderDays, purchaseAttribution, customerId, customerDetails, id]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -274,6 +298,84 @@ app.delete('/api/cars/:id', async (req, res) => {
     try {
         await db.query('DELETE FROM cars WHERE id=$1', [req.params.id]);
         res.json({ message: 'Car deleted' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// --- CUSTOMERS API ---
+
+app.get('/api/customers', async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM customers ORDER BY created_at DESC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/customers', async (req, res) => {
+    const cust = req.body;
+    try {
+        const result = await db.query(
+            `INSERT INTO customers (id, full_name, phone, email, address, vehicle_id, vehicle_name, sale_price, sale_date, lead_source, notes, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()) RETURNING *`,
+            [
+                cust.id,
+                cust.full_name || cust.fullName,
+                cust.phone || null,
+                cust.email || null,
+                cust.address || null,
+                cust.vehicle_id || cust.vehicleId || null,
+                cust.vehicle_name || cust.vehicleName || null,
+                cust.sale_price || cust.salePrice || null,
+                cust.sale_date || cust.saleDate || new Date().toISOString(),
+                cust.lead_source || cust.leadSource || null,
+                cust.notes || null
+            ]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.put('/api/customers/:id', async (req, res) => {
+    const { id } = req.params;
+    const cust = req.body;
+    try {
+        const result = await db.query(
+            `UPDATE customers 
+             SET full_name=$1, phone=$2, email=$3, address=$4, vehicle_id=$5, vehicle_name=$6, sale_price=$7, sale_date=$8, lead_source=$9, notes=$10, updated_at=NOW()
+             WHERE id=$11 RETURNING *`,
+            [
+                cust.full_name || cust.fullName,
+                cust.phone || null,
+                cust.email || null,
+                cust.address || null,
+                cust.vehicle_id || cust.vehicleId || null,
+                cust.vehicle_name || cust.vehicleName || null,
+                cust.sale_price || cust.salePrice || null,
+                cust.sale_date || cust.saleDate || new Date().toISOString(),
+                cust.lead_source || cust.leadSource || null,
+                cust.notes || null,
+                id
+            ]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.delete('/api/customers/:id', async (req, res) => {
+    try {
+        await db.query('DELETE FROM customers WHERE id=$1', [req.params.id]);
+        res.json({ message: 'Customer deleted' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });

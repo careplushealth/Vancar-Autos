@@ -10,28 +10,69 @@
     font-weight: var(--font-weight-bold);
 }
 
-.manage-cars__table-container {
+.manage-cars__filters {
     background: var(--color-bg-card);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    overflow-x: auto;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
 }
 
-.manage-cars__table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 800px;
+.manage-cars__filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.manage-cars__table th {
-    text-align: left;
-    padding: var(--spacing-md) var(--spacing-lg);
-    background: var(--color-bg-tertiary);
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-text-secondary);
+.manage-cars__filter-label {
     font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.manage-cars__search-input,
+.manage-cars__filter-select,
+.manage-cars__price-input {
+    padding: 0.5rem 0.75rem;
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+}
+
+.manage-cars__search-input {
+    min-width: 200px;
+    flex: 1;
+}
+
+.manage-cars__price-input {
+    width: 100px;
+}
+
+.manage-cars__search-input:focus,
+.manage-cars__filter-select:focus,
+.manage-cars__price-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+.manage-cars__table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.manage-cars__table th.sortable:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-text-primary);
 }
 
 .manage-cars__table td {

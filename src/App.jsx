@@ -29,6 +29,7 @@ import BannerGenerator from './pages/admin/BannerGenerator/BannerGenerator';
 import InvoiceGenerator from './pages/admin/InvoiceGenerator/InvoiceGenerator';
 import DepositSlipGenerator from './pages/admin/DepositSlipGenerator/DepositSlipGenerator';
 import DistanceSaleGenerator from './pages/admin/DistanceSaleGenerator/DistanceSaleGenerator';
+import Customers from './pages/admin/Customers/Customers';
 import { syncDataFromServer } from './services/dataService';
 
 const CustomersPlaceholder = () => (
@@ -110,7 +111,7 @@ const router = createBrowserRouter(
         <Route path="analytics" element={<BusinessAnalytics />} />
         <Route path="enquiries" element={<Enquiries />} />
         <Route path="banner-generator" element={<BannerGenerator />} />
-        <Route path="customers" element={<CustomersPlaceholder />} />
+        <Route path="customers" element={<Customers />} />
         <Route path="sales" element={<SalesPlaceholder />} />
         <Route path="invoices" element={<InvoiceGenerator />} />
         <Route path="deposit-slips" element={<DepositSlipGenerator />} />

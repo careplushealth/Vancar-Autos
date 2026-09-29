@@ -9,6 +9,7 @@ const GENERAL_EXPENSES_KEY = 'vancar_general_expenses';
 const INVOICES_KEY = 'vancar_invoices';
 const DEPOSIT_SLIPS_KEY = 'vancar_deposit_slips';
 const DISTANCE_SALE_FORMS_KEY = 'vancar_distance_sale_forms';
+const CUSTOMERS_KEY = 'vancar_customers';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const syncNeon = (endpoint, method, data = null) => {
@@ -21,13 +22,14 @@ const syncNeon = (endpoint, method, data = null) => {
 
 export async function syncDataFromServer() {
     try {
-        const [carsRes, blogsRes, expensesRes, invoicesRes, generalExpensesRes, depositSlipsRes] = await Promise.all([
+        const [carsRes, blogsRes, expensesRes, invoicesRes, generalExpensesRes, depositSlipsRes, customersRes] = await Promise.all([
             fetch(`${API_URL}/cars`),
             fetch(`${API_URL}/blogs`),
             fetch(`${API_URL}/vehicle-expenses`),
             fetch(`${API_URL}/invoices`).catch(err => ({ ok: false, error: err })),
             fetch(`${API_URL}/general-expenses`).catch(err => ({ ok: false, error: err })),
-            fetch(`${API_URL}/deposit-slips`).catch(err => ({ ok: false, error: err }))
+            fetch(`${API_URL}/deposit-slips`).catch(err => ({ ok: false, error: err })),
+            fetch(`${API_URL}/customers`).catch(err => ({ ok: false, error: err }))
         ]);
         if (carsRes.ok) {
             const cars = await carsRes.json();
@@ -52,6 +54,10 @@ export async function syncDataFromServer() {
         if (depositSlipsRes && depositSlipsRes.ok) {
             const depositSlips = await depositSlipsRes.json();
             if (Array.isArray(depositSlips)) saveData(DEPOSIT_SLIPS_KEY, depositSlips);
+        }
+        if (customersRes && customersRes.ok) {
+            const customers = await customersRes.json();
+            if (Array.isArray(customers)) saveData(CUSTOMERS_KEY, customers);
         }
     } catch (err) {
         console.error("Failed to sync from server:", err);
@@ -681,6 +687,67 @@ export function updateDistanceSaleForm(id, data) {
 export function deleteDistanceSaleForm(id) {
     const forms = getDistanceSaleForms().filter(f => f.id !== id);
     saveData(DISTANCE_SALE_FORMS_KEY, forms);
+}
+
+// === Customers ===
+export function getCustomers() {
+    return initData(CUSTOMERS_KEY, []);
+}
+
+export function getCustomerById(id) {
+    const customers = getCustomers();
+    return customers.find(c => c.id === id) || null;
+}
+
+export function createCustomer(data) {
+    const customers = getCustomers();
+    const nowStr = new Date().toISOString();
+    const newCustomer = {
+        ...data,
+        id: data.id || generateId(),
+        full_name: data.full_name || data.fullName || '',
+        phone: data.phone || '',
+        email: data.email || '',
+        address: data.address || '',
+        vehicle_id: data.vehicle_id || data.vehicleId || null,
+        vehicle_name: data.vehicle_name || data.vehicleName || null,
+        sale_price: data.sale_price || data.salePrice || null,
+        sale_date: data.sale_date || data.saleDate || nowStr,
+        lead_source: data.lead_source || data.leadSource || null,
+        notes: data.notes || '',
+        created_at: nowStr,
+        updated_at: nowStr
+    };
+    customers.unshift(newCustomer);
+    saveData(CUSTOMERS_KEY, customers);
+    syncNeon('/customers', 'POST', newCustomer);
+    return newCustomer;
+}
+
+export function updateCustomer(id, data) {
+    const customers = getCustomers();
+    const idx = customers.findIndex(c => c.id === id);
+    if (idx === -1) return null;
+    const nowStr = new Date().toISOString();
+    customers[idx] = {
+        ...customers[idx],
+        ...data,
+        full_name: data.full_name || data.fullName || customers[idx].full_name,
+        phone: data.phone !== undefined ? data.phone : customers[idx].phone,
+        email: data.email !== undefined ? data.email : customers[idx].email,
+        address: data.address !== undefined ? data.address : customers[idx].address,
+        id,
+        updated_at: nowStr
+    };
+    saveData(CUSTOMERS_KEY, customers);
+    syncNeon(`/customers/${id}`, 'PUT', customers[idx]);
+    return customers[idx];
+}
+
+export function deleteCustomer(id) {
+    const customers = getCustomers().filter(c => c.id !== id);
+    saveData(CUSTOMERS_KEY, customers);
+    syncNeon(`/customers/${id}`, 'DELETE');
 }
 
 
