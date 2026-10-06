@@ -64,6 +64,7 @@ export default function KarmaNavbar() {
             {[
               { label: 'View Stock', path: '/buy' },
               { label: 'Sell Your Car', path: '/sell' },
+              { label: 'Concierge', path: '/concierge' },
               { label: 'About Us', path: '/about' },
               { label: 'Blog & News', path: '/blog' },
               { label: 'Contact', path: '/contact' },
@@ -151,6 +152,7 @@ export default function KarmaNavbar() {
           {[
             { label: 'View Stock', path: '/buy' },
             { label: 'Sell Your Car', path: '/sell' },
+            { label: 'Concierge Sourcing', path: '/concierge' },
             { label: 'About Us', path: '/about' },
             { label: 'Blog & News', path: '/blog' },
             { label: 'Contact Us', path: '/contact' },

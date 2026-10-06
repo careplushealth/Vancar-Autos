@@ -34,6 +34,7 @@ export default function Footer() {
                             <h4 className="footer__heading">Buying Options</h4>
                             <ul className="footer__list">
                                 <li><Link to="/buy">Search Used Stock</Link></li>
+                                <li><Link to="/concierge">Vehicle Concierge</Link></li>
                                 <li><Link to="/sell">Value Your Vehicle</Link></li>
                                 <li><Link to="/about">Our Quality Standards</Link></li>
                                 <li><Link to="/buy">Affordable Used Cars</Link></li>

@@ -87,6 +87,12 @@ export default function Header() {
                                 </NavLink>
                             </li>
                             <li className="header__nav-item">
+                                <NavLink to="/concierge" className="header__nav-link">
+                                    <span>Concierge Sourcing</span>
+                                    <span className="header__nav-arrow">›</span>
+                                </NavLink>
+                            </li>
+                            <li className="header__nav-item">
                                 <NavLink to="/about" className="header__nav-link">
                                     <span>About Us</span>
                                     <span className="header__nav-arrow">›</span>

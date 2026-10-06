@@ -10,6 +10,7 @@ import CarDetails from './pages/CarDetails/CarDetails';
 import Sell from './pages/Sell/Sell';
 import About from './pages/About/About';
 import Contact from './pages/Contact/Contact';
+import Concierge from './pages/Concierge/Concierge';
 import Blog from './pages/Blog/Blog';
 import BlogArticle from './pages/BlogArticle/BlogArticle';
 
@@ -85,6 +86,7 @@ const router = createBrowserRouter(
         <Route path="buy" element={<Buy />} />
         <Route path="buy/:id" element={<CarDetails />} />
         <Route path="sell" element={<Sell />} />
+        <Route path="concierge" element={<Concierge />} />
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
         <Route path="blog" element={<Blog />} />
