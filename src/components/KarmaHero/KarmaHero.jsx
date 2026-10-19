@@ -8,11 +8,23 @@ export default function KarmaHero() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
+  const [dataVersion, setDataVersion] = useState(0);
+
+  useEffect(() => {
+    const handleUpdate = (e) => {
+      if (!e.detail || e.detail.key === 'vancar_cars') {
+        setDataVersion(v => v + 1);
+      }
+    };
+    window.addEventListener('vancar_data_updated', handleUpdate);
+    return () => window.removeEventListener('vancar_data_updated', handleUpdate);
+  }, []);
+
   // Get active cars currently in stock (status === 'available')
   const inStockCars = useMemo(() => {
     const cars = getAvailableCars().filter(c => c.images && c.images.length > 0);
     return cars.length > 0 ? cars : getAvailableCars();
-  }, []);
+  }, [dataVersion]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

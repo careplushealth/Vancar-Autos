@@ -1,12 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import { logout } from '../services/authService';
+import { syncAdminDataFromServer } from '../services/dataService';
 import Logo from '../components/Logo/Logo';
 import './AdminLayout.css';
 
 export default function AdminLayout() {
     const navigate = useNavigate();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+    useEffect(() => {
+        syncAdminDataFromServer();
+    }, []);
 
     const handleLogout = () => {
         logout();

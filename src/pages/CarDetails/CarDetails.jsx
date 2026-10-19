@@ -54,68 +54,6 @@ export default function CarDetails() {
 
     return (
         <div className="car-details">
-            {/* Interactive Image Gallery */}
-            <div className="car-details__hero">
-                <img 
-                    src={galleryImages[activeIdx]} 
-                    alt={`${car.title} - View ${activeIdx + 1}`} 
-                    className="car-details__hero-img animate-fade-in car-details__hero-img--zoomable" 
-                    key={activeIdx}
-                    onClick={() => setIsZoomed(true)}
-                />
-                
-                {/* Arrow Navigation */}
-                <button 
-                    onClick={handlePrev} 
-                    className="car-details__nav-btn car-details__nav-btn--prev"
-                    aria-label="Previous image"
-                >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="15 18 9 12 15 6" />
-                    </svg>
-                </button>
-                <button 
-                    onClick={handleNext} 
-                    className="car-details__nav-btn car-details__nav-btn--next"
-                    aria-label="Next image"
-                >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                </button>
-
-                {/* Click to Zoom Indicator Tag */}
-                <button 
-                    onClick={() => setIsZoomed(true)} 
-                    className="car-details__zoom-indicator-btn"
-                    aria-label="Zoom image"
-                >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5">
-                        <circle cx="11" cy="11" r="8" />
-                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                        <line x1="11" y1="8" x2="11" y2="14" />
-                        <line x1="8" y1="11" x2="14" y2="11" />
-                    </svg>
-                    <span>Click to Zoom</span>
-                </button>
-
-                {/* Thumbnails Tray Overlay */}
-                <div className="car-details__thumbnails">
-                    {galleryImages.map((img, index) => (
-                        <button
-                            key={index}
-                            onClick={() => setActiveIdx(index)}
-                            className={`car-details__thumb-btn ${index === activeIdx ? 'car-details__thumb-btn--active' : ''}`}
-                            aria-label={`View image ${index + 1}`}
-                        >
-                            <img src={img} alt="Thumbnail view" className="car-details__thumb-img" />
-                        </button>
-                    ))}
-                </div>
-
-                <div className="car-details__hero-overlay" />
-            </div>
-
             <div className="container">
                 {/* Breadcrumb */}
                 <nav className="car-details__breadcrumb">
@@ -123,6 +61,74 @@ export default function CarDetails() {
                     <Link to="/buy">Used Cars</Link> <span>›</span>
                     <span>{car.make} {car.model}</span>
                 </nav>
+
+                {/* Interactive Image Gallery */}
+                <div className="car-details__gallery-section">
+                    <div className="car-details__hero">
+                        <img 
+                            src={galleryImages[activeIdx]} 
+                            alt={`${car.title} - View ${activeIdx + 1}`} 
+                            className="car-details__hero-img animate-fade-in car-details__hero-img--zoomable" 
+                            key={activeIdx}
+                            onClick={() => setIsZoomed(true)}
+                        />
+                        
+                        {/* Arrow Navigation (only if multiple images) */}
+                        {galleryImages.length > 1 && (
+                            <>
+                                <button 
+                                    onClick={handlePrev} 
+                                    className="car-details__nav-btn car-details__nav-btn--prev"
+                                    aria-label="Previous image"
+                                >
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="15 18 9 12 15 6" />
+                                    </svg>
+                                </button>
+                                <button 
+                                    onClick={handleNext} 
+                                    className="car-details__nav-btn car-details__nav-btn--next"
+                                    aria-label="Next image"
+                                >
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="9 18 15 12 9 6" />
+                                    </svg>
+                                </button>
+                            </>
+                        )}
+
+                        {/* Click to Zoom Indicator Tag */}
+                        <button 
+                            onClick={() => setIsZoomed(true)} 
+                            className="car-details__zoom-indicator-btn"
+                            aria-label="Zoom image"
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                <line x1="11" y1="8" x2="11" y2="14" />
+                                <line x1="8" y1="11" x2="14" y2="11" />
+                            </svg>
+                            <span>Click to Zoom</span>
+                        </button>
+                    </div>
+
+                    {/* Thumbnails Strip (only if multiple images) */}
+                    {galleryImages.length > 1 && (
+                        <div className="car-details__thumbnails">
+                            {galleryImages.map((img, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setActiveIdx(index)}
+                                    className={`car-details__thumb-btn ${index === activeIdx ? 'car-details__thumb-btn--active' : ''}`}
+                                    aria-label={`View image ${index + 1}`}
+                                >
+                                    <img src={img} alt="Thumbnail view" className="car-details__thumb-img" />
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
                 <div className="car-details__layout">
                     {/* Main Content */}
@@ -218,7 +224,7 @@ export default function CarDetails() {
                             <div className="car-details__action-buttons">
                                 <Link to="/contact" state={{ carTitle: car.title, carId: car.id, action: 'enquiry' }} className="btn btn--primary" style={{ width: '100%' }}>Enquire Now</Link>
                                 <Link to="/contact" state={{ carTitle: car.title, carId: car.id, action: 'reserve' }} className="btn btn--outline" style={{ width: '100%' }}>Reserve This Car</Link>
-                                <a href="tel:01onal" className="btn btn--secondary" style={{ width: '100%' }}>
+                                <a href="tel:07707700070" className="btn btn--secondary" style={{ width: '100%' }}>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                                     Call Us
                                 </a>

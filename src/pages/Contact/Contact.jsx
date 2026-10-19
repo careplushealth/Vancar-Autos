@@ -118,7 +118,7 @@ export default function Contact() {
                         </div>
                         <div className="contact__info-card">
                             <h4>📞 Call Us</h4>
-                            <p><a href="tel:07386533337" style={{ color: 'inherit', fontWeight: 'bold' }}>07386 533337</a></p>
+                            <p><a href="tel:07707700070" style={{ color: 'inherit', fontWeight: 'bold' }}>07707 700070</a></p>
                         </div>
                         <div className="contact__info-card">
                             <h4>📧 Email Us</h4>
@@ -126,7 +126,7 @@ export default function Contact() {
                         </div>
                         <div className="contact__info-card">
                             <h4>🕐 Opening Hours</h4>
-                            <p>Mon - Fri: 9:00 AM - 6:00 PM<br />Saturday: 9:00 AM - 5:00 PM<br />Sunday: 10:00 AM - 4:00 PM</p>
+                            <p>Mon - Fri: 10:00 AM - 6:00 PM<br />Saturday: 10:00 AM - 5:00 PM<br />Sunday: 10:00 AM - 4:00 PM</p>
                         </div>
                     </div>
                 </div>

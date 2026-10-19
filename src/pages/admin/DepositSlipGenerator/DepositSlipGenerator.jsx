@@ -14,7 +14,7 @@ import './DepositSlipGenerator.css';
 const DEFAULT_SELLER = {
     name: 'VanCar Autos Limited',
     address: 'Yard 1, Midland Street, Manchester, M12 6LB',
-    tel: '07386 533337',
+    tel: '07707 700070',
     email: 'sales@vancarautos.co.uk'
 };
 
@@ -344,7 +344,7 @@ export default function DepositSlipGenerator() {
                                     <td style="width: 36%; border: 1px solid #666666; padding: 3px 6px; vertical-align: top;">
                                         <strong>${sellerDetails.name || 'VanCar Autos Limited'}</strong><br />
                                         ${sellerDetails.address || 'Yard 1, Midland Street, Manchester, M12 6LB'}<br />
-                                        Tel: <strong>${sellerDetails.tel || '07386 533337'}</strong>
+                                        Tel: <strong>${sellerDetails.tel || '07707 700070'}</strong>
                                     </td>
                                     <td style="width: 14%; background-color: #f4f9f1; font-weight: bold; color: #49A921; border: 1px solid #666666; padding: 3px 6px; vertical-align: top;">Receipt Info</td>
                                     <td style="width: 36%; border: 1px solid #666666; padding: 3px 6px; vertical-align: top;">
@@ -884,7 +884,7 @@ export default function DepositSlipGenerator() {
                                                     <td style={{ width: '36%' }}>
                                                         <strong>{sellerDetails.name || 'VanCar Autos Limited'}</strong><br />
                                                         {sellerDetails.address || 'Yard 1, Midland Street, Manchester, M12 6LB'}<br />
-                                                        Tel: <strong>{sellerDetails.tel || '07386 533337'}</strong>
+                                                        Tel: <strong>{sellerDetails.tel || '07707 700070'}</strong>
                                                     </td>
                                                     <td className="vds-col-label" style={{ width: '14%' }}>Receipt Info</td>
                                                     <td style={{ width: '36%' }}>

@@ -12,34 +12,65 @@ const DISTANCE_SALE_FORMS_KEY = 'vancar_distance_sale_forms';
 const CUSTOMERS_KEY = 'vancar_customers';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 6000) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const res = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(id);
+        return res;
+    } catch (err) {
+        clearTimeout(id);
+        return { ok: false, error: err };
+    }
+};
+
 const syncNeon = (endpoint, method, data = null) => {
-    fetch(`${API_URL}${endpoint}`, {
+    fetchWithTimeout(`${API_URL}${endpoint}`, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: data ? JSON.stringify(data) : null
-    }).catch(err => console.error("Neon DB Sync Error:", err));
+    }, 8000).catch(err => console.error("Neon DB Sync Error:", err));
 };
 
 export async function syncDataFromServer() {
     try {
-        const [carsRes, blogsRes, expensesRes, invoicesRes, generalExpensesRes, depositSlipsRes, customersRes] = await Promise.all([
-            fetch(`${API_URL}/cars`),
-            fetch(`${API_URL}/blogs`),
-            fetch(`${API_URL}/vehicle-expenses`),
-            fetch(`${API_URL}/invoices`).catch(err => ({ ok: false, error: err })),
-            fetch(`${API_URL}/general-expenses`).catch(err => ({ ok: false, error: err })),
-            fetch(`${API_URL}/deposit-slips`).catch(err => ({ ok: false, error: err })),
-            fetch(`${API_URL}/customers`).catch(err => ({ ok: false, error: err }))
+        // Fast lightweight sync: only fetch public-facing inventory (cars and blogs)
+        const [carsRes, blogsRes] = await Promise.all([
+            fetchWithTimeout(`${API_URL}/cars`, {}, 6000),
+            fetchWithTimeout(`${API_URL}/blogs`, {}, 6000)
         ]);
+
         if (carsRes.ok) {
             const cars = await carsRes.json();
-            if (cars && cars.length > 0) saveData(CARS_KEY, cars);
+            if (Array.isArray(cars) && cars.length > 0) {
+                saveData(CARS_KEY, cars);
+                window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: CARS_KEY } }));
+            }
         }
         if (blogsRes.ok) {
             const blogs = await blogsRes.json();
-            if (blogs && blogs.length > 0) saveData(BLOGS_KEY, blogs);
+            if (Array.isArray(blogs) && blogs.length > 0) {
+                saveData(BLOGS_KEY, blogs);
+                window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: BLOGS_KEY } }));
+            }
         }
-        if (expensesRes.ok) {
+    } catch (err) {
+        console.error("Public data sync notice:", err);
+    }
+}
+
+export async function syncAdminDataFromServer() {
+    try {
+        const [expensesRes, invoicesRes, generalExpensesRes, depositSlipsRes, customersRes] = await Promise.all([
+            fetchWithTimeout(`${API_URL}/vehicle-expenses`, {}, 10000),
+            fetchWithTimeout(`${API_URL}/invoices`, {}, 10000),
+            fetchWithTimeout(`${API_URL}/general-expenses`, {}, 10000),
+            fetchWithTimeout(`${API_URL}/deposit-slips`, {}, 10000),
+            fetchWithTimeout(`${API_URL}/customers`, {}, 10000)
+        ]);
+
+        if (expensesRes && expensesRes.ok) {
             const expenses = await expensesRes.json();
             if (Array.isArray(expenses)) saveData(EXPENSES_KEY, expenses);
         }
@@ -60,7 +91,7 @@ export async function syncDataFromServer() {
             if (Array.isArray(customers)) saveData(CUSTOMERS_KEY, customers);
         }
     } catch (err) {
-        console.error("Failed to sync from server:", err);
+        console.error("Admin data sync notice:", err);
     }
 }
 

@@ -187,7 +187,7 @@ export default function KarmaNavbar() {
           style={{ transitionDelay: '400ms' }}
         >
           <div className="flex flex-col space-y-2 text-center text-sm font-medium text-slate-500">
-            <span>Call us: <a href="tel:07386533337" className="hover:text-[#55A01F] transition-colors">07386 533337</a></span>
+            <span>Call us: <a href="tel:07707700070" className="hover:text-[#55A01F] transition-colors">07707 700070</a></span>
             <span>Email: <a href="mailto:hellovancarautos@gmail.com" className="hover:text-[#55A01F] transition-colors">hellovancarautos@gmail.com</a></span>
           </div>
           <p className="text-[10px] tracking-[0.2em] uppercase text-slate-400">

@@ -433,7 +433,7 @@ export default function InvoiceGenerator() {
                         <div style="font-size: 10px; color: #475569; line-height: 1.3;">
                             <strong>Vancar Autos Ltd</strong><br />
                             Yard 1, Midland Street, Manchester, M12 6LB<br />
-                            Phone: 07386 533337 | Email: hellovancarautos@gmail.com
+                            Phone: 07707 700070 | Email: hellovancarautos@gmail.com
                         </div>
                     </div>
                     <div style="text-align: right; min-width: 200px;">
@@ -1189,7 +1189,7 @@ export default function InvoiceGenerator() {
                                             <strong>Vancar Autos Ltd</strong><br />
                                             Yard 1, Midland Street,<br />
                                             Manchester, M12 6LB<br />
-                                            Phone: 07386 533337<br />
+                                            Phone: 07707 700070<br />
                                             Email: hellovancarautos@gmail.com<br />
                                             Web: www.vancarautos.co.uk
                                         </div>

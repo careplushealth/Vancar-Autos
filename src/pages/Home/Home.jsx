@@ -7,8 +7,20 @@ import { getFeaturedCars, getAvailableCars } from '../../services/dataService';
 import './Home.css';
 
 export default function Home() {
-    const featuredCars = useMemo(() => getFeaturedCars().slice(0, 3), []);
-    const allCars = useMemo(() => getAvailableCars(), []);
+    const [dataVersion, setDataVersion] = useState(0);
+
+    useEffect(() => {
+        const handleUpdate = (e) => {
+            if (!e.detail || e.detail.key === 'vancar_cars') {
+                setDataVersion(v => v + 1);
+            }
+        };
+        window.addEventListener('vancar_data_updated', handleUpdate);
+        return () => window.removeEventListener('vancar_data_updated', handleUpdate);
+    }, []);
+
+    const featuredCars = useMemo(() => getFeaturedCars().slice(0, 3), [dataVersion]);
+    const allCars = useMemo(() => getAvailableCars(), [dataVersion]);
 
     // Finance Calculator State
     const [selectedCarId, setSelectedCarId] = useState(allCars[0]?.id || '');

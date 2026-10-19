@@ -1,37 +1,38 @@
 import { createBrowserRouter, RouterProvider, createRoutesFromElements, Route, Navigate, ScrollRestoration, Outlet } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
-
-// Public Pages
-import Home from './pages/Home/Home';
-import Buy from './pages/Buy/Buy';
-import CarDetails from './pages/CarDetails/CarDetails';
-import Sell from './pages/Sell/Sell';
-import About from './pages/About/About';
-import Contact from './pages/Contact/Contact';
-import Concierge from './pages/Concierge/Concierge';
-import Blog from './pages/Blog/Blog';
-import BlogArticle from './pages/BlogArticle/BlogArticle';
-
-// Admin Pages
-import Login from './pages/admin/Login/Login';
-import Dashboard from './pages/admin/Dashboard/Dashboard';
-import ManageCars from './pages/admin/ManageCars/ManageCars';
-import CarEditor from './pages/admin/CarEditor/CarEditor';
-import ManageBlogs from './pages/admin/ManageBlogs/ManageBlogs';
-import BlogEditor from './pages/admin/BlogEditor/BlogEditor';
-import Settings from './pages/admin/Settings/Settings';
-import ExpenseTracker from './pages/admin/ExpenseTracker/ExpenseTracker';
-import GeneralExpenseTracker from './pages/admin/GeneralExpenseTracker/GeneralExpenseTracker';
-import BusinessAnalytics from './pages/admin/BusinessAnalytics/BusinessAnalytics';
-import Enquiries from './pages/admin/Enquiries/Enquiries';
-import BannerGenerator from './pages/admin/BannerGenerator/BannerGenerator';
-import InvoiceGenerator from './pages/admin/InvoiceGenerator/InvoiceGenerator';
-import DepositSlipGenerator from './pages/admin/DepositSlipGenerator/DepositSlipGenerator';
-import DistanceSaleGenerator from './pages/admin/DistanceSaleGenerator/DistanceSaleGenerator';
-import Customers from './pages/admin/Customers/Customers';
+import { isAuthenticated } from './services/authService';
 import { syncDataFromServer } from './services/dataService';
+
+// Public Pages: Eagerly load Home for instant paint, lazy load other routes
+import Home from './pages/Home/Home';
+const Buy = lazy(() => import('./pages/Buy/Buy'));
+const CarDetails = lazy(() => import('./pages/CarDetails/CarDetails'));
+const Sell = lazy(() => import('./pages/Sell/Sell'));
+const About = lazy(() => import('./pages/About/About'));
+const Contact = lazy(() => import('./pages/Contact/Contact'));
+const Concierge = lazy(() => import('./pages/Concierge/Concierge'));
+const Blog = lazy(() => import('./pages/Blog/Blog'));
+const BlogArticle = lazy(() => import('./pages/BlogArticle/BlogArticle'));
+
+// Admin Pages (Code-split to keep public bundle light & fast)
+const Login = lazy(() => import('./pages/admin/Login/Login'));
+const Dashboard = lazy(() => import('./pages/admin/Dashboard/Dashboard'));
+const ManageCars = lazy(() => import('./pages/admin/ManageCars/ManageCars'));
+const CarEditor = lazy(() => import('./pages/admin/CarEditor/CarEditor'));
+const ManageBlogs = lazy(() => import('./pages/admin/ManageBlogs/ManageBlogs'));
+const BlogEditor = lazy(() => import('./pages/admin/BlogEditor/BlogEditor'));
+const Settings = lazy(() => import('./pages/admin/Settings/Settings'));
+const ExpenseTracker = lazy(() => import('./pages/admin/ExpenseTracker/ExpenseTracker'));
+const GeneralExpenseTracker = lazy(() => import('./pages/admin/GeneralExpenseTracker/GeneralExpenseTracker'));
+const BusinessAnalytics = lazy(() => import('./pages/admin/BusinessAnalytics/BusinessAnalytics'));
+const Enquiries = lazy(() => import('./pages/admin/Enquiries/Enquiries'));
+const BannerGenerator = lazy(() => import('./pages/admin/BannerGenerator/BannerGenerator'));
+const InvoiceGenerator = lazy(() => import('./pages/admin/InvoiceGenerator/InvoiceGenerator'));
+const DepositSlipGenerator = lazy(() => import('./pages/admin/DepositSlipGenerator/DepositSlipGenerator'));
+const DistanceSaleGenerator = lazy(() => import('./pages/admin/DistanceSaleGenerator/DistanceSaleGenerator'));
+const Customers = lazy(() => import('./pages/admin/Customers/Customers'));
 
 const CustomersPlaceholder = () => (
   <div className="p-8 min-h-[80vh] flex flex-col justify-center items-center text-center">
@@ -58,8 +59,6 @@ const SalesPlaceholder = () => (
 );
 
 // Auth Guard
-import { isAuthenticated } from './services/authService';
-
 const ProtectedRoute = ({ children }) => {
   if (!isAuthenticated()) {
     return <Navigate to="/admin/login" replace />;
@@ -67,12 +66,20 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Root component to handle global app behavior like ScrollRestoration
+const PageFallback = () => (
+  <div style={{ height: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ width: '32px', height: '32px', border: '3px solid rgba(85,160,31,0.2)', borderTop: '3px solid #55A01F', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+  </div>
+);
+
+// Root component to handle global app behavior like ScrollRestoration and lazy Suspense
 const Root = () => {
   return (
     <>
       <ScrollRestoration />
-      <Outlet />
+      <Suspense fallback={<PageFallback />}>
+        <Outlet />
+      </Suspense>
     </>
   );
 };
@@ -134,21 +141,10 @@ const router = createBrowserRouter(
 );
 
 export default function App() {
-  const [loading, setLoading] = useState(true);
-
+  // Sync public inventory in background without blocking initial paint
   useEffect(() => {
-    syncDataFromServer().then(() => setLoading(false));
+    syncDataFromServer();
   }, []);
-
-  if (loading) {
-    return (
-      <div style={{ height: '100vh', background: 'var(--color-bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '40px', height: '40px', border: '3px solid rgba(85,160,31,0.2)', borderTop: '3px solid #55A01F', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-        </div>
-      </div>
-    );
-  }
 
   return <RouterProvider router={router} />;
 }
