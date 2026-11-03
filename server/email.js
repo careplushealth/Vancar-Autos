@@ -1,16 +1,31 @@
 const nodemailer = require('nodemailer');
 
+// Free webmail domains that have strict DMARC policies preventing third-party relay (e.g. SendGrid)
+const STRICT_DMARC_DOMAINS = ['@gmail.com', '@googlemail.com', '@yahoo.', '@hotmail.', '@outlook.', '@icloud.'];
+
 /**
  * Direct SendGrid API v3 Email Dispatch
- * Uses SendGrid's native high-deliverability REST API
+ * Uses SendGrid's native REST API with deliverability optimizations
  */
 const sendViaSendGrid = async ({ to, subject, html, text }) => {
     const apiKey = process.env.SENDGRID_API_KEY;
     if (!apiKey) return false;
 
-    const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'hellovancarautos@gmail.com';
+    const fromEmail = (process.env.SENDGRID_FROM_EMAIL || 'hellovancarautos@gmail.com').trim();
     const fromName = process.env.SENDGRID_FROM_NAME || 'Vancar Autos';
+    const replyToEmail = (process.env.REPLY_TO_EMAIL || 'hellovancarautos@gmail.com').trim();
 
+    // Check for DMARC violation risk (e.g. sending @gmail.com from SendGrid)
+    const isFreeWebmail = STRICT_DMARC_DOMAINS.some(domain => fromEmail.toLowerCase().includes(domain));
+    if (isFreeWebmail) {
+        console.warn(
+            `[Email Deliverability Warning] Sending from '${fromEmail}' via SendGrid triggers strict DMARC / SPF failures on Gmail, Yahoo, and Outlook. ` +
+            `This is the primary reason emails get rejected or land in Junk/Spam. ` +
+            `To guarantee 100% Inbox delivery: set SENDGRID_FROM_EMAIL to a domain address (e.g. 'noreply@vancarautos.co.uk') with SendGrid DNS authentication, or configure SMTP_PASS in .env to use Gmail's direct SMTP.`
+        );
+    }
+
+    // RFC 2046 multipart/alternative order: text/plain first, then text/html
     const content = [];
     if (text) {
         content.push({ type: 'text/plain', value: text });
@@ -23,10 +38,17 @@ const sendViaSendGrid = async ({ to, subject, html, text }) => {
     }
 
     const payload = {
-        personalizations: [{ to: [{ email: to }] }],
+        personalizations: [{ to: [{ email: to.trim() }] }],
         from: { email: fromEmail, name: fromName },
+        reply_to: { email: replyToEmail, name: fromName },
         subject: subject,
-        content: content
+        content: content,
+        // Disable click & open tracking redirects: prevents SendGrid from rewriting links
+        // into ct.sendgrid.net URLs, which anti-phishing filters frequently flag as spam/phishing.
+        tracking_settings: {
+            click_tracking: { enable: false, enable_text: false },
+            open_tracking: { enable: false }
+        }
     };
 
     try {
@@ -40,7 +62,7 @@ const sendViaSendGrid = async ({ to, subject, html, text }) => {
         });
 
         if (response.status === 202 || response.ok) {
-            console.log(`[SendGrid] Successfully delivered email to: ${to}`);
+            console.log(`[SendGrid] Successfully dispatched email to: ${to}`);
             return true;
         } else {
             const errBody = await response.text();
@@ -53,24 +75,29 @@ const sendViaSendGrid = async ({ to, subject, html, text }) => {
     }
 };
 
-// Initialize fallback SMTP transporter if credentials are provided
+// Initialize fallback/primary SMTP transporter if credentials are provided
 const createTransporter = () => {
-    const host = process.env.SMTP_HOST;
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
 
-    if (!host || !user || !pass) {
+    if (!user || !pass) {
         return null;
     }
 
+    const port = parseInt(process.env.SMTP_PORT || '587', 10);
+    const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+
     return nodemailer.createTransport({
         host: host,
-        port: parseInt(process.env.SMTP_PORT || '587', 10),
-        secure: process.env.SMTP_SECURE === 'true',
+        port: port,
+        secure: secure,
         auth: {
             user: user,
             pass: pass
-        }
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000
     });
 };
 
@@ -78,51 +105,76 @@ const createTransporter = () => {
  * Standard Customer Inquiry Email (via SendGrid, SMTP, or Formspree)
  */
 const sendInquiryEmail = async (inquiry) => {
-    const recipient = process.env.CONTACT_EMAIL_RECIPIENT || 'hellovancarautos@gmail.com';
+    const recipient = (process.env.CONTACT_EMAIL_RECIPIENT || 'hellovancarautos@gmail.com').trim();
+    const replyTo = inquiry.email ? inquiry.email.trim() : (process.env.REPLY_TO_EMAIL || 'hellovancarautos@gmail.com');
+    const subject = `Website Inquiry: ${inquiry.name} - ${inquiry.subject || 'General'}`;
 
-    // 1. Try SendGrid first
-    if (process.env.SENDGRID_API_KEY) {
-        let detailsHtml = '';
-        if (inquiry.type === 'vehicle_inquiry' && inquiry.vehicle_details) {
-            const v = inquiry.vehicle_details;
-            detailsHtml = `
-                <div style="background:#f8fafc; padding:12px; border-radius:6px; margin:15px 0;">
-                    <h4 style="margin:0 0 8px 0; color:#0f172a;">Vehicle of Interest:</h4>
-                    <p style="margin:2px 0;"><strong>${v.title || ''}</strong></p>
-                    <p style="margin:2px 0; font-family:monospace; color:#ca8a04;">Registration: ${v.registration || 'N/A'}</p>
-                    <p style="margin:2px 0;">Price: £${Number(v.price || 0).toLocaleString('en-GB')} | Mileage: ${Number(v.mileage || 0).toLocaleString('en-GB')} miles</p>
-                </div>
-            `;
-        }
-
-        const emailHtml = `
-            <div style="font-family:sans-serif; max-width:600px; margin:0 auto; padding:20px; border:1px solid #e2e8f0; border-radius:8px;">
-                <h2 style="color:#0f172a; margin-top:0;">New Website Inquiry: ${inquiry.subject || 'General'}</h2>
-                <p><strong>Name:</strong> ${inquiry.name}</p>
-                <p><strong>Email:</strong> ${inquiry.email}</p>
-                <p><strong>Phone:</strong> ${inquiry.phone || 'Not provided'}</p>
-                <p><strong>Message:</strong></p>
-                <blockquote style="background:#f1f5f9; padding:12px; border-left:4px solid #55A01F; margin:10px 0;">
-                    ${(inquiry.message || '').replace(/\n/g, '<br>')}
-                </blockquote>
-                ${detailsHtml}
+    let detailsHtml = '';
+    let detailsText = '';
+    if (inquiry.type === 'vehicle_inquiry' && inquiry.vehicle_details) {
+        const v = inquiry.vehicle_details;
+        detailsHtml = `
+            <div style="background:#f8fafc; padding:12px; border-radius:6px; margin:15px 0; border-left:3px solid #55A01F;">
+                <h4 style="margin:0 0 8px 0; color:#0f172a;">Vehicle of Interest:</h4>
+                <p style="margin:2px 0;"><strong>${v.title || ''}</strong></p>
+                <p style="margin:2px 0; font-family:monospace; color:#ca8a04;">Registration: ${v.registration || 'N/A'}</p>
+                <p style="margin:2px 0;">Price: £${Number(v.price || 0).toLocaleString('en-GB')} | Mileage: ${Number(v.mileage || 0).toLocaleString('en-GB')} miles</p>
             </div>
         `;
+        detailsText = `\n\nVEHICLE OF INTEREST:\n- Title: ${v.title || ''}\n- Registration: ${v.registration || 'N/A'}\n- Price: £${Number(v.price || 0).toLocaleString('en-GB')}\n- Mileage: ${Number(v.mileage || 0).toLocaleString('en-GB')} miles`;
+    }
 
+    const emailHtml = `
+        <div style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width:600px; margin:0 auto; padding:24px; border:1px solid #e2e8f0; border-radius:8px; background:#ffffff;">
+            <h2 style="color:#0f172a; margin-top:0;">New Website Inquiry: ${inquiry.subject || 'General'}</h2>
+            <p style="margin:6px 0;"><strong>Name:</strong> ${inquiry.name}</p>
+            <p style="margin:6px 0;"><strong>Email:</strong> <a href="mailto:${inquiry.email}">${inquiry.email}</a></p>
+            <p style="margin:6px 0;"><strong>Phone:</strong> ${inquiry.phone || 'Not provided'}</p>
+            <p style="margin:16px 0 6px 0;"><strong>Message:</strong></p>
+            <blockquote style="background:#f8fafc; padding:12px 16px; border-left:4px solid #55A01F; margin:10px 0; color:#334155;">
+                ${(inquiry.message || '').replace(/\n/g, '<br>')}
+            </blockquote>
+            ${detailsHtml}
+        </div>
+    `;
+
+    const emailText = `NEW WEBSITE INQUIRY: ${inquiry.subject || 'General'}\n\nName: ${inquiry.name}\nEmail: ${inquiry.email}\nPhone: ${inquiry.phone || 'Not provided'}\n\nMessage:\n${inquiry.message || ''}${detailsText}`;
+
+    // 1. Try SendGrid first
+    if (process.env.SENDGRID_API_KEY && process.env.EMAIL_PROVIDER !== 'smtp') {
         const sent = await sendViaSendGrid({
             to: recipient,
-            subject: `Website Inquiry: ${inquiry.name} - ${inquiry.subject || 'General'}`,
+            subject: subject,
             html: emailHtml,
-            text: `Name: ${inquiry.name}\nEmail: ${inquiry.email}\nPhone: ${inquiry.phone}\nMessage: ${inquiry.message}`
+            text: emailText
         });
-
         if (sent) return true;
     }
 
-    // 2. Fallback to Formspree
+    // 2. Try SMTP fallback
+    const transporter = createTransporter();
+    if (transporter) {
+        try {
+            const fromAddress = process.env.SMTP_FROM || `"Vancar Autos" <${process.env.SMTP_USER}>`;
+            await transporter.sendMail({
+                from: fromAddress,
+                to: recipient,
+                replyTo: replyTo,
+                subject: subject,
+                text: emailText,
+                html: emailHtml
+            });
+            console.log(`[SMTP] Successfully delivered inquiry to: ${recipient}`);
+            return true;
+        } catch (err) {
+            console.error('[SMTP Error] Inquiry email:', err.message);
+        }
+    }
+
+    // 3. Fallback to Formspree
     const formspreeEndpoint = 'https://formspree.io/f/xlgyelej';
     const payload = {
-        _subject: `Website Inquiry: ${inquiry.name} - ${inquiry.subject || 'General'}`,
+        _subject: subject,
         _replyto: inquiry.email,
         Sender: 'Vancar Autos Website',
         name: inquiry.name,
@@ -290,16 +342,17 @@ const sendFinanceApplicationEmails = async (app) => {
                             <tr>
                                 <td style="padding:8px 0; color:#64748b; font-size:14px; width:45%;">Bank Sort Code:</td>
                                 <td style="padding:8px 0; color:#0f172a; font-size:16px; font-weight:bold; font-family:monospace; letter-spacing:1.5px;">
-                                    ${app.bank_sort_code || app.bank_sort_code_masked || 'N/A'}
+                                    ${app.bank_sort_code_masked || (app.bank_sort_code ? '***' + String(app.bank_sort_code).slice(-2) : 'Protected')}
                                 </td>
                             </tr>
                             <tr>
                                 <td style="padding:8px 0; color:#64748b; font-size:14px;">Account Number:</td>
                                 <td style="padding:8px 0; color:#0f172a; font-size:16px; font-weight:bold; font-family:monospace; letter-spacing:1.5px;">
-                                    ${app.bank_account_number || app.bank_account_number_masked || 'N/A'}
+                                    ${app.bank_account_number_masked || (app.bank_account_number ? '****' + String(app.bank_account_number).slice(-4) : 'Protected')}
                                 </td>
                             </tr>
                         </table>
+                        <p style="margin:8px 0 0 0; font-size:12px; color:#64748b;">(Full decrypted bank details are securely accessible by authorized staff in the Admin Portal)</p>
                     </div>
 
                     <div style="text-align:center; margin-top:32px;">
@@ -419,80 +472,172 @@ const sendFinanceApplicationEmails = async (app) => {
     </html>
     `;
 
-    // 1. Dispatch via SendGrid API if SENDGRID_API_KEY is available
-    if (process.env.SENDGRID_API_KEY) {
+    // Build readable 3-year address history for plain text
+    const addressSummaryText = (app.addresses || []).map((addr, idx) => 
+        `${idx === 0 ? 'Current Address' : `Previous Address #${idx}`}: ${[addr.doorNumber, addr.street, addr.town, addr.postcode].filter(Boolean).join(', ')} (${addr.years || 0} yrs ${addr.months || 0} mos)`
+    ).join('\n');
+
+    // Business Email Plain-Text Alternative (MIME multipart/alternative prevents spam filtering)
+    const businessEmailText = `NEW VEHICLE FINANCE APPLICATION [${app.reference_number}]
+Applicant: ${app.full_name}
+
+FINANCE REQUIREMENTS:
+- Reference Number: ${app.reference_number}
+- Requested Borrow Amount: £${Number(app.borrow_amount || 0).toLocaleString('en-GB')}
+- Repayment Term: ${app.term_years} Years (${app.term_years * 12} Months)
+- Credit Score Tier: ${app.credit_score || 'Not specified'}
+- Est. Monthly Payment: £${Number(app.estimated_monthly || 0).toLocaleString('en-GB')} / mo
+- Representative APR: ${app.estimated_apr}%
+- Est. Total Repayable: £${Number(app.total_repayable || 0).toLocaleString('en-GB')}
+
+APPLICANT PERSONAL DETAILS:
+- Full Name: ${app.full_name}
+- Date of Birth: ${app.date_of_birth}
+- Marital Status: ${app.marital_status || 'Not specified'}
+- Email: ${app.email}
+- Phone: ${app.phone}
+
+EMPLOYMENT & INCOME:
+- Employment Status: ${app.employment_status || 'Employed'}
+- Job Title: ${app.job_title}
+- Employer / Company: ${app.employer}
+- Net Monthly Income: £${Number(app.monthly_income || 0).toLocaleString('en-GB')}
+
+3-YEAR ADDRESS HISTORY:
+${addressSummaryText}
+
+BANK DETAILS:
+- Bank Sort Code: ${app.bank_sort_code_masked || 'Protected'}
+- Account Number: ${app.bank_account_number_masked || 'Protected'}
+(Full decrypted banking details are securely accessible inside the Admin Portal)
+
+Open Application in Admin Portal:
+${adminPortalUrl}
+
+Vancar Autos Limited • Yard 1, Midland Street, Manchester, M12 6LB • 07707 700070`;
+
+    // Customer Confirmation Plain-Text Alternative
+    const customerEmailText = `VANCAR AUTOS - Vehicle Finance Application Received
+Reference: ${app.reference_number}
+
+Dear ${customerFirstName},
+
+Thank you for your finance application. Your application has been successfully received. Our specialist finance team is reviewing your profile and vehicle preferences.
+
+YOUR FINANCE SUMMARY:
+- Reference Number: ${app.reference_number}
+- Requested Borrow Amount: £${Number(app.borrow_amount || 0).toLocaleString('en-GB')}
+- Repayment Term: ${app.term_years} Years (${app.term_years * 12} Months)
+- Estimated Monthly Payment: £${Number(app.estimated_monthly || 0).toLocaleString('en-GB')} / mo
+- Illustrative APR: ${app.estimated_apr}% Representative
+
+WHAT HAPPENS NEXT:
+1. Application Review: Our specialist team reviews your profile and vehicle preferences.
+2. Lender Matching: We match your application across our panel of 30+ UK lenders to secure the lowest possible APR.
+3. Personal Advisor Contact: A dedicated advisor will contact you within 2-4 business hours to discuss your tailored quote and next steps.
+
+Important Information:
+Submitting this application does not mean finance has been approved. All applications are subject to status, affordability checks and final lender underwriting. We are a credit broker, not a lender.
+
+Questions about your application?
+Call us on 07707 700070 or reply to hellovancarautos@gmail.com
+
+Vancar Autos Limited
+Yard 1, Midland Street, Manchester, M12 6LB
+Registered in England and Wales (Company No: 16593644)`;
+
+    const businessSubject = `New Finance Application [${app.reference_number}] - ${app.full_name}`;
+    const customerSubject = `Your Vancar Autos Finance Application Confirmation [${app.reference_number}]`;
+
+    // 1. Dispatch via SendGrid API if SENDGRID_API_KEY is available and EMAIL_PROVIDER is not explicitly 'smtp'
+    if (process.env.SENDGRID_API_KEY && process.env.EMAIL_PROVIDER !== 'smtp') {
         console.log('[Finance Email] Using SendGrid API for transactional email delivery...');
 
         // Email 1: First Business Email
-        const b1 = await sendViaSendGrid({
+        results.business1 = await sendViaSendGrid({
             to: businessRecipient1,
-            subject: `New Finance Application [${app.reference_number}] - ${app.full_name} (£${Number(app.borrow_amount || 0).toLocaleString('en-GB')})`,
-            html: businessEmailHtml
+            subject: businessSubject,
+            html: businessEmailHtml,
+            text: businessEmailText
         });
-        results.business1 = b1;
 
         // Email 2: Second Business Email
-        const b2 = await sendViaSendGrid({
+        results.business2 = await sendViaSendGrid({
             to: businessRecipient2,
-            subject: `New Finance Application [${app.reference_number}] - ${app.full_name} (£${Number(app.borrow_amount || 0).toLocaleString('en-GB')})`,
-            html: businessEmailHtml
+            subject: businessSubject,
+            html: businessEmailHtml,
+            text: businessEmailText
         });
-        results.business2 = b2;
 
         // Email 3: Customer Confirmation Email
         if (app.email) {
-            const cust = await sendViaSendGrid({
+            results.customer = await sendViaSendGrid({
                 to: app.email,
-                subject: `Your Vancar Autos Finance Application Confirmation [${app.reference_number}]`,
-                html: customerEmailHtml
+                subject: customerSubject,
+                html: customerEmailHtml,
+                text: customerEmailText
             });
-            results.customer = cust;
         }
 
         console.log(`[Finance Email] SendGrid delivery summary: Business1=${results.business1}, Business2=${results.business2}, Customer=${results.customer}`);
     }
 
-    // 2. Fallback to Nodemailer SMTP if SendGrid wasn't used or failed
+    // 2. Fallback to Nodemailer SMTP for any unsent emails (or as primary if EMAIL_PROVIDER === 'smtp')
     const transporter = createTransporter();
-    if (transporter) {
+    if (transporter && (!results.business1 || !results.business2 || (!results.customer && app.email))) {
+        console.log('[Finance Email] Executing SMTP dispatch for pending emails...');
         const fromAddress = process.env.SMTP_FROM || `"Vancar Autos" <${process.env.SMTP_USER}>`;
+        const replyTo = (process.env.REPLY_TO_EMAIL || 'hellovancarautos@gmail.com').trim();
 
         // Send Email 1
-        try {
-            await transporter.sendMail({
-                from: fromAddress,
-                to: businessRecipient1,
-                subject: `New Finance Application [${app.reference_number}] - ${app.full_name} (£${Number(app.borrow_amount || 0).toLocaleString('en-GB')})`,
-                html: businessEmailHtml
-            });
-            results.business1 = true;
-        } catch (err) {
-            console.error(`[SMTP Error] Business Email 1:`, err.message);
+        if (!results.business1) {
+            try {
+                await transporter.sendMail({
+                    from: fromAddress,
+                    to: businessRecipient1,
+                    replyTo: replyTo,
+                    subject: businessSubject,
+                    text: businessEmailText,
+                    html: businessEmailHtml
+                });
+                results.business1 = true;
+                console.log(`[SMTP] Successfully delivered business email 1 to: ${businessRecipient1}`);
+            } catch (err) {
+                console.error(`[SMTP Error] Business Email 1:`, err.message);
+            }
         }
 
         // Send Email 2
-        try {
-            await transporter.sendMail({
-                from: fromAddress,
-                to: businessRecipient2,
-                subject: `New Finance Application [${app.reference_number}] - ${app.full_name} (£${Number(app.borrow_amount || 0).toLocaleString('en-GB')})`,
-                html: businessEmailHtml
-            });
-            results.business2 = true;
-        } catch (err) {
-            console.error(`[SMTP Error] Business Email 2:`, err.message);
+        if (!results.business2) {
+            try {
+                await transporter.sendMail({
+                    from: fromAddress,
+                    to: businessRecipient2,
+                    replyTo: replyTo,
+                    subject: businessSubject,
+                    text: businessEmailText,
+                    html: businessEmailHtml
+                });
+                results.business2 = true;
+                console.log(`[SMTP] Successfully delivered business email 2 to: ${businessRecipient2}`);
+            } catch (err) {
+                console.error(`[SMTP Error] Business Email 2:`, err.message);
+            }
         }
 
         // Send Email 3
-        if (app.email) {
+        if (!results.customer && app.email) {
             try {
                 await transporter.sendMail({
                     from: fromAddress,
                     to: app.email,
-                    subject: `Your Vancar Autos Finance Application Confirmation [${app.reference_number}]`,
+                    replyTo: replyTo,
+                    subject: customerSubject,
+                    text: customerEmailText,
                     html: customerEmailHtml
                 });
                 results.customer = true;
+                console.log(`[SMTP] Successfully delivered customer email to: ${app.email}`);
             } catch (err) {
                 console.error(`[SMTP Error] Customer Email:`, err.message);
             }
@@ -522,8 +667,8 @@ const sendFinanceApplicationEmails = async (app) => {
                 Marital_Status: app.marital_status || 'Not specified',
                 Applicant_Email: app.email,
                 Applicant_Phone: app.phone,
-                Bank_Sort_Code: app.bank_sort_code || 'N/A',
-                Bank_Account_Number: app.bank_account_number || 'N/A',
+                Bank_Sort_Code: app.bank_sort_code_masked || 'Protected',
+                Bank_Account_Number: app.bank_account_number_masked || 'Protected',
                 Address_History_3_Years: addressSummary,
                 Employment_Status: app.employment_status || 'Employed',
                 Job_Title: app.job_title,
