@@ -11,12 +11,19 @@ export default function HomeSearch() {
     const [bodyType, setBodyType] = useState('All');
     const [fuel, setFuel] = useState('All');
     const [transmission, setTransmission] = useState('All');
+    const [dataVersion, setDataVersion] = useState(0);
 
-    const makes = useMemo(() => getMakes(), []);
+    useEffect(() => {
+        const handleUpdate = () => setDataVersion(v => v + 1);
+        window.addEventListener('vancar_data_updated', handleUpdate);
+        return () => window.removeEventListener('vancar_data_updated', handleUpdate);
+    }, []);
+
+    const makes = useMemo(() => getMakes(), [dataVersion]);
     const models = useMemo(() => {
         if (!make) return [];
         return getModelsByMake(make);
-    }, [make]);
+    }, [make, dataVersion]);
 
     // Reset model if make changes
     useEffect(() => {

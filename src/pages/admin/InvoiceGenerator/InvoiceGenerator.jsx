@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { getCars, getInvoices, createInvoice, updateInvoice, deleteInvoice } from '../../../services/dataService';
+import { getCars, getInvoices, createInvoice, updateInvoice, deleteInvoice, syncDataFromServer } from '../../../services/dataService';
 import './InvoiceGenerator.css';
 
 const formatMakeModelTitleCase = (makeStr, modelStr) => {
@@ -129,7 +129,19 @@ export default function InvoiceGenerator() {
         termsOfSale: 'Please make payment by the due date shown on this invoice. Title to the vehicle remains with Vancar Autos until funds are cleared in full.'
     });
 
-    // Load database resources
+    // Load database resources and sync with server
+    useEffect(() => {
+        syncDataFromServer().then(() => {
+            setCarsList(getCars());
+        });
+        const handleUpdate = () => {
+            setInvoicesList(getInvoices());
+            setCarsList(getCars());
+        };
+        window.addEventListener('vancar_data_updated', handleUpdate);
+        return () => window.removeEventListener('vancar_data_updated', handleUpdate);
+    }, []);
+
     useEffect(() => {
         setInvoicesList(getInvoices());
         setCarsList(getCars());
@@ -951,10 +963,10 @@ export default function InvoiceGenerator() {
                                 >
                                     <option value="">Pre-fill from inventory stock...</option>
                                     {carsList.filter(c => c.status === 'available').map(car => {
-                                        const reg = (car.registration || '').toUpperCase();
+                                        const reg = (car.registration || car.vrm || '').trim().toUpperCase();
                                         return (
                                             <option key={car.id} value={car.id}>
-                                                {reg ? `[${reg}] ` : ''}{car.year} {car.make} {car.model} — £{car.price?.toLocaleString()}
+                                                {reg ? `[${reg}] ` : ''}{car.year} {car.make} {car.model} — £{Number(car.price || 0).toLocaleString('en-GB')}
                                             </option>
                                         );
                                     })}

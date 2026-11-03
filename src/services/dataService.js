@@ -46,7 +46,8 @@ export async function syncDataFromServer() {
             if (Array.isArray(cars) && cars.length > 0) {
                 const normalizedCars = cars.map(car => ({
                     ...car,
-                    images: normalizeCarImages(car.images, car.bodyType)
+                    registration: car.registration ? car.registration.trim().toUpperCase() : (DEFAULT_CAR_REGS[car.id] || (car.vrm ? car.vrm.toUpperCase() : '')),
+                    images: normalizeCarImages(car.images)
                 }));
                 saveData(CARS_KEY, normalizedCars);
                 window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: CARS_KEY } }));
@@ -151,10 +152,17 @@ export const normalizeCarImages = (images) => {
     }
   }
 
-  // Filter out invalid items (like "[", "null", "", etc.)
+  // Filter out invalid items (like "[", "null", "", etc.) and fix Auto Trader CDN presets
   const cleaned = list
     .map(img => (typeof img === 'string' ? img.trim() : ''))
-    .filter(img => img && img !== '[' && img !== ']' && img !== 'null' && img !== 'undefined' && img !== 'NaN');
+    .filter(img => img && img !== '[' && img !== ']' && img !== 'null' && img !== 'undefined' && img !== 'NaN')
+    .map(img => {
+      // Auto Trader CDN requires w1024h768 (w800/w1024 return 404 for many vehicles)
+      if (img.includes('m.atcdn.co.uk')) {
+        return img.replace(/\/media\/(w800|w1024|\{resize\})\//, '/media/w1024h768/').replace('{resize}', 'w1024h768');
+      }
+      return img;
+    });
 
   return cleaned;
 };
@@ -200,8 +208,8 @@ export function getSimilarCars(carId, limit = 4) {
 }
 
 export function searchCars(filters = {}) {
-  // Use all cars so we can display sold ones too
-  let cars = getCars();
+  // Only show cars that are up for sale on the customer-facing website
+  let cars = filters.includeSold ? getCars() : getAvailableCars();
 
   if (filters.search) {
     const q = filters.search.toLowerCase();
@@ -259,12 +267,13 @@ export function searchCars(filters = {}) {
     }
   }
 
-  // Always push sold cars to the bottom regardless of filters
-  cars.sort((a, b) => {
-    if (a.status === 'sold' && b.status !== 'sold') return 1;
-    if (a.status !== 'sold' && b.status === 'sold') return -1;
-    return 0; // maintain existing order
-  });
+  if (filters.includeSold) {
+    cars.sort((a, b) => {
+      if (a.status === 'sold' && b.status !== 'sold') return 1;
+      if (a.status !== 'sold' && b.status === 'sold') return -1;
+      return 0; // maintain existing order
+    });
+  }
 
   return cars;
 }
@@ -334,8 +343,8 @@ export function getBodyTypes() {
   return types;
 }
 
-export function getMakes() {
-  const cars = getCars();
+export function getMakes(includeSold = false) {
+  const cars = includeSold ? getCars() : getAvailableCars();
   return [...new Set(cars.map(c => c.make))].sort();
 }
 
@@ -463,8 +472,8 @@ export function deleteVehicleExpense(id) {
   syncNeon(`/vehicle-expenses/${id}`, 'DELETE');
 }
 
-export function getModelsByMake(make) {
-  const cars = getCars();
+export function getModelsByMake(make, includeSold = false) {
+  const cars = includeSold ? getCars() : getAvailableCars();
   return [...new Set(cars.filter(c => c.make === make).map(c => c.model))].sort();
 }
 

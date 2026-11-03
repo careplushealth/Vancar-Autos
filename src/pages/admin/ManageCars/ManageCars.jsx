@@ -500,11 +500,13 @@ export default function ManageCars() {
                                 const days = car.autotrader_days_advertised ?? car.autotraderDaysAdvertised;
                                 const purchaser = car.purchase_attribution || car.purchaseAttribution;
 
+                                const advertUrl = car.status === 'sold' ? `/buy/${car.id}?preview=1` : `/buy/${car.id}`;
+
                                 return (
                                     <tr key={car.id}>
                                         <td>
                                             <a 
-                                                href={`/buy/${car.id}`} 
+                                                href={advertUrl} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer"
                                                 className="manage-cars__thumb-link"
@@ -538,7 +540,7 @@ export default function ManageCars() {
                                         <td>
                                             <div className="manage-cars__info">
                                                 <a 
-                                                    href={`/buy/${car.id}`} 
+                                                    href={advertUrl} 
                                                     target="_blank" 
                                                     rel="noopener noreferrer"
                                                     className="manage-cars__title--link"

@@ -1,11 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import CarCard from '../../components/CarCard/CarCard';
 import { getCarById, getSimilarCars } from '../../services/dataService';
 import './CarDetails.css';
 
 export default function CarDetails() {
     const { id } = useParams();
+    const [searchParams] = useSearchParams();
+    const isAdminPreview = searchParams.get('preview') === '1' || searchParams.get('admin') === '1';
     const car = useMemo(() => getCarById(id), [id]);
     const similar = useMemo(() => getSimilarCars(id, 3), [id]);
     const [activeIdx, setActiveIdx] = useState(0);
@@ -36,13 +38,13 @@ export default function CarDetails() {
         setActiveIdx((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
     };
 
-    if (!car) {
+    if (!car || (car.status === 'sold' && !isAdminPreview)) {
         return (
             <div className="car-details container">
                 <div className="car-details__not-found">
-                    <h2>Car not found</h2>
-                    <p>The vehicle you're looking for is no longer available.</p>
-                    <Link to="/buy" className="btn btn--primary">Browse all cars</Link>
+                    <h2>Vehicle Not Available</h2>
+                    <p>The vehicle you're looking for is no longer available or has been sold.</p>
+                    <Link to="/buy" className="btn btn--primary">Browse Available Stock</Link>
                 </div>
             </div>
         );

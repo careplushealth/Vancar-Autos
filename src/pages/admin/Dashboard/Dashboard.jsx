@@ -148,11 +148,13 @@ export default function Dashboard() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    displayedCars.map(car => (
+                                    displayedCars.map(car => {
+                                        const previewUrl = car.status === 'sold' ? `/buy/${car.id}?preview=1` : `/buy/${car.id}`;
+                                        return (
                                         <tr key={car.id}>
                                             <td>
                                                 <a
-                                                    href={`/buy/${car.id}`}
+                                                    href={previewUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="admin-dashboard__car-thumb-btn"
@@ -160,13 +162,13 @@ export default function Dashboard() {
                                                 >
                                                     {car.images && car.images[0] ? (
                                                         <img 
-                                                            src={car.images[0]} 
-                                                            alt="" 
-                                                            onError={(e) => {
-                                                                e.currentTarget.style.display = 'none';
-                                                                const noPhoto = e.currentTarget.parentElement?.querySelector('.admin-dashboard__no-photo');
-                                                                if (noPhoto) noPhoto.style.display = 'flex';
-                                                            }}
+                                                             src={car.images[0]} 
+                                                             alt="" 
+                                                             onError={(e) => {
+                                                                 e.currentTarget.style.display = 'none';
+                                                                 const noPhoto = e.currentTarget.parentElement?.querySelector('.admin-dashboard__no-photo');
+                                                                 if (noPhoto) noPhoto.style.display = 'flex';
+                                                             }}
                                                         />
                                                     ) : null}
                                                     <div 
@@ -180,7 +182,7 @@ export default function Dashboard() {
                                             <td>
                                                 <div>
                                                     <a
-                                                        href={`/buy/${car.id}`}
+                                                        href={previewUrl}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="admin-dashboard__car-title-link"
@@ -227,7 +229,7 @@ export default function Dashboard() {
                                             <td style={{ textAlign: 'right' }}>
                                                 <div style={{ display: 'inline-flex', gap: '6px' }}>
                                                     <a
-                                                        href={`/buy/${car.id}`}
+                                                        href={previewUrl}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="btn btn--sm btn--primary"
@@ -246,7 +248,8 @@ export default function Dashboard() {
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </tbody>
                         </table>

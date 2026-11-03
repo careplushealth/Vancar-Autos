@@ -19,6 +19,13 @@ const SORT_OPTIONS = [
 
 export default function Buy() {
     const [searchParams] = useSearchParams();
+    const [dataVersion, setDataVersion] = useState(0);
+
+    useEffect(() => {
+        const handleUpdate = () => setDataVersion(v => v + 1);
+        window.addEventListener('vancar_data_updated', handleUpdate);
+        return () => window.removeEventListener('vancar_data_updated', handleUpdate);
+    }, []);
     
     // Read search parameters from URL (e.g. from homepage search widget)
     const initialBodyType = searchParams.get('bodyType') || 'All';
@@ -44,11 +51,11 @@ export default function Buy() {
     
     const [showFilters, setShowFilters] = useState(false);
 
-    const makes = useMemo(() => getMakes(), []);
+    const makes = useMemo(() => getMakes(), [dataVersion]);
     const models = useMemo(() => {
         if (!filters.make) return [];
         return getModelsByMake(filters.make);
-    }, [filters.make]);
+    }, [filters.make, dataVersion]);
 
     // Reset model filter if make changes
     useEffect(() => {
@@ -69,7 +76,7 @@ export default function Buy() {
             maxMileage: filters.maxMileage ? Number(filters.maxMileage) : undefined
         };
         return searchCars(searchFilters);
-    }, [filters.search, filters.bodyType, filters.fuel, filters.transmission, filters.make, filters.sort, filters.maxPrice, filters.maxMileage]);
+    }, [filters.search, filters.bodyType, filters.fuel, filters.transmission, filters.make, filters.sort, filters.maxPrice, filters.maxMileage, dataVersion]);
 
     // Apply secondary filtering (model) on client
     const cars = useMemo(() => {

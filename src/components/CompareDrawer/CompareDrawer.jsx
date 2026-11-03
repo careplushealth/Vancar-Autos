@@ -41,7 +41,9 @@ export default function CompareDrawer() {
         window.dispatchEvent(new Event('vancar_compare_changed'));
     };
 
-    const comparedCars = compareIds.map(id => getCarById(id)).filter(Boolean);
+    const comparedCars = compareIds
+        .map(id => getCarById(id))
+        .filter(car => car && car.status === 'available');
 
     if (compareIds.length === 0) return null;
 
