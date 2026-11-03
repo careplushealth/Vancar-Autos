@@ -843,17 +843,27 @@ app.post('/api/finance/apply', async (req, res) => {
         const dbResult = await db.query(insertQuery, values);
         const savedApplication = dbResult.rows[0];
 
-        // Format application object for email templates
+        // Format application object for email templates with ALL raw and formatted details
         const emailPayload = {
             ...savedApplication,
             addresses: addresses,
             borrow_amount: borrowNum,
             term_years: termNum,
+            credit_score: credit_score,
+            marital_status: marital_status || 'Not specified',
+            employment_status: employment_status || 'Employed',
+            job_title: job_title.trim(),
+            employer: employer.trim(),
+            monthly_income: incomeNum,
             estimated_monthly: monthly,
             estimated_apr: apr,
             total_repayable: totalRepayable,
+            total_interest: totalInterest,
+            bank_sort_code: cleanSortCode.match(/.{1,2}/g).join('-'),
+            bank_account_number: cleanAccountNumber,
             bank_sort_code_masked: sortCodeMasked,
-            bank_account_number_masked: accountMasked
+            bank_account_number_masked: accountMasked,
+            vehicle_details: vehicle_details || null
         };
 
         // --- Trigger Automated 3-Email Workflow Asynchronously ---

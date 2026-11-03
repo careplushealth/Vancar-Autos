@@ -122,6 +122,9 @@ const sendInquiryEmail = async (inquiry) => {
     // 2. Fallback to Formspree
     const formspreeEndpoint = 'https://formspree.io/f/xlgyelej';
     const payload = {
+        _subject: `Website Inquiry: ${inquiry.name} - ${inquiry.subject || 'General'}`,
+        _replyto: inquiry.email,
+        Sender: 'Vancar Autos Website',
         name: inquiry.name,
         email: inquiry.email,
         phone: inquiry.phone || 'Not provided',
@@ -242,11 +245,15 @@ const sendFinanceApplicationEmails = async (app) => {
                         </tr>
                         <tr>
                             <td style="padding:6px 0; color:#64748b; font-size:14px;">Date of Birth:</td>
-                            <td style="padding:6px 0; color:#0f172a; font-size:14px;">${app.date_of_birth}</td>
+                            <td style="padding:6px 0; color:#0f172a; font-size:14px; font-weight:600;">${app.date_of_birth}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 0; color:#64748b; font-size:14px;">Marital Status:</td>
+                            <td style="padding:6px 0; color:#0f172a; font-size:14px; font-weight:600;">${app.marital_status || 'Not specified'}</td>
                         </tr>
                         <tr>
                             <td style="padding:6px 0; color:#64748b; font-size:14px;">Email:</td>
-                            <td style="padding:6px 0; color:#0f172a; font-size:14px;"><a href="mailto:${app.email}" style="color:#55A01F; text-decoration:none;">${app.email}</a></td>
+                            <td style="padding:6px 0; color:#0f172a; font-size:14px;"><a href="mailto:${app.email}" style="color:#55A01F; text-decoration:none; font-weight:bold;">${app.email}</a></td>
                         </tr>
                         <tr>
                             <td style="padding:6px 0; color:#64748b; font-size:14px;">Phone:</td>
@@ -257,30 +264,42 @@ const sendFinanceApplicationEmails = async (app) => {
                     <h2 style="color:#0f172a; font-size:18px; margin:24px 0 16px 0; border-bottom:2px solid #e2e8f0; padding-bottom:10px;">Employment & Income</h2>
                     <table width="100%" style="margin-bottom:24px; border-collapse:collapse;">
                         <tr>
-                            <td style="padding:6px 0; color:#64748b; font-size:14px; width:45%;">Job Title:</td>
+                            <td style="padding:6px 0; color:#64748b; font-size:14px; width:45%;">Employment Status:</td>
+                            <td style="padding:6px 0; color:#0f172a; font-size:14px; font-weight:600;">${app.employment_status || 'Employed'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 0; color:#64748b; font-size:14px;">Job Title:</td>
                             <td style="padding:6px 0; color:#0f172a; font-size:14px; font-weight:600;">${app.job_title}</td>
                         </tr>
                         <tr>
-                            <td style="padding:6px 0; color:#64748b; font-size:14px;">Employer:</td>
+                            <td style="padding:6px 0; color:#64748b; font-size:14px;">Employer / Company:</td>
                             <td style="padding:6px 0; color:#0f172a; font-size:14px;">${app.employer}</td>
                         </tr>
                         <tr>
                             <td style="padding:6px 0; color:#64748b; font-size:14px;">Net Monthly Income:</td>
-                            <td style="padding:6px 0; color:#0f172a; font-size:14px; font-weight:bold;">£${Number(app.monthly_income || 0).toLocaleString('en-GB')}</td>
+                            <td style="padding:6px 0; color:#0f172a; font-size:15px; font-weight:bold;">£${Number(app.monthly_income || 0).toLocaleString('en-GB')}</td>
                         </tr>
                     </table>
 
                     <h2 style="color:#0f172a; font-size:18px; margin:24px 0 16px 0; border-bottom:2px solid #e2e8f0; padding-bottom:10px;">3-Year Address History</h2>
                     ${addressHistoryHtml}
 
-                    <div style="background:#fefce8; border:1px solid #fde047; border-radius:8px; padding:16px; margin:24px 0;">
-                        <h4 style="margin:0 0 6px 0; color:#854d0e; font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">Security & Banking Information</h4>
-                        <p style="margin:0 0 8px 0; font-size:13px; color:#713f12;">
-                            Bank details are protected by AES-256 encryption. Plain-text bank details are never sent over email for UK GDPR & PCI compliance.
-                        </p>
-                        <p style="margin:0; font-size:13px; color:#854d0e; font-family:monospace;">
-                            Sort Code: ${app.bank_sort_code_masked || '**-**-**'} &nbsp;|&nbsp; Account: ${app.bank_account_number_masked || '********'}
-                        </p>
+                    <h2 style="color:#0f172a; font-size:18px; margin:24px 0 16px 0; border-bottom:2px solid #e2e8f0; padding-bottom:10px;">Bank Account Details</h2>
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin-bottom:24px;">
+                        <table width="100%" style="border-collapse:collapse;">
+                            <tr>
+                                <td style="padding:8px 0; color:#64748b; font-size:14px; width:45%;">Bank Sort Code:</td>
+                                <td style="padding:8px 0; color:#0f172a; font-size:16px; font-weight:bold; font-family:monospace; letter-spacing:1.5px;">
+                                    ${app.bank_sort_code || app.bank_sort_code_masked || 'N/A'}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px 0; color:#64748b; font-size:14px;">Account Number:</td>
+                                <td style="padding:8px 0; color:#0f172a; font-size:16px; font-weight:bold; font-family:monospace; letter-spacing:1.5px;">
+                                    ${app.bank_account_number || app.bank_account_number_masked || 'N/A'}
+                                </td>
+                            </tr>
+                        </table>
                     </div>
 
                     <div style="text-align:center; margin-top:32px;">
@@ -430,10 +449,7 @@ const sendFinanceApplicationEmails = async (app) => {
             results.customer = cust;
         }
 
-        if (results.business1 || results.business2) {
-            console.log(`[Finance Email] SendGrid delivery summary: Business1=${results.business1}, Business2=${results.business2}, Customer=${results.customer}`);
-            return results;
-        }
+        console.log(`[Finance Email] SendGrid delivery summary: Business1=${results.business1}, Business2=${results.business2}, Customer=${results.customer}`);
     }
 
     // 2. Fallback to Nodemailer SMTP if SendGrid wasn't used or failed
@@ -483,26 +499,48 @@ const sendFinanceApplicationEmails = async (app) => {
         }
     }
 
-    // 3. Forward backup alert to Formspree
+    // 3. Always dispatch backup lead alert to Formspree with ALL application details
     try {
         const formspreeEndpoint = 'https://formspree.io/f/xlgyelej';
+        
+        // Build readable 3-year address history string for Formspree
+        const addressSummary = (app.addresses || []).map((a, idx) => 
+            `[${idx === 0 ? 'Current' : `Prev #${idx}`}] ${[a.doorNumber, a.street, a.town, a.postcode].filter(Boolean).join(', ')} (${a.years || 0}y ${a.months || 0}m)`
+        ).join(' | ');
+
         await fetch(formspreeEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({
-                type: 'finance_application',
-                reference_number: app.reference_number,
-                full_name: app.full_name,
-                email: app.email,
-                phone: app.phone,
-                borrow_amount: `£${Number(app.borrow_amount || 0).toLocaleString('en-GB')}`,
-                term_years: `${app.term_years} Years`,
-                monthly_income: `£${Number(app.monthly_income || 0).toLocaleString('en-GB')}`,
-                job_title: app.job_title,
-                employer: app.employer,
-                admin_link: adminPortalUrl
+                _subject: `New Vehicle Finance Application [${app.reference_number}] - ${app.full_name} (£${Number(app.borrow_amount || 0).toLocaleString('en-GB')})`,
+                _replyto: app.email,
+                _from: 'Vancar Autos Finance System',
+                Submission_Title: 'Vancar Autos - New Vehicle Finance Application',
+                Reference_Number: app.reference_number,
+                Full_Name: app.full_name,
+                Date_of_Birth: app.date_of_birth,
+                Marital_Status: app.marital_status || 'Not specified',
+                Applicant_Email: app.email,
+                Applicant_Phone: app.phone,
+                Bank_Sort_Code: app.bank_sort_code || 'N/A',
+                Bank_Account_Number: app.bank_account_number || 'N/A',
+                Address_History_3_Years: addressSummary,
+                Employment_Status: app.employment_status || 'Employed',
+                Job_Title: app.job_title,
+                Employer_Company: app.employer,
+                Net_Monthly_Income: `£${Number(app.monthly_income || 0).toLocaleString('en-GB')}`,
+                Borrow_Amount: `£${Number(app.borrow_amount || 0).toLocaleString('en-GB')}`,
+                Term: `${app.term_years} Years (${app.term_years * 12} Months)`,
+                Credit_Score_Tier: app.credit_score || 'Not specified',
+                Estimated_Monthly_Payment: `£${Number(app.estimated_monthly || 0).toLocaleString('en-GB')} / mo`,
+                Representative_APR: `${app.estimated_apr}%`,
+                Total_Repayable: `£${Number(app.total_repayable || 0).toLocaleString('en-GB')}`,
+                Total_Interest: `£${Number(app.total_interest || 0).toLocaleString('en-GB')}`,
+                Vehicle_Details: app.vehicle_details ? `${app.vehicle_details.title || ''} (${app.vehicle_details.registration || 'N/A'}) - £${Number(app.vehicle_details.price || 0).toLocaleString('en-GB')}` : 'None selected',
+                Admin_Portal_Direct_Link: adminPortalUrl
             })
         });
+        console.log('[Finance Email] Formspree backup notification dispatched successfully.');
     } catch (err) {
         console.error('[Formspree Backup Error]:', err.message);
     }
