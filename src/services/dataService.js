@@ -44,7 +44,11 @@ export async function syncDataFromServer() {
         if (carsRes.ok) {
             const cars = await carsRes.json();
             if (Array.isArray(cars) && cars.length > 0) {
-                saveData(CARS_KEY, cars);
+                const normalizedCars = cars.map(car => ({
+                    ...car,
+                    images: normalizeCarImages(car.images, car.bodyType)
+                }));
+                saveData(CARS_KEY, normalizedCars);
                 window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: CARS_KEY } }));
             }
         }
@@ -113,13 +117,61 @@ function generateId() {
 }
 
 // === Cars ===
+const DEFAULT_CAR_REGS = {
+  'car-001': 'LO23 HSE',
+  'car-002': 'BD72 AMX',
+  'car-003': 'WP71 VXY',
+  'car-004': 'RX23 POR',
+  'car-005': 'EF72 AUD',
+  'car-006': 'YG20 BEN',
+  'car-007': 'LM23 AST',
+  'car-008': 'FD73 FST',
+  'car-009': 'EV21 TSL',
+  'car-010': 'RS73 AUD',
+  'car-011': 'VW22 VAN',
+  'car-012': 'JG24 TYP'
+};
+
+export const normalizeCarImages = (images) => {
+  let list = [];
+  if (Array.isArray(images)) {
+    list = images;
+  } else if (typeof images === 'string') {
+    const trimmed = images.trim();
+    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) list = parsed;
+        else if (typeof parsed === 'string' && parsed.trim()) list = [parsed.trim()];
+      } catch {
+        // json parse fallback
+      }
+    } else if (trimmed) {
+      list = [trimmed];
+    }
+  }
+
+  // Filter out invalid items (like "[", "null", "", etc.)
+  const cleaned = list
+    .map(img => (typeof img === 'string' ? img.trim() : ''))
+    .filter(img => img && img !== '[' && img !== ']' && img !== 'null' && img !== 'undefined' && img !== 'NaN');
+
+  return cleaned;
+};
+
 export function getCars() {
   const cars = initData(CARS_KEY, carsData);
-  return cars.map(car => ({
-    ...car,
-    purchase_attribution: car.purchase_attribution || car.purchaseAttribution || null,
-    purchaseAttribution: car.purchase_attribution || car.purchaseAttribution || null
-  }));
+  return cars.map(car => {
+    const reg = car.registration || DEFAULT_CAR_REGS[car.id] || (car.vrm ? car.vrm.toUpperCase() : '');
+    const normalizedImages = normalizeCarImages(car.images, car.bodyType);
+    return {
+      ...car,
+      registration: reg,
+      images: normalizedImages,
+      purchase_attribution: car.purchase_attribution || car.purchaseAttribution || null,
+      purchaseAttribution: car.purchase_attribution || car.purchaseAttribution || null
+    };
+  });
 }
 
 export function getCarById(id) {
@@ -222,6 +274,7 @@ export function createCar(carData) {
   const attr = carData.purchase_attribution || carData.purchaseAttribution || null;
   const newCar = { 
     ...carData, 
+    images: normalizeCarImages(carData.images, carData.bodyType),
     purchase_attribution: attr,
     purchaseAttribution: attr,
     id: generateId() 
@@ -237,15 +290,35 @@ export function updateCar(id, carData) {
   const idx = cars.findIndex(c => c.id === id);
   if (idx === -1) return null;
   const attr = carData.purchase_attribution !== undefined ? carData.purchase_attribution : (carData.purchaseAttribution !== undefined ? carData.purchaseAttribution : cars[idx].purchase_attribution);
+  const images = carData.images !== undefined ? normalizeCarImages(carData.images, carData.bodyType || cars[idx].bodyType) : cars[idx].images;
   cars[idx] = { 
     ...cars[idx], 
     ...carData, 
+    images,
     purchase_attribution: attr || null,
     purchaseAttribution: attr || null,
     id 
   };
   saveData(CARS_KEY, cars);
   syncNeon(`/cars/${id}`, 'PUT', cars[idx]);
+
+  if (carData.status === 'sold' && carData.customer_details && carData.customer_details.name) {
+    const cd = carData.customer_details;
+    const vName = `${cars[idx].year || ''} ${cars[idx].make || ''} ${cars[idx].model || ''} ${cars[idx].trim || ''}`.trim();
+    recordCustomerFromSale({
+      id: carData.customer_id || null,
+      full_name: cd.name,
+      phone: cd.phone,
+      email: cd.email,
+      address: cd.address,
+      vehicle_id: id,
+      vehicle_name: vName,
+      sale_price: carData.price || cars[idx].price || null,
+      sale_date: new Date().toISOString(),
+      lead_source: carData.lead_source || carData.leadSource || cars[idx].lead_source || 'Forecourt Sale'
+    });
+  }
+
   return cars[idx];
 }
 
@@ -533,6 +606,29 @@ export function createInvoice(invoiceData) {
     invoices.push(newInvoice);
     saveData(INVOICES_KEY, invoices);
     syncNeon('/invoices', 'POST', newInvoice);
+
+    // Automatically record / update customer in Customer Directory
+    if (newInvoice.customer_details && newInvoice.customer_details.name) {
+        const c = newInvoice.customer_details;
+        const fullAddr = [c.address1, c.address2, c.city, c.postcode].filter(Boolean).map(s => s.trim()).join(', ');
+        const v = newInvoice.vehicle_details || {};
+        const vTitle = `${v.make || ''} ${v.model || ''}${v.registration ? ` [${v.registration.toUpperCase()}]` : ''}`.trim();
+        const sale = newInvoice.sale_details || {};
+        recordCustomerFromSale({
+            full_name: c.name,
+            phone: c.phone,
+            email: c.email,
+            address: fullAddr || c.address || '',
+            vehicle_id: v.id || null,
+            vehicle_name: vTitle || null,
+            sale_price: sale.cashPrice || sale.balanceDue || null,
+            sale_date: newInvoice.invoice_date || nowStr,
+            invoice_number: newInvoice.invoice_number || null,
+            lead_source: 'Invoice Sale',
+            notes: newInvoice.notes || `Invoice #${newInvoice.invoice_number || ''}`
+        });
+    }
+
     return newInvoice;
 }
 
@@ -549,6 +645,29 @@ export function updateInvoice(id, invoiceData) {
     };
     saveData(INVOICES_KEY, invoices);
     syncNeon(`/invoices/${id}`, 'PUT', invoices[idx]);
+
+    // Automatically record / update customer in Customer Directory
+    if (invoices[idx].customer_details && invoices[idx].customer_details.name) {
+        const c = invoices[idx].customer_details;
+        const fullAddr = [c.address1, c.address2, c.city, c.postcode].filter(Boolean).map(s => s.trim()).join(', ');
+        const v = invoices[idx].vehicle_details || {};
+        const vTitle = `${v.make || ''} ${v.model || ''}${v.registration ? ` [${v.registration.toUpperCase()}]` : ''}`.trim();
+        const sale = invoices[idx].sale_details || {};
+        recordCustomerFromSale({
+            full_name: c.name,
+            phone: c.phone,
+            email: c.email,
+            address: fullAddr || c.address || '',
+            vehicle_id: v.id || null,
+            vehicle_name: vTitle || null,
+            sale_price: sale.cashPrice || sale.balanceDue || null,
+            sale_date: invoices[idx].invoice_date || nowStr,
+            invoice_number: invoices[idx].invoice_number || null,
+            lead_source: 'Invoice Sale',
+            notes: invoices[idx].notes || `Invoice #${invoices[idx].invoice_number || ''}`
+        });
+    }
+
     return invoices[idx];
 }
 
@@ -722,7 +841,169 @@ export function deleteDistanceSaleForm(id) {
 
 // === Customers ===
 export function getCustomers() {
+    syncCustomersFromSalesAndInvoices();
     return initData(CUSTOMERS_KEY, []);
+}
+
+export function syncCustomersFromSalesAndInvoices() {
+    try {
+        const invoices = initData(INVOICES_KEY, []);
+        const cars = initData(CARS_KEY, carsData);
+        let updatedAny = false;
+        const customers = initData(CUSTOMERS_KEY, []);
+
+        // 1. Sync from Invoices
+        for (const inv of invoices) {
+            const c = inv.customer_details;
+            if (c && c.name && c.name.trim()) {
+                const cleanName = c.name.trim();
+                const cleanEmail = (c.email || '').trim().toLowerCase();
+                const cleanPhone = (c.phone || '').trim().replace(/\s+/g, '');
+
+                const found = customers.some(cust => {
+                    if (cleanEmail && cust.email && cust.email.trim().toLowerCase() === cleanEmail) return true;
+                    if (cleanPhone && cust.phone && cust.phone.trim().replace(/\s+/g, '') === cleanPhone) return true;
+                    if (cleanName && cust.full_name && cust.full_name.trim().toLowerCase() === cleanName.toLowerCase()) return true;
+                    return false;
+                });
+
+                if (!found) {
+                    const fullAddr = [c.address1, c.address2, c.city, c.postcode].filter(Boolean).map(s => s.trim()).join(', ');
+                    const v = inv.vehicle_details || {};
+                    const vTitle = `${v.make || ''} ${v.model || ''}${v.registration ? ` [${v.registration.toUpperCase()}]` : ''}`.trim();
+                    const sale = inv.sale_details || {};
+                    const newCust = {
+                        id: generateId(),
+                        full_name: cleanName,
+                        phone: (c.phone || '').trim(),
+                        email: (c.email || '').trim(),
+                        address: fullAddr || c.address || '',
+                        vehicle_id: v.id || null,
+                        vehicle_name: vTitle || null,
+                        sale_price: sale.cashPrice || sale.balanceDue || null,
+                        sale_date: inv.invoice_date || inv.created_at || new Date().toISOString(),
+                        lead_source: 'Invoice Sale',
+                        invoice_number: inv.invoice_number || null,
+                        notes: inv.notes || `Generated from Invoice #${inv.invoice_number || ''}`,
+                        created_at: inv.created_at || new Date().toISOString(),
+                        updated_at: inv.updated_at || new Date().toISOString()
+                    };
+                    customers.unshift(newCust);
+                    syncNeon('/customers', 'POST', newCust);
+                    updatedAny = true;
+                }
+            }
+        }
+
+        // 2. Sync from Sold Cars
+        for (const car of cars) {
+            if (car.status === 'sold' && car.customer_details && car.customer_details.name) {
+                const cd = car.customer_details;
+                const cleanName = cd.name.trim();
+                const cleanEmail = (cd.email || '').trim().toLowerCase();
+                const cleanPhone = (cd.phone || '').trim().replace(/\s+/g, '');
+
+                const found = customers.some(cust => {
+                    if (car.customer_id && cust.id === car.customer_id) return true;
+                    if (cleanEmail && cust.email && cust.email.trim().toLowerCase() === cleanEmail) return true;
+                    if (cleanPhone && cust.phone && cust.phone.trim().replace(/\s+/g, '') === cleanPhone) return true;
+                    if (cleanName && cust.full_name && cust.full_name.trim().toLowerCase() === cleanName.toLowerCase()) return true;
+                    return false;
+                });
+
+                if (!found) {
+                    const vName = `${car.year || ''} ${car.make || ''} ${car.model || ''}${car.registration ? ` [${car.registration}]` : ''}`.trim();
+                    const newCust = {
+                        id: car.customer_id || generateId(),
+                        full_name: cleanName,
+                        phone: (cd.phone || '').trim(),
+                        email: (cd.email || '').trim(),
+                        address: (cd.address || '').trim(),
+                        vehicle_id: car.id,
+                        vehicle_name: vName,
+                        sale_price: car.price || null,
+                        sale_date: new Date().toISOString(),
+                        lead_source: car.lead_source || car.leadSource || 'Forecourt Sale',
+                        notes: `Purchased ${vName}`,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    };
+                    customers.unshift(newCust);
+                    syncNeon('/customers', 'POST', newCust);
+                    updatedAny = true;
+                }
+            }
+        }
+
+        if (updatedAny) {
+            saveData(CUSTOMERS_KEY, customers);
+        }
+    } catch (e) {
+        console.error('Error syncing customers from sales and invoices:', e);
+    }
+}
+
+export function recordCustomerFromSale(data) {
+    if (!data || !data.full_name || !data.full_name.trim()) return null;
+    const customers = initData(CUSTOMERS_KEY, []);
+    const cleanName = data.full_name.trim();
+    const cleanEmail = (data.email || '').trim().toLowerCase();
+    const cleanPhone = (data.phone || '').trim().replace(/\s+/g, '');
+    const nowStr = new Date().toISOString();
+
+    const existingIdx = customers.findIndex(c => {
+        if (data.id && c.id === data.id) return true;
+        if (cleanEmail && c.email && c.email.trim().toLowerCase() === cleanEmail) return true;
+        if (cleanPhone && c.phone && c.phone.trim().replace(/\s+/g, '') === cleanPhone) return true;
+        if (cleanName && c.full_name && c.full_name.trim().toLowerCase() === cleanName.toLowerCase()) return true;
+        return false;
+    });
+
+    if (existingIdx !== -1) {
+        const existing = customers[existingIdx];
+        const updated = {
+            ...existing,
+            full_name: cleanName,
+            phone: data.phone?.trim() || existing.phone,
+            email: data.email?.trim() || existing.email,
+            address: data.address?.trim() || existing.address,
+            vehicle_id: data.vehicle_id || existing.vehicle_id,
+            vehicle_name: data.vehicle_name || existing.vehicle_name,
+            sale_price: (data.sale_price !== undefined && data.sale_price !== null) ? data.sale_price : existing.sale_price,
+            sale_date: data.sale_date || existing.sale_date || nowStr,
+            lead_source: data.lead_source || existing.lead_source,
+            invoice_number: data.invoice_number || existing.invoice_number,
+            notes: data.notes ? (existing.notes && !existing.notes.includes(data.notes) ? `${existing.notes}\n${data.notes}` : data.notes) : existing.notes,
+            updated_at: nowStr
+        };
+        customers[existingIdx] = updated;
+        saveData(CUSTOMERS_KEY, customers);
+        syncNeon(`/customers/${updated.id}`, 'PUT', updated);
+        window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: CUSTOMERS_KEY } }));
+        return updated;
+    } else {
+        const newCustomer = {
+            id: data.id || generateId(),
+            full_name: cleanName,
+            phone: (data.phone || '').trim(),
+            email: (data.email || '').trim(),
+            address: (data.address || '').trim(),
+            vehicle_id: data.vehicle_id || null,
+            vehicle_name: data.vehicle_name || null,
+            sale_price: data.sale_price || null,
+            sale_date: data.sale_date || nowStr,
+            lead_source: data.lead_source || null,
+            invoice_number: data.invoice_number || null,
+            notes: data.notes || '',
+            created_at: nowStr,
+            updated_at: nowStr
+        };
+        customers.unshift(newCustomer);
+        saveData(CUSTOMERS_KEY, customers);
+        syncNeon('/customers', 'POST', newCustomer);
+        window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: CUSTOMERS_KEY } }));
+        return newCustomer;
+    }
 }
 
 export function getCustomerById(id) {
@@ -745,6 +1026,7 @@ export function createCustomer(data) {
         sale_price: data.sale_price || data.salePrice || null,
         sale_date: data.sale_date || data.saleDate || nowStr,
         lead_source: data.lead_source || data.leadSource || null,
+        invoice_number: data.invoice_number || data.invoiceNumber || null,
         notes: data.notes || '',
         created_at: nowStr,
         updated_at: nowStr
@@ -752,6 +1034,7 @@ export function createCustomer(data) {
     customers.unshift(newCustomer);
     saveData(CUSTOMERS_KEY, customers);
     syncNeon('/customers', 'POST', newCustomer);
+    window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: CUSTOMERS_KEY } }));
     return newCustomer;
 }
 
@@ -767,11 +1050,13 @@ export function updateCustomer(id, data) {
         phone: data.phone !== undefined ? data.phone : customers[idx].phone,
         email: data.email !== undefined ? data.email : customers[idx].email,
         address: data.address !== undefined ? data.address : customers[idx].address,
+        invoice_number: data.invoice_number !== undefined ? data.invoice_number : customers[idx].invoice_number,
         id,
         updated_at: nowStr
     };
     saveData(CUSTOMERS_KEY, customers);
     syncNeon(`/customers/${id}`, 'PUT', customers[idx]);
+    window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: CUSTOMERS_KEY } }));
     return customers[idx];
 }
 
@@ -779,6 +1064,7 @@ export function deleteCustomer(id) {
     const customers = getCustomers().filter(c => c.id !== id);
     saveData(CUSTOMERS_KEY, customers);
     syncNeon(`/customers/${id}`, 'DELETE');
+    window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: CUSTOMERS_KEY } }));
 }
 
 

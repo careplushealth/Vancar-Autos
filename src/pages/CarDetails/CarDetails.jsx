@@ -25,7 +25,7 @@ export default function CarDetails() {
 
     const galleryImages = useMemo(() => {
         if (!car) return [];
-        return car.images && car.images.length > 0 ? car.images : ['/images/car-sedan.png'];
+        return car.images && car.images.length > 0 ? car.images : [];
     }, [car]);
 
     const handlePrev = () => {
@@ -64,54 +64,82 @@ export default function CarDetails() {
 
                 {/* Interactive Image Gallery */}
                 <div className="car-details__gallery-section">
-                    <div className="car-details__hero">
-                        <img 
-                            src={galleryImages[activeIdx]} 
-                            alt={`${car.title} - View ${activeIdx + 1}`} 
-                            className="car-details__hero-img animate-fade-in car-details__hero-img--zoomable" 
-                            key={activeIdx}
-                            onClick={() => setIsZoomed(true)}
-                        />
-                        
-                        {/* Arrow Navigation (only if multiple images) */}
-                        {galleryImages.length > 1 && (
-                            <>
-                                <button 
-                                    onClick={handlePrev} 
-                                    className="car-details__nav-btn car-details__nav-btn--prev"
-                                    aria-label="Previous image"
-                                >
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <polyline points="15 18 9 12 15 6" />
-                                    </svg>
-                                </button>
-                                <button 
-                                    onClick={handleNext} 
-                                    className="car-details__nav-btn car-details__nav-btn--next"
-                                    aria-label="Next image"
-                                >
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <polyline points="9 18 15 12 9 6" />
-                                    </svg>
-                                </button>
-                            </>
-                        )}
+                    {galleryImages.length > 0 ? (
+                        <div className="car-details__hero">
+                            <img 
+                                src={galleryImages[activeIdx]} 
+                                alt={`${car.title} - View ${activeIdx + 1}`} 
+                                className="car-details__hero-img animate-fade-in car-details__hero-img--zoomable" 
+                                key={activeIdx}
+                                onClick={() => setIsZoomed(true)}
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const ph = e.currentTarget.parentElement?.querySelector('.car-details__no-photo-box');
+                                    if (ph) ph.style.display = 'flex';
+                                }}
+                            />
+                            
+                            <div 
+                                className="car-details__no-photo-box"
+                                style={{ display: 'none', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '380px', background: 'var(--color-bg-tertiary, #f1f5f9)', borderRadius: '16px', color: 'var(--color-text-tertiary, #94a3b8)', gap: '12px', width: '100%' }}
+                            >
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                                <span style={{ fontSize: '13px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vehicle Photos Coming Soon</span>
+                            </div>
 
-                        {/* Click to Zoom Indicator Tag */}
-                        <button 
-                            onClick={() => setIsZoomed(true)} 
-                            className="car-details__zoom-indicator-btn"
-                            aria-label="Zoom image"
-                        >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5">
-                                <circle cx="11" cy="11" r="8" />
-                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                                <line x1="11" y1="8" x2="11" y2="14" />
-                                <line x1="8" y1="11" x2="14" y2="11" />
+                            {/* Arrow Navigation (only if multiple images) */}
+                            {galleryImages.length > 1 && (
+                                <>
+                                    <button 
+                                        onClick={handlePrev} 
+                                        className="car-details__nav-btn car-details__nav-btn--prev"
+                                        aria-label="Previous image"
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="15 18 9 12 15 6" />
+                                        </svg>
+                                    </button>
+                                    <button 
+                                        onClick={handleNext} 
+                                        className="car-details__nav-btn car-details__nav-btn--next"
+                                        aria-label="Next image"
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="9 18 15 12 9 6" />
+                                        </svg>
+                                    </button>
+                                </>
+                            )}
+
+                            {/* Click to Zoom Indicator Tag */}
+                            <button 
+                                onClick={() => setIsZoomed(true)} 
+                                className="car-details__zoom-indicator-btn"
+                                aria-label="Zoom image"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                    <line x1="11" y1="8" x2="11" y2="14" />
+                                    <line x1="8" y1="11" x2="14" y2="11" />
+                                </svg>
+                                <span>Click to Zoom</span>
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="car-details__hero car-details__hero--empty" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '380px', background: 'var(--color-bg-tertiary, #f1f5f9)', borderRadius: '16px', color: 'var(--color-text-tertiary, #94a3b8)', gap: '12px' }}>
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
                             </svg>
-                            <span>Click to Zoom</span>
-                        </button>
-                    </div>
+                            <span style={{ fontSize: '13px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vehicle Photos Coming Soon</span>
+                        </div>
+                    )}
 
                     {/* Thumbnails Strip (only if multiple images) */}
                     {galleryImages.length > 1 && (
@@ -123,7 +151,12 @@ export default function CarDetails() {
                                     className={`car-details__thumb-btn ${index === activeIdx ? 'car-details__thumb-btn--active' : ''}`}
                                     aria-label={`View image ${index + 1}`}
                                 >
-                                    <img src={img} alt="Thumbnail view" className="car-details__thumb-img" />
+                                    <img 
+                                        src={img} 
+                                        alt="Thumbnail view" 
+                                        className="car-details__thumb-img" 
+                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                    />
                                 </button>
                             ))}
                         </div>
@@ -222,8 +255,8 @@ export default function CarDetails() {
                             <h3>Interested?</h3>
                             <p>Get in touch with our team about this vehicle.</p>
                             <div className="car-details__action-buttons">
-                                <Link to="/contact" state={{ carTitle: car.title, carId: car.id, action: 'enquiry' }} className="btn btn--primary" style={{ width: '100%' }}>Enquire Now</Link>
-                                <Link to="/contact" state={{ carTitle: car.title, carId: car.id, action: 'reserve' }} className="btn btn--outline" style={{ width: '100%' }}>Reserve This Car</Link>
+                                <Link to="/contact" state={{ carTitle: car.title, carId: car.id, registration: car.registration, action: 'enquiry' }} className="btn btn--primary" style={{ width: '100%' }}>Enquire Now</Link>
+                                <Link to="/contact" state={{ carTitle: car.title, carId: car.id, registration: car.registration, action: 'reserve' }} className="btn btn--outline" style={{ width: '100%' }}>Reserve This Car</Link>
                                 <a href="tel:07707700070" className="btn btn--secondary" style={{ width: '100%' }}>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                                     Call Us
@@ -306,6 +339,7 @@ export default function CarDetails() {
                             alt={`${car.title} - Zoomed View ${activeIdx + 1}`} 
                             className="car-details__lightbox-img animate-scale-up" 
                             key={activeIdx}
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         />
                         
                         {/* Lightbox caption */}

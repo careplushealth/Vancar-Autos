@@ -146,6 +146,21 @@ export default function Enquiries() {
                                                 {item.type === 'vehicle_inquiry' && '🚗 Stock Inquiry'}
                                                 {item.type === 'sell_valuation' && '💰 Valuation'}
                                             </span>
+                                            {item.vehicle_details?.registration && (
+                                                <span style={{
+                                                    background: '#fef08a',
+                                                    color: '#854d0e',
+                                                    border: '1px solid #facc15',
+                                                    padding: '1px 6px',
+                                                    borderRadius: '4px',
+                                                    fontSize: '10px',
+                                                    fontWeight: 'bold',
+                                                    fontFamily: 'monospace',
+                                                    letterSpacing: '0.05em'
+                                                }}>
+                                                    {item.vehicle_details.registration}
+                                                </span>
+                                            )}
                                             <span className="admin-enquiries__item-date">
                                                 {new Date(item.created_at).toLocaleDateString('en-GB', {
                                                     day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
@@ -225,6 +240,21 @@ export default function Enquiries() {
                                             <h3>Vehicle Details</h3>
                                             {selectedEnquiry.type === 'vehicle_inquiry' ? (
                                                 <div className="admin-enquiries__vehicle-card">
+                                                    {selectedEnquiry.vehicle_details.registration && (
+                                                        <div className="admin-enquiries__vehicle-row">
+                                                            <strong>Registration:</strong> <span style={{
+                                                                background: '#fef08a',
+                                                                color: '#854d0e',
+                                                                border: '1px solid #facc15',
+                                                                padding: '2px 8px',
+                                                                borderRadius: '4px',
+                                                                fontSize: '12px',
+                                                                fontWeight: 'bold',
+                                                                fontFamily: 'monospace',
+                                                                letterSpacing: '0.05em'
+                                                            }}>{selectedEnquiry.vehicle_details.registration}</span>
+                                                        </div>
+                                                    )}
                                                     <div className="admin-enquiries__vehicle-row">
                                                         <strong>Vehicle Model:</strong> <span>{selectedEnquiry.vehicle_details.title}</span>
                                                     </div>

@@ -1,6 +1,7 @@
 [
     {
         "id": "car-001",
+        "registration": "LO23 HSE",
         "title": "2023 Range Rover Sport HSE",
         "make": "Land Rover",
         "model": "Range Rover Sport",
@@ -34,6 +35,7 @@
     },
     {
         "id": "car-002",
+        "registration": "BD72 AMX",
         "title": "2022 Mercedes-Benz S-Class S500",
         "make": "Mercedes-Benz",
         "model": "S-Class",
@@ -66,6 +68,7 @@
     },
     {
         "id": "car-003",
+        "registration": "WP71 VXY",
         "title": "2024 BMW X5 xDrive40d M Sport",
         "make": "BMW",
         "model": "X5",
@@ -98,6 +101,7 @@
     },
     {
         "id": "car-004",
+        "registration": "RX23 POR",
         "title": "2023 Porsche 911 Carrera S",
         "make": "Porsche",
         "model": "911",
@@ -130,6 +134,7 @@
     },
     {
         "id": "car-005",
+        "registration": "EF72 AUD",
         "title": "2023 Volkswagen Golf R",
         "make": "Volkswagen",
         "model": "Golf",
@@ -161,6 +166,7 @@
     },
     {
         "id": "car-006",
+        "registration": "YG20 BEN",
         "title": "2022 Mercedes-Benz E-Class Estate",
         "make": "Mercedes-Benz",
         "model": "E-Class Estate",
@@ -193,6 +199,7 @@
     },
     {
         "id": "car-007",
+        "registration": "LM23 AST",
         "title": "2024 Audi Q7 S Line",
         "make": "Audi",
         "model": "Q7",
@@ -225,6 +232,7 @@
     },
     {
         "id": "car-008",
+        "registration": "FD73 FST",
         "title": "2023 Ford Focus ST",
         "make": "Ford",
         "model": "Focus",
@@ -256,6 +264,7 @@
     },
     {
         "id": "car-009",
+        "registration": "EV21 TSL",
         "title": "2021 Tesla Model 3 Long Range",
         "make": "Tesla",
         "model": "Model 3",
@@ -287,6 +296,7 @@
     },
     {
         "id": "car-010",
+        "registration": "RS73 AUD",
         "title": "2023 Audi RS6 Avant",
         "make": "Audi",
         "model": "RS6 Avant",
@@ -318,6 +328,7 @@
     },
     {
         "id": "car-011",
+        "registration": "VW22 VAN",
         "title": "2022 Volkswagen Transporter T6.1",
         "make": "Volkswagen",
         "model": "Transporter",
@@ -350,6 +361,7 @@
     },
     {
         "id": "car-012",
+        "registration": "JG24 TYP",
         "title": "2024 Jaguar F-Type R75 Coupe",
         "make": "Jaguar",
         "model": "F-Type",

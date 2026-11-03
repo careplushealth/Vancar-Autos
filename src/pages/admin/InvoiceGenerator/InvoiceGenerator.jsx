@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { getCars, getInvoices, createInvoice, updateInvoice, deleteInvoice } from '../../../services/dataService';
 import './InvoiceGenerator.css';
 
@@ -71,6 +71,13 @@ export default function InvoiceGenerator() {
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'form'
     const [selectedCarId, setSelectedCarId] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
+    const [filterMake, setFilterMake] = useState('All');
+    const [filterModel, setFilterModel] = useState('All');
+    const [filterPaymentStatus, setFilterPaymentStatus] = useState('All');
+    const [filterDatePreset, setFilterDatePreset] = useState('all');
+    const [authorisedSignature, setAuthorisedSignature] = useState(() => {
+        return localStorage.getItem('vancar_default_signature') || 'Abbas VanCar';
+    });
     const [currentInvoiceId, setCurrentInvoiceId] = useState(null);
     const containerRef = useRef(null);
     const [zoomPercent, setZoomPercent] = useState(65);
@@ -205,7 +212,7 @@ export default function InvoiceGenerator() {
         const car = carsList.find(c => c.id === carId);
         if (car) {
             setVehicleDetails({
-                registration: car.registration || '',
+                registration: (car.registration || '').toUpperCase(),
                 make: car.make || '',
                 model: car.model || '',
                 trim: car.trim || '',
@@ -281,6 +288,9 @@ export default function InvoiceGenerator() {
             termsOfSale: 'Please make payment by the due date shown on this invoice. Title to the vehicle remains with Vancar Autos until funds are cleared in full.'
         });
 
+        // Set default signature
+        setAuthorisedSignature(localStorage.getItem('vancar_default_signature') || 'Abbas VanCar');
+
         setViewMode('form');
     };
 
@@ -302,6 +312,7 @@ export default function InvoiceGenerator() {
             balanceDue: invoice.sale_details.balanceDue
         });
         setNotes(parseInvoiceNotes(invoice.notes));
+        setAuthorisedSignature(invoice.authorised_signature || invoice.notes?.authorisedSignature || localStorage.getItem('vancar_default_signature') || 'Abbas VanCar');
         setViewMode('form');
     };
 
@@ -323,6 +334,7 @@ export default function InvoiceGenerator() {
             balanceDue: invoice.sale_details.balanceDue
         });
         setNotes(parseInvoiceNotes(invoice.notes));
+        setAuthorisedSignature(invoice.authorised_signature || invoice.notes?.authorisedSignature || localStorage.getItem('vancar_default_signature') || 'Abbas VanCar');
         setViewMode('form');
     };
 
@@ -361,8 +373,10 @@ export default function InvoiceGenerator() {
                 financeAmount: saleDetails.financeAmount,
                 balanceDue: saleDetails.balanceDue
             },
-            notes: notes
+            notes: notes,
+            authorised_signature: authorisedSignature
         };
+        localStorage.setItem('vancar_default_signature', authorisedSignature);
 
         if (currentInvoiceId) {
             updateInvoice(currentInvoiceId, invoiceData);
@@ -398,7 +412,8 @@ export default function InvoiceGenerator() {
                 financeAmount: saleDetails.financeAmount,
                 balanceDue: saleDetails.balanceDue
             },
-            notes: notes
+            notes: notes,
+            authorised_signature: authorisedSignature
         };
 
         const tempDiv = document.createElement('div');
@@ -412,6 +427,7 @@ export default function InvoiceGenerator() {
         const customer = invoiceData.customer_details;
         const sale = invoiceData.sale_details;
         const invNotes = parseInvoiceNotes(invoiceData.notes);
+        const invSignature = invoiceData.authorised_signature || authorisedSignature || '';
 
         const subtotalFormatted = (parseFloat(sale.cashPrice) || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const deliveryFeeFormatted = (parseFloat(sale.deliveryFee) || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -566,11 +582,13 @@ export default function InvoiceGenerator() {
 
                 <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 9.5px;">
                     <div style="width: 45%;">
-                        <div style="height: 22px; border-bottom: 1px solid #94a3b8; margin-bottom: 3px;"></div>
+                        <div style="height: 24px; border-bottom: 1px solid #94a3b8; margin-bottom: 3px; font-family: 'Dancing Script', 'Great Vibes', 'Brush Script MT', cursive; font-size: 19px; color: #000000; line-height: 22px; padding-left: 4px; font-weight: 700; transform: rotate(-1.5deg);">
+                            ${invSignature || ''}
+                        </div>
                         <strong style="color: #475569;">Authorised Signature (Vancar Autos)</strong>
                     </div>
                     <div style="width: 45%;">
-                        <div style="height: 22px; border-bottom: 1px solid #94a3b8; margin-bottom: 3px;"></div>
+                        <div style="height: 24px; border-bottom: 1px solid #94a3b8; margin-bottom: 3px;"></div>
                         <strong style="color: #475569;">Customer Signature</strong>
                     </div>
                 </div>
@@ -662,17 +680,91 @@ export default function InvoiceGenerator() {
         }
     };
 
-    // Filter invoices list
-    const filteredInvoices = invoicesList.filter(inv => {
-        const query = searchQuery.toLowerCase();
-        const number = inv.invoice_number?.toLowerCase() || '';
-        const name = inv.customer_details?.name?.toLowerCase() || '';
-        const reg = inv.vehicle_details?.registration?.toLowerCase() || '';
-        const make = inv.vehicle_details?.make?.toLowerCase() || '';
-        const model = inv.vehicle_details?.model?.toLowerCase() || '';
+    // Unique makes and models for invoice filters
+    const invoiceMakes = useMemo(() => {
+        const set = new Set();
+        invoicesList.forEach(inv => {
+            const m = inv.vehicle_details?.make?.trim();
+            if (m) set.add(m);
+        });
+        return Array.from(set).sort();
+    }, [invoicesList]);
 
-        return number.includes(query) || name.includes(query) || reg.includes(query) || make.includes(query) || model.includes(query);
-    });
+    const invoiceModels = useMemo(() => {
+        const set = new Set();
+        invoicesList.forEach(inv => {
+            const m = inv.vehicle_details?.make?.trim();
+            const mdl = inv.vehicle_details?.model?.trim();
+            if (filterMake === 'All' || (m && m.toLowerCase() === filterMake.toLowerCase())) {
+                if (mdl) set.add(mdl);
+            }
+        });
+        return Array.from(set).sort();
+    }, [invoicesList, filterMake]);
+
+    const handleMakeFilterChange = (make) => {
+        setFilterMake(make);
+        setFilterModel('All');
+    };
+
+    const handleResetInvoiceFilters = () => {
+        setSearchQuery('');
+        setFilterMake('All');
+        setFilterModel('All');
+        setFilterPaymentStatus('All');
+        setFilterDatePreset('all');
+    };
+
+    // Filter invoices list
+    const filteredInvoices = useMemo(() => {
+        return invoicesList.filter(inv => {
+            const q = searchQuery.toLowerCase().trim();
+            if (q) {
+                const number = inv.invoice_number?.toLowerCase() || '';
+                const name = inv.customer_details?.name?.toLowerCase() || '';
+                const email = inv.customer_details?.email?.toLowerCase() || '';
+                const phone = inv.customer_details?.phone?.toLowerCase() || '';
+                const reg = inv.vehicle_details?.registration?.toLowerCase() || '';
+                const make = inv.vehicle_details?.make?.toLowerCase() || '';
+                const model = inv.vehicle_details?.model?.toLowerCase() || '';
+
+                if (!number.includes(q) && !name.includes(q) && !email.includes(q) && !phone.includes(q) && !reg.includes(q) && !make.includes(q) && !model.includes(q)) {
+                    return false;
+                }
+            }
+
+            if (filterMake !== 'All') {
+                const m = inv.vehicle_details?.make || '';
+                if (m.toLowerCase() !== filterMake.toLowerCase()) return false;
+            }
+
+            if (filterModel !== 'All') {
+                const mdl = inv.vehicle_details?.model || '';
+                if (mdl.toLowerCase() !== filterModel.toLowerCase()) return false;
+            }
+
+            if (filterPaymentStatus !== 'All') {
+                const balance = parseFloat(inv.sale_details?.balanceDue) || 0;
+                if (filterPaymentStatus === 'paid' && balance > 0) return false;
+                if (filterPaymentStatus === 'unpaid' && balance <= 0) return false;
+            }
+
+            if (filterDatePreset !== 'all' && inv.invoice_date) {
+                const invDate = new Date(inv.invoice_date);
+                const now = new Date();
+                if (filterDatePreset === '30days') {
+                    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    if (invDate < thirtyDaysAgo) return false;
+                } else if (filterDatePreset === 'thisMonth') {
+                    if (invDate.getMonth() !== now.getMonth() || invDate.getFullYear() !== now.getFullYear()) return false;
+                } else if (filterDatePreset === 'thisYear') {
+                    if (invDate.getFullYear() !== now.getFullYear()) return false;
+                }
+            }
+
+            return true;
+        });
+    }, [invoicesList, searchQuery, filterMake, filterModel, filterPaymentStatus, filterDatePreset]);
 
     const formattedMakeModel = formatMakeModelTitleCase(vehicleDetails.make, vehicleDetails.model);
     const formattedReg = (vehicleDetails.registration || '').toUpperCase();
@@ -695,20 +787,92 @@ export default function InvoiceGenerator() {
             </header>
 
             {viewMode === 'list' ? (
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                    {/* Search & Filters */}
-                    <div className="flex gap-4 mb-6">
-                        <div className="search-box-wrapper flex-1 relative">
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm overflow-hidden max-w-full">
+                    {/* Search & Multi-Filters Bar */}
+                    <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200/80 mb-6 flex flex-col gap-3">
+                        <div className="search-box-wrapper relative">
                             <input 
                                 type="text"
-                                className="form-input py-2.5 pl-10"
-                                placeholder="Search by invoice number, customer name, make, model or registration..."
+                                className="form-input py-2.5 pl-10 bg-white"
+                                placeholder="Search by invoice number, customer name, email, phone, reg, make or model..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
-                            <div className="absolute left-3 top-3.5 text-slate-400">
+                            <div className="absolute left-3 top-3 text-slate-400">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
                             </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-slate-600">Make:</span>
+                                <select 
+                                    className="form-select py-1.5 px-3 text-xs bg-white rounded-lg border-slate-200"
+                                    value={filterMake}
+                                    onChange={(e) => handleMakeFilterChange(e.target.value)}
+                                >
+                                    <option value="All">All Makes</option>
+                                    {invoiceMakes.map(m => (
+                                        <option key={m} value={m}>{m}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-slate-600">Model:</span>
+                                <select 
+                                    className="form-select py-1.5 px-3 text-xs bg-white rounded-lg border-slate-200"
+                                    value={filterModel}
+                                    onChange={(e) => setFilterModel(e.target.value)}
+                                >
+                                    <option value="All">All Models</option>
+                                    {invoiceModels.map(mdl => (
+                                        <option key={mdl} value={mdl}>{mdl}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-slate-600">Payment:</span>
+                                <select 
+                                    className="form-select py-1.5 px-3 text-xs bg-white rounded-lg border-slate-200"
+                                    value={filterPaymentStatus}
+                                    onChange={(e) => setFilterPaymentStatus(e.target.value)}
+                                >
+                                    <option value="All">All Payment Statuses</option>
+                                    <option value="paid">Paid (Balance £0.00)</option>
+                                    <option value="unpaid">Balance Due (&gt; £0)</option>
+                                </select>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-slate-600">Date:</span>
+                                <select 
+                                    className="form-select py-1.5 px-3 text-xs bg-white rounded-lg border-slate-200"
+                                    value={filterDatePreset}
+                                    onChange={(e) => setFilterDatePreset(e.target.value)}
+                                >
+                                    <option value="all">All Time</option>
+                                    <option value="thisMonth">This Month</option>
+                                    <option value="30days">Last 30 Days</option>
+                                    <option value="thisYear">This Year</option>
+                                </select>
+                            </div>
+
+                            {(searchQuery || filterMake !== 'All' || filterModel !== 'All' || filterPaymentStatus !== 'All' || filterDatePreset !== 'all') && (
+                                <button
+                                    onClick={handleResetInvoiceFilters}
+                                    className="btn btn--sm btn--outline text-xs py-1.5 px-3 ml-auto text-slate-600 hover:text-slate-900 border-slate-300"
+                                >
+                                    Reset Filters
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="text-xs text-slate-500 pt-1 flex justify-between items-center">
+                            <span>
+                                Showing <strong>{filteredInvoices.length}</strong> of <strong>{invoicesList.length}</strong> invoices
+                            </span>
                         </div>
                     </div>
 
@@ -781,16 +945,19 @@ export default function InvoiceGenerator() {
                             <h3 className="font-bold text-slate-800 text-sm">Invoice Editor</h3>
                             <div className="flex gap-2">
                                 <select 
-                                    className="form-select py-1.5 px-3 text-xs w-auto bg-slate-50"
+                                    className="form-select py-1.5 px-3 text-xs w-auto bg-slate-50 font-medium"
                                     value={selectedCarId}
                                     onChange={handleCarPrefillChange}
                                 >
                                     <option value="">Pre-fill from inventory stock...</option>
-                                    {carsList.filter(c => c.status === 'available').map(car => (
-                                        <option key={car.id} value={car.id}>
-                                            {car.year} {car.make} {car.model} ({car.registration || 'No Reg'}) - £{car.price?.toLocaleString()}
-                                        </option>
-                                    ))}
+                                    {carsList.filter(c => c.status === 'available').map(car => {
+                                        const reg = (car.registration || '').toUpperCase();
+                                        return (
+                                            <option key={car.id} value={car.id}>
+                                                {reg ? `[${reg}] ` : ''}{car.year} {car.make} {car.model} — £{car.price?.toLocaleString()}
+                                            </option>
+                                        );
+                                    })}
                                 </select>
                             </div>
                         </div>
@@ -1139,6 +1306,36 @@ export default function InvoiceGenerator() {
                                         onChange={(e) => setNotes(prev => ({ ...prev, termsOfSale: e.target.value }))}
                                     />
                                 </div>
+
+                                <div className="form-group mt-4 pt-3 border-t border-slate-100">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="form-label font-semibold text-slate-800 mb-0">
+                                            Authorised Signature (VanCar Autos)
+                                        </label>
+                                        <span className="text-xs text-slate-500">Appears on signature line in cursive font</span>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                                        <div className="flex-1 w-full">
+                                            <input 
+                                                type="text" 
+                                                placeholder="Enter signatory name (e.g. Abbas Ali)" 
+                                                className="form-input" 
+                                                value={authorisedSignature} 
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setAuthorisedSignature(val);
+                                                    localStorage.setItem('vancar_default_signature', val);
+                                                }} 
+                                            />
+                                        </div>
+                                        <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 min-w-[170px] text-center">
+                                            <span className="text-[10px] text-slate-400 block uppercase tracking-wider">Font Preview</span>
+                                            <span className="sig-font-text text-xl text-black block truncate">
+                                                {authorisedSignature || 'VanCar Autos'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -1329,7 +1526,11 @@ export default function InvoiceGenerator() {
 
                                 <div className="invoice-pdf-signatures">
                                     <div className="sig-block">
-                                        <div className="sig-line"></div>
+                                        <div className="sig-line">
+                                            {authorisedSignature && (
+                                                <span className="sig-font-text">{authorisedSignature}</span>
+                                            )}
+                                        </div>
                                         <strong>Authorised Signature (Vancar Autos)</strong>
                                     </div>
                                     <div className="sig-block">

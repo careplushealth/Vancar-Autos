@@ -119,9 +119,11 @@ const initDB = async () => {
 
         // Migration query to add registration, vat_scheme & purchase_attribution columns if table exists
         await db.query(`
+            ALTER TABLE cars ADD COLUMN IF NOT EXISTS registration VARCHAR(50);
             ALTER TABLE vehicle_expenses ADD COLUMN IF NOT EXISTS registration VARCHAR(50);
             ALTER TABLE vehicle_expenses ADD COLUMN IF NOT EXISTS vat_scheme VARCHAR(50) DEFAULT 'VAT Margin';
             ALTER TABLE vehicle_expenses ADD COLUMN IF NOT EXISTS purchase_attribution VARCHAR(100);
+            ALTER TABLE customers ADD COLUMN IF NOT EXISTS invoice_number VARCHAR(100);
         `);
 
         // Create contact submissions table
@@ -248,12 +250,13 @@ app.post('/api/cars', async (req, res) => {
     }
 
     try {
+        const registration = car.registration ? car.registration.trim().toUpperCase() : null;
         const customerId = car.customer_id || car.customerId || null;
         const customerDetails = car.customer_details || car.customerDetails ? JSON.stringify(car.customer_details || car.customerDetails) : null;
         const result = await db.query(
-            `INSERT INTO cars (id, title, make, model, trim, year, price, mileage, fuel, transmission, "bodyType", colour, engine, doors, seats, description, features, images, status, featured, lead_source, autotrader_days_advertised, purchase_attribution, customer_id, customer_details)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25) RETURNING *`,
-            [car.id, car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, leadSource, autotraderDays, purchaseAttribution, customerId, customerDetails]
+            `INSERT INTO cars (id, title, make, model, trim, year, price, mileage, fuel, transmission, "bodyType", colour, engine, doors, seats, description, features, images, status, featured, lead_source, autotrader_days_advertised, purchase_attribution, customer_id, customer_details, registration)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26) RETURNING *`,
+            [car.id, car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, leadSource, autotraderDays, purchaseAttribution, customerId, customerDetails, registration]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -282,10 +285,11 @@ app.put('/api/cars/:id', async (req, res) => {
     }
 
     try {
+        const registration = car.registration ? car.registration.trim().toUpperCase() : null;
         const result = await db.query(
-            `UPDATE cars SET title=$1, make=$2, model=$3, trim=$4, year=$5, price=$6, mileage=$7, fuel=$8, transmission=$9, "bodyType"=$10, colour=$11, engine=$12, doors=$13, seats=$14, description=$15, features=$16, images=$17, status=$18, featured=$19, lead_source=$20, autotrader_days_advertised=$21, purchase_attribution=$22, customer_id=$23, customer_details=$24
-             WHERE id=$25 RETURNING *`,
-            [car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, leadSource, autotraderDays, purchaseAttribution, customerId, customerDetails, id]
+            `UPDATE cars SET title=$1, make=$2, model=$3, trim=$4, year=$5, price=$6, mileage=$7, fuel=$8, transmission=$9, "bodyType"=$10, colour=$11, engine=$12, doors=$13, seats=$14, description=$15, features=$16, images=$17, status=$18, featured=$19, lead_source=$20, autotrader_days_advertised=$21, purchase_attribution=$22, customer_id=$23, customer_details=$24, registration=$25
+             WHERE id=$26 RETURNING *`,
+            [car.title, car.make, car.model, car.trim, car.year, car.price, car.mileage, car.fuel, car.transmission, car.bodyType, car.colour, car.engine, car.doors, car.seats, car.description, JSON.stringify(car.features), JSON.stringify(car.images), car.status, car.featured, leadSource, autotraderDays, purchaseAttribution, customerId, customerDetails, registration, id]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -320,8 +324,8 @@ app.post('/api/customers', async (req, res) => {
     const cust = req.body;
     try {
         const result = await db.query(
-            `INSERT INTO customers (id, full_name, phone, email, address, vehicle_id, vehicle_name, sale_price, sale_date, lead_source, notes, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()) RETURNING *`,
+            `INSERT INTO customers (id, full_name, phone, email, address, vehicle_id, vehicle_name, sale_price, sale_date, lead_source, notes, invoice_number, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()) RETURNING *`,
             [
                 cust.id,
                 cust.full_name || cust.fullName,
@@ -333,7 +337,8 @@ app.post('/api/customers', async (req, res) => {
                 cust.sale_price || cust.salePrice || null,
                 cust.sale_date || cust.saleDate || new Date().toISOString(),
                 cust.lead_source || cust.leadSource || null,
-                cust.notes || null
+                cust.notes || null,
+                cust.invoice_number || cust.invoiceNumber || null
             ]
         );
         res.json(result.rows[0]);
@@ -349,8 +354,8 @@ app.put('/api/customers/:id', async (req, res) => {
     try {
         const result = await db.query(
             `UPDATE customers 
-             SET full_name=$1, phone=$2, email=$3, address=$4, vehicle_id=$5, vehicle_name=$6, sale_price=$7, sale_date=$8, lead_source=$9, notes=$10, updated_at=NOW()
-             WHERE id=$11 RETURNING *`,
+             SET full_name=$1, phone=$2, email=$3, address=$4, vehicle_id=$5, vehicle_name=$6, sale_price=$7, sale_date=$8, lead_source=$9, notes=$10, invoice_number=$11, updated_at=NOW()
+             WHERE id=$12 RETURNING *`,
             [
                 cust.full_name || cust.fullName,
                 cust.phone || null,
@@ -362,6 +367,7 @@ app.put('/api/customers/:id', async (req, res) => {
                 cust.sale_date || cust.saleDate || new Date().toISOString(),
                 cust.lead_source || cust.leadSource || null,
                 cust.notes || null,
+                cust.invoice_number || cust.invoiceNumber || null,
                 id
             ]
         );
@@ -1252,13 +1258,19 @@ app.post('/api/autotrader/sync-stock', async (req, res) => {
             }
             const features = JSON.stringify(featuresArr);
             
+            const registration = (item.vehicle?.registration || item.vehicle?.vrm || '').toUpperCase().trim();
+
             let imagesArr = [];
-            const rawImages = item.media?.images || item.vehicle?.images || item.images || [];
+            const rawImages = item.media?.images || item.adverts?.retailAdverts?.media?.images || item.vehicle?.media?.images || item.vehicle?.images || item.images || [];
             if (Array.isArray(rawImages)) {
                 imagesArr = rawImages.map(img => {
                     if (typeof img === 'string') return img;
-                    const href = img?.href || img?.url || '';
-                    return href.replace('{resize}', 'w800');
+                    const href = img?.href || img?.url || img?.uri || img?.src || '';
+                    if (!href) return '';
+                    if (href.includes('{resize}')) {
+                        return href.replace('{resize}', 'w1024');
+                    }
+                    return href;
                 }).filter(Boolean);
             }
             const images = JSON.stringify(imagesArr);
@@ -1278,14 +1290,14 @@ app.post('/api/autotrader/sync-stock', async (req, res) => {
                     finalStatus = existingStatus;
                 }
                 await db.query(
-                    `UPDATE cars SET title=$1, make=$2, model=$3, trim=$4, year=$5, price=$6, mileage=$7, fuel=$8, transmission=$9, "bodyType"=$10, colour=$11, engine=$12, doors=$13, seats=$14, description=$15, features=$16, images=$17, status=$18, featured=$19 WHERE id=$20`,
-                    [title, make, model, trim, year, price, mileage, fuel, transmission, bodyType, colour, engine, doors, seats, description, features, images, finalStatus, featured, dbId]
+                    `UPDATE cars SET title=$1, make=$2, model=$3, trim=$4, year=$5, price=$6, mileage=$7, fuel=$8, transmission=$9, "bodyType"=$10, colour=$11, engine=$12, doors=$13, seats=$14, description=$15, features=$16, images=$17, status=$18, featured=$19, registration=COALESCE(NULLIF($20, ''), registration) WHERE id=$21`,
+                    [title, make, model, trim, year, price, mileage, fuel, transmission, bodyType, colour, engine, doors, seats, description, features, images, finalStatus, featured, registration, dbId]
                 );
             } else {
                 await db.query(
-                    `INSERT INTO cars (id, title, make, model, trim, year, price, mileage, fuel, transmission, "bodyType", colour, engine, doors, seats, description, features, images, status, featured)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
-                    [dbId, title, make, model, trim, year, price, mileage, fuel, transmission, bodyType, colour, engine, doors, seats, description, features, images, finalStatus, featured]
+                    `INSERT INTO cars (id, title, make, model, trim, year, price, mileage, fuel, transmission, "bodyType", colour, engine, doors, seats, description, features, images, status, featured, registration)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
+                    [dbId, title, make, model, trim, year, price, mileage, fuel, transmission, bodyType, colour, engine, doors, seats, description, features, images, finalStatus, featured, registration]
                 );
             }
             syncedCount++;

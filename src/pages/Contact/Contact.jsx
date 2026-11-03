@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { submitInquiry } from '../../services/dataService';
+import { submitInquiry, getCarById } from '../../services/dataService';
 import './Contact.css';
 
 export default function Contact() {
@@ -10,14 +10,19 @@ export default function Contact() {
     const [submitted, setSubmitted] = useState(false);
     const [error, setError] = useState(null);
 
+    const vehicleState = location.state || {};
+    const targetCar = vehicleState.carId ? getCarById(vehicleState.carId) : null;
+    const vehicleReg = (vehicleState.registration || targetCar?.registration || '').toUpperCase();
+
     useEffect(() => {
         if (location.state) {
             const { carTitle, carId, action } = location.state;
             if (carTitle) {
-                const subject = action === 'reserve' ? 'Purchase Enquiry' : 'General Enquiry';
+                const regBadge = vehicleReg ? ` [${vehicleReg}]` : '';
+                const subject = action === 'reserve' ? `Purchase Enquiry: ${carTitle}${regBadge}` : `General Enquiry: ${carTitle}${regBadge}`;
                 const message = action === 'reserve'
-                    ? `I would like to reserve the vehicle: ${carTitle} (ID: ${carId}). Please let me know the next steps.`
-                    : `I am interested in inquiring about the vehicle: ${carTitle} (ID: ${carId}). Please provide more details.`;
+                    ? `I would like to reserve the vehicle: ${carTitle}${vehicleReg ? ` (Registration: ${vehicleReg})` : ''} (ID: ${carId || 'N/A'}). Please let me know the next steps.`
+                    : `I am interested in inquiring about the vehicle: ${carTitle}${vehicleReg ? ` (Registration: ${vehicleReg})` : ''} (ID: ${carId || 'N/A'}). Please provide more details.`;
                 setForm(prev => ({
                     ...prev,
                     subject,
@@ -25,20 +30,33 @@ export default function Contact() {
                 }));
             }
         }
-    }, [location.state]);
+    }, [location.state, vehicleReg]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        const isVehicleInquiry = Boolean(vehicleState.carId || vehicleState.carTitle);
         try {
             await submitInquiry({
-                type: 'contact',
+                type: isVehicleInquiry ? 'vehicle_inquiry' : 'contact',
                 name: form.name,
                 email: form.email,
                 phone: form.phone,
                 subject: form.subject || 'General Enquiry',
-                message: form.message
+                message: form.message,
+                ...(isVehicleInquiry ? {
+                    vehicle_details: {
+                        id: vehicleState.carId || targetCar?.id || 'N/A',
+                        title: vehicleState.carTitle || targetCar?.title || form.subject,
+                        registration: vehicleReg,
+                        price: targetCar?.price,
+                        mileage: targetCar?.mileage,
+                        year: targetCar?.year,
+                        make: targetCar?.make,
+                        model: targetCar?.model
+                    }
+                } : {})
             });
             setSubmitted(true);
         } catch (err) {
@@ -67,7 +85,42 @@ export default function Contact() {
                                 <p>We'll get back to you within 24 hours.</p>
                             </div>
                         ) : (
-                            <form className="contact__form" onSubmit={handleSubmit}>
+                            <>
+                                {vehicleState.carTitle && (
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        flexWrap: 'wrap',
+                                        gap: '8px',
+                                        padding: '10px 14px',
+                                        marginBottom: '1rem',
+                                        borderRadius: '8px',
+                                        background: 'var(--color-bg-secondary, #f8fafc)',
+                                        border: '1px solid var(--color-border, #e2e8f0)'
+                                    }}>
+                                        <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--color-text-primary)' }}>
+                                            🚗 Enquiring about: <strong>{vehicleState.carTitle}</strong>
+                                        </span>
+                                        {vehicleReg && (
+                                            <span style={{
+                                                display: 'inline-block',
+                                                background: '#fef08a',
+                                                color: '#854d0e',
+                                                border: '1px solid #facc15',
+                                                padding: '2px 8px',
+                                                borderRadius: '4px',
+                                                fontSize: '11px',
+                                                fontWeight: 'bold',
+                                                fontFamily: 'monospace',
+                                                letterSpacing: '0.05em'
+                                            }}>
+                                                {vehicleReg}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                                <form className="contact__form" onSubmit={handleSubmit}>
                                 <div className="contact__form-row">
                                     <div className="form-group">
                                         <label className="form-label">Name</label>
@@ -108,6 +161,7 @@ export default function Contact() {
                                     {loading ? 'Sending...' : 'Send Message'}
                                 </button>
                             </form>
+                            </>
                         )}
                     </div>
 

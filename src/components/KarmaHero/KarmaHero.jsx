@@ -124,6 +124,7 @@ export default function KarmaHero() {
                       className="karma-hero__car-img animate-fade-in"
                       loading="eager"
                       decoding="async"
+                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/hero-car.png'; }}
                     />
 
                     {/* Stock Status Badge */}

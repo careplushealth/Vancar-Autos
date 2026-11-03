@@ -16,7 +16,7 @@ const LEAD_SOURCES = [
 ];
 
 const INITIAL_FORM = {
-    title: '', make: '', model: '', trim: '', year: new Date().getFullYear(),
+    registration: '', title: '', make: '', model: '', trim: '', year: new Date().getFullYear(),
     price: '', mileage: '', fuel: 'Petrol', transmission: 'Automatic',
     bodyType: 'SUV', colour: '', engine: '', doors: 5, seats: 5,
     description: '', features: [], images: [], status: 'available', featured: false,
@@ -135,6 +135,16 @@ export default function CarEditor() {
                 <div className="car-editor__section">
                     <h2>Basic Information</h2>
                     <div className="form-row">
+                        <div className="form-group">
+                            <label className="form-label">Registration Plate (VRM)</label>
+                            <input 
+                                name="registration" 
+                                className="form-input font-mono uppercase" 
+                                placeholder="e.g. AB12 CDE" 
+                                value={form.registration || ''} 
+                                onChange={(e) => setForm(prev => ({ ...prev, registration: e.target.value.toUpperCase() }))} 
+                            />
+                        </div>
                         <div className="form-group">
                             <label className="form-label">Make</label>
                             <input name="make" className="form-input" value={form.make} onChange={handleChange} required />
@@ -308,7 +318,7 @@ export default function CarEditor() {
                         <div className="car-editor__images">
                             {form.images.map((img, i) => (
                                 <div key={i} className="car-editor__image-preview">
-                                    <img src={img} alt="" />
+                                    <img src={img} alt="" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/car-sedan.png'; }} />
                                     <button type="button" onClick={() => removeImage(i)} className="car-editor__remove-image">×</button>
                                 </div>
                             ))}

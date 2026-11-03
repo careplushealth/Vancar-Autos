@@ -14,6 +14,7 @@ const sendInquiryEmail = async (inquiry) => {
     // Flatten vehicle details if present so they show up clearly in the Formspree email
     if (inquiry.type === 'vehicle_inquiry' && inquiry.vehicle_details) {
         const vehicle = inquiry.vehicle_details;
+        payload.vehicle_registration = vehicle.registration || 'N/A';
         payload.vehicle_title = vehicle.title;
         payload.vehicle_price = `£${Number(vehicle.price || 0).toLocaleString('en-GB')}`;
         payload.vehicle_mileage = `${Number(vehicle.mileage || 0).toLocaleString('en-GB')} miles`;

@@ -68,7 +68,17 @@ export default function CompareDrawer() {
                     <div className="flex items-center gap-6 overflow-x-auto py-1 max-w-full">
                         {comparedCars.map(car => (
                             <div key={car.id} className="compare-drawer__thumbnail">
-                                <img src={car.images?.[0] || '/images/car-sedan.png'} alt={car.title} />
+                                {car.images && car.images[0] ? (
+                                    <img 
+                                        src={car.images[0]} 
+                                        alt={car.title} 
+                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                    />
+                                ) : (
+                                    <div style={{ width: '40px', height: '28px', background: '#334155', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '9px' }}>
+                                        CAR
+                                    </div>
+                                )}
                                 <span className="compare-drawer__thumbnail-title">{car.make} {car.model}</span>
                                 <button 
                                     onClick={() => handleRemove(car.id)}
@@ -125,11 +135,18 @@ export default function CompareDrawer() {
                                             {comparedCars.map(car => (
                                                 <th key={car.id} className="compare-modal__th-car">
                                                     <div className="compare-modal__car-card text-left">
-                                                        <img 
-                                                            src={car.images?.[0] || '/images/car-sedan.png'} 
-                                                            alt={car.title} 
-                                                            className="compare-modal__car-img" 
-                                                        />
+                                                        {car.images && car.images[0] ? (
+                                                            <img 
+                                                                src={car.images[0]} 
+                                                                alt={car.title} 
+                                                                className="compare-modal__car-img" 
+                                                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                                            />
+                                                        ) : (
+                                                            <div style={{ height: '120px', background: 'var(--color-bg-tertiary, #f1f5f9)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '11px', textTransform: 'uppercase', marginBottom: '10px' }}>
+                                                                No Photo
+                                                            </div>
+                                                        )}
                                                         <h3 className="compare-modal__car-name">{car.year} {car.make} {car.model}</h3>
                                                         <span className="compare-modal__car-price">{formatPrice(car.price)}</span>
                                                         <div className="mt-4">

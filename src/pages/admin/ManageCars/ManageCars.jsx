@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
     getCars,
     deleteCar,
@@ -31,12 +31,24 @@ export default function ManageCars() {
     const cars = useMemo(() => getCars(), [refresh]);
     const customers = useMemo(() => getCustomers(), [refresh]);
 
+    const [searchParams] = useSearchParams();
+    const initialStatus = searchParams.get('status');
+
     // Filtering state
     const [searchQuery, setSearchQuery] = useState('');
     const [filterMake, setFilterMake] = useState('All');
-    const [filterStatus, setFilterStatus] = useState('All');
+    const [filterModel, setFilterModel] = useState('All');
+    const [filterStatus, setFilterStatus] = useState(initialStatus === 'sold' || initialStatus === 'available' ? initialStatus : 'All');
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
+
+    useEffect(() => {
+        const s = searchParams.get('status');
+        if (s === 'sold' || s === 'available') {
+            setFilterStatus(s);
+        }
+    }, [searchParams]);
+
 
     // Sorting state
     const [sortField, setSortField] = useState('vehicle');
@@ -61,6 +73,22 @@ export default function ManageCars() {
         });
         return Array.from(set).sort();
     }, [cars]);
+
+    // List of unique models for dropdown (filtered by selected make if one is chosen)
+    const availableModels = useMemo(() => {
+        const set = new Set();
+        cars.forEach(c => {
+            if (filterMake === 'All' || c.make === filterMake) {
+                if (c.model) set.add(c.model);
+            }
+        });
+        return Array.from(set).sort();
+    }, [cars, filterMake]);
+
+    const handleMakeFilterChange = (make) => {
+        setFilterMake(make);
+        setFilterModel('All');
+    };
 
     // Handle Header Click Sorting
     const handleSort = (field) => {
@@ -100,6 +128,11 @@ export default function ManageCars() {
 
             // Make filter
             if (filterMake !== 'All' && car.make !== filterMake) {
+                return false;
+            }
+
+            // Model filter
+            if (filterModel !== 'All' && car.model !== filterModel) {
                 return false;
             }
 
@@ -159,11 +192,12 @@ export default function ManageCars() {
         }
 
         return result;
-    }, [cars, searchQuery, filterMake, filterStatus, minPrice, maxPrice, sortField, sortOrder]);
+    }, [cars, searchQuery, filterMake, filterModel, filterStatus, minPrice, maxPrice, sortField, sortOrder]);
 
     const handleResetFilters = () => {
         setSearchQuery('');
         setFilterMake('All');
+        setFilterModel('All');
         setFilterStatus('All');
         setMinPrice('');
         setMaxPrice('');
@@ -362,11 +396,25 @@ export default function ManageCars() {
                     <select
                         className="manage-cars__filter-select"
                         value={filterMake}
-                        onChange={(e) => setFilterMake(e.target.value)}
+                        onChange={(e) => handleMakeFilterChange(e.target.value)}
                     >
                         <option value="All">All Makes</option>
                         {availableMakes.map(m => (
                             <option key={m} value={m}>{m}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="manage-cars__filter-group">
+                    <span className="manage-cars__filter-label">Model:</span>
+                    <select
+                        className="manage-cars__filter-select"
+                        value={filterModel}
+                        onChange={(e) => setFilterModel(e.target.value)}
+                    >
+                        <option value="All">All Models</option>
+                        {availableModels.map(mdl => (
+                            <option key={mdl} value={mdl}>{mdl}</option>
                         ))}
                     </select>
                 </div>
@@ -403,7 +451,7 @@ export default function ManageCars() {
                     />
                 </div>
 
-                {(searchQuery || filterMake !== 'All' || filterStatus !== 'All' || minPrice || maxPrice) && (
+                {(searchQuery || filterMake !== 'All' || filterModel !== 'All' || filterStatus !== 'All' || minPrice || maxPrice) && (
                     <button
                         onClick={handleResetFilters}
                         className="btn btn--sm btn--outline"
@@ -455,12 +503,58 @@ export default function ManageCars() {
                                 return (
                                     <tr key={car.id}>
                                         <td>
-                                            <img src={car.images?.[0] || '/images/car-sedan.png'} alt="" className="manage-cars__thumb" />
+                                            <a 
+                                                href={`/buy/${car.id}`} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="manage-cars__thumb-link"
+                                                title={`View live website advert for ${car.year} ${car.make} ${car.model}`}
+                                            >
+                                                {car.images && car.images[0] ? (
+                                                    <img 
+                                                        src={car.images[0]} 
+                                                        alt="" 
+                                                        className="manage-cars__thumb" 
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                            const noPhoto = e.currentTarget.parentElement?.querySelector('.manage-cars__no-photo');
+                                                            if (noPhoto) noPhoto.style.display = 'flex';
+                                                        }}
+                                                    />
+                                                ) : null}
+                                                <div 
+                                                    className="manage-cars__no-photo"
+                                                    style={{ display: car.images && car.images[0] ? 'none' : 'flex' }}
+                                                >
+                                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                                        <circle cx="8.5" cy="8.5" r="1.5" />
+                                                        <polyline points="21 15 16 10 5 21" />
+                                                    </svg>
+                                                    <span>No Photo</span>
+                                                </div>
+                                            </a>
                                         </td>
                                         <td>
                                             <div className="manage-cars__info">
-                                                <span className="manage-cars__title">{car.year} {car.make} {car.model}</span>
-                                                <span className="manage-cars__subtitle">{car.trim}</span>
+                                                <a 
+                                                    href={`/buy/${car.id}`} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="manage-cars__title--link"
+                                                    title="Open live advert on main site (new tab)"
+                                                >
+                                                    {car.year} {car.make} {car.model}
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: '5px', opacity: 0.6 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                                </a>
+                                                <span className="manage-cars__subtitle">
+                                                    {car.registration ? (
+                                                        <span style={{ display: 'inline-block', background: 'rgba(234, 179, 8, 0.15)', color: '#ca8a04', padding: '1px 5px', borderRadius: '3px', fontWeight: 'bold', fontSize: '10px', marginRight: '6px', fontFamily: 'monospace', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+                                                            {car.registration}
+                                                        </span>
+                                                    ) : null}
+                                                    {car.trim}
+                                                </span>
                                             </div>
                                         </td>
                                         <td>£{car.price.toLocaleString()}</td>

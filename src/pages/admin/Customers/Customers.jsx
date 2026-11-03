@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from '../../../services/dataService';
+import { useState, useMemo, useEffect } from 'react';
+import { getCustomers, createCustomer, updateCustomer, deleteCustomer, syncAdminDataFromServer } from '../../../services/dataService';
 import './Customers.css';
 
 const fmtCurrency = (n) =>
@@ -28,6 +28,17 @@ const getInitials = (name) => {
 export default function Customers() {
     const [refresh, setRefresh] = useState(0);
     const customers = useMemo(() => getCustomers(), [refresh]);
+
+    useEffect(() => {
+        syncAdminDataFromServer().then(() => setRefresh(r => r + 1));
+        const handleUpdate = (e) => {
+            if (!e.detail || e.detail.key === 'vancar_customers' || e.detail.key === 'vancar_invoices' || e.detail.key === 'vancar_cars') {
+                setRefresh(r => r + 1);
+            }
+        };
+        window.addEventListener('vancar_data_updated', handleUpdate);
+        return () => window.removeEventListener('vancar_data_updated', handleUpdate);
+    }, []);
 
     // Filters & Search
     const [searchQuery, setSearchQuery] = useState('');
@@ -64,7 +75,8 @@ export default function Customers() {
                 (c.phone && c.phone.toLowerCase().includes(searchQuery.toLowerCase())) ||
                 (c.email && c.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
                 (c.address && c.address.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                (c.vehicle_name && c.vehicle_name.toLowerCase().includes(searchQuery.toLowerCase()));
+                (c.vehicle_name && c.vehicle_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                (c.invoice_number && c.invoice_number.toLowerCase().includes(searchQuery.toLowerCase()));
 
             const source = c.lead_source || c.leadSource;
             const matchesLead = selectedLeadSource === 'All' || source === selectedLeadSource;
@@ -281,13 +293,29 @@ export default function Customers() {
                                             </span>
                                         </td>
                                         <td>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                                 <span style={{ fontSize: '12px', fontWeight: '500' }}>
                                                     {formatDate(cust.sale_date || cust.created_at)}
                                                 </span>
                                                 {lead && (
                                                     <span className="admin-customers__lead-tag">
                                                         📍 {lead}
+                                                    </span>
+                                                )}
+                                                {cust.invoice_number && (
+                                                    <span style={{
+                                                        display: 'inline-block',
+                                                        background: 'rgba(59, 130, 246, 0.1)',
+                                                        color: '#2563eb',
+                                                        padding: '1px 6px',
+                                                        borderRadius: '4px',
+                                                        fontSize: '11px',
+                                                        fontWeight: 'bold',
+                                                        fontFamily: 'monospace',
+                                                        border: '1px solid rgba(59, 130, 246, 0.25)',
+                                                        width: 'fit-content'
+                                                    }}>
+                                                        🧾 #{cust.invoice_number}
                                                     </span>
                                                 )}
                                             </div>
@@ -382,6 +410,12 @@ export default function Customers() {
                                         <span className="text-xs text-slate-500">Lead Source:</span>
                                         <span className="text-xs font-semibold text-slate-700">{viewingCustomer.lead_source || viewingCustomer.leadSource || 'N/A'}</span>
                                     </div>
+                                    {viewingCustomer.invoice_number && (
+                                        <div className="flex justify-between">
+                                            <span className="text-xs text-slate-500">Invoice Number:</span>
+                                            <span className="text-xs font-mono font-bold text-blue-600">#{viewingCustomer.invoice_number}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

@@ -96,14 +96,15 @@ export default function CarCard({ car }) {
         e.preventDefault();
         setIsSubmitting(true);
         setEnquiryError(null);
+        const reg = (car.registration || '').toUpperCase();
         try {
             await submitInquiry({
                 type: 'vehicle_inquiry',
                 name: enquiry.name,
                 email: enquiry.email,
                 phone: enquiry.phone,
-                subject: `Quick Enquiry: ${car.title}`,
-                message: `Customer enquired about this vehicle via quick view enquiry form.`,
+                subject: `Quick Enquiry: ${car.title}${reg ? ` [${reg}]` : ''}`,
+                message: `Customer enquired about this vehicle via quick view enquiry form.${reg ? ` Registration: ${reg}` : ''}`,
                 vehicle_details: {
                     title: car.title,
                     price: car.price,
@@ -111,6 +112,7 @@ export default function CarCard({ car }) {
                     year: car.year,
                     make: car.make,
                     model: car.model,
+                    registration: reg,
                     id: car.id
                 }
             });
@@ -144,12 +146,30 @@ export default function CarCard({ car }) {
                 <Link to={`/buy/${car.id}`} className="flex flex-col h-full">
                     {/* Image Showcase & Overlays */}
                     <div className="car-card__image-wrap relative w-full pt-[56.25%] overflow-hidden bg-slate-50">
-                        <img
-                            src={car.images?.[0] || '/images/car-sedan.png'}
-                            alt={car.title}
-                            className="car-card__image absolute inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                            loading="lazy"
-                        />
+                        {car.images && car.images[0] ? (
+                            <img
+                                src={car.images[0]}
+                                alt={car.title}
+                                className="car-card__image absolute inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                                loading="lazy"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const placeholder = e.currentTarget.parentElement?.querySelector('.car-card__no-photo');
+                                    if (placeholder) placeholder.style.display = 'flex';
+                                }}
+                            />
+                        ) : null}
+                        <div 
+                            className="car-card__no-photo absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400 gap-1.5 select-none"
+                            style={{ display: car.images && car.images[0] ? 'none' : 'flex' }}
+                        >
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                            <span className="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Photo Coming Soon</span>
+                        </div>
                         
                         {/* Status Badges */}
                         <div className="car-card__badges-container absolute top-3 left-3 flex flex-col gap-1.5 z-10">
@@ -250,16 +270,42 @@ export default function CarCard({ car }) {
                         <div className="quick-view-modal__body">
                             {/* Left: Gallery Showcase */}
                             <div className="quick-view-modal__gallery">
-                                <img 
-                                    src={car.images?.[0] || '/images/car-sedan.png'} 
-                                    alt={car.title} 
-                                    className="quick-view-modal__main-img" 
-                                />
-                                <div className="quick-view-modal__gallery-thumbs">
-                                    {car.images?.slice(0, 3).map((img, index) => (
-                                        <img key={index} src={img} alt={`Thumb ${index + 1}`} className="quick-view-modal__thumb" />
-                                    )) || <img src="/images/car-sedan.png" alt="Thumb" className="quick-view-modal__thumb" />}
+                                {car.images && car.images[0] ? (
+                                    <img 
+                                        src={car.images[0]} 
+                                        alt={car.title} 
+                                        className="quick-view-modal__main-img" 
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                            const ph = e.currentTarget.parentElement?.querySelector('.quick-view-modal__no-photo');
+                                            if (ph) ph.style.display = 'flex';
+                                        }}
+                                    />
+                                ) : null}
+                                <div 
+                                    className="quick-view-modal__no-photo flex flex-col items-center justify-center bg-slate-100 text-slate-400 h-64 rounded-xl gap-2 select-none"
+                                    style={{ display: car.images && car.images[0] ? 'none' : 'flex' }}
+                                >
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                                        <polyline points="21 15 16 10 5 21"/>
+                                    </svg>
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Photo Coming Soon</span>
                                 </div>
+                                {car.images && car.images.length > 1 && (
+                                    <div className="quick-view-modal__gallery-thumbs">
+                                        {car.images.slice(0, 3).map((img, index) => (
+                                            <img 
+                                                key={index} 
+                                                src={img} 
+                                                alt={`Thumb ${index + 1}`} 
+                                                className="quick-view-modal__thumb" 
+                                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Right: Info & Contact Form */}
