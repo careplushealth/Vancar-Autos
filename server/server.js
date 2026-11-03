@@ -4,7 +4,8 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 const db = require('./db');
 const bcrypt = require('bcryptjs');
-const { sendInquiryEmail } = require('./email');
+const { sendInquiryEmail, sendFinanceApplicationEmails } = require('./email');
+const { encrypt, decrypt, maskSortCode, maskAccountNumber } = require('./crypto');
 
 const app = express();
 app.use(cors());
@@ -195,6 +196,41 @@ const initDB = async () => {
                 signature_type VARCHAR(20) DEFAULT 'blank',
                 vehicle_id VARCHAR(50),
                 created_by VARCHAR(100) DEFAULT 'admin',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // Create finance applications table
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS finance_applications (
+                id VARCHAR(50) PRIMARY KEY,
+                reference_number VARCHAR(50) UNIQUE NOT NULL,
+                status VARCHAR(50) DEFAULT 'submitted',
+                borrow_amount NUMERIC NOT NULL,
+                term_years INTEGER NOT NULL,
+                credit_score VARCHAR(50),
+                estimated_monthly NUMERIC NOT NULL,
+                estimated_apr NUMERIC NOT NULL,
+                total_repayable NUMERIC NOT NULL,
+                total_interest NUMERIC NOT NULL,
+                full_name VARCHAR(150) NOT NULL,
+                date_of_birth VARCHAR(50) NOT NULL,
+                marital_status VARCHAR(50),
+                addresses JSONB NOT NULL,
+                employment_status VARCHAR(50),
+                job_title VARCHAR(100) NOT NULL,
+                employer VARCHAR(150) NOT NULL,
+                monthly_income NUMERIC NOT NULL,
+                email VARCHAR(150) NOT NULL,
+                phone VARCHAR(50) NOT NULL,
+                bank_sort_code_encrypted TEXT NOT NULL,
+                bank_account_number_encrypted TEXT NOT NULL,
+                bank_sort_code_masked VARCHAR(20) NOT NULL,
+                bank_account_number_masked VARCHAR(20) NOT NULL,
+                vehicle_id VARCHAR(50),
+                vehicle_details JSONB,
+                consent_given BOOLEAN DEFAULT true,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -576,6 +612,347 @@ app.delete('/api/contact-submissions/:id', async (req, res) => {
         res.json({ message: 'Submission deleted successfully' });
     } catch (err) {
         console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// --- FINANCE APPLICATIONS API ---
+
+// 1. Get Configurable APR Rates
+app.get('/api/finance/rates', (req, res) => {
+    res.json({
+        excellent: parseFloat(process.env.FINANCE_APR_EXCELLENT || '11.9'),
+        good: parseFloat(process.env.FINANCE_APR_GOOD || '12.9'),
+        fair: parseFloat(process.env.FINANCE_APR_FAIR || '13.9'),
+        poor: parseFloat(process.env.FINANCE_APR_POOR || '19.9'),
+        bad: parseFloat(process.env.FINANCE_APR_BAD || '19.9'),
+        representativeApr: parseFloat(process.env.FINANCE_APR_EXCELLENT || '11.9')
+    });
+});
+
+// 2. Submit Finance Application
+app.post('/api/finance/apply', async (req, res) => {
+    try {
+        const {
+            borrow_amount,
+            term_years,
+            credit_score = 'Good',
+            full_name,
+            date_of_birth,
+            marital_status,
+            addresses = [],
+            employment_status,
+            job_title,
+            employer,
+            monthly_income,
+            email,
+            phone,
+            bank_sort_code,
+            bank_account_number,
+            vehicle_id,
+            vehicle_details,
+            consent_given
+        } = req.body;
+
+        // --- Server-side Validations ---
+        if (!full_name || full_name.trim().length < 2) {
+            return res.status(400).json({ error: 'Full name is required (minimum 2 characters).' });
+        }
+
+        // DOB & 18+ Age Validation
+        if (!date_of_birth) {
+            return res.status(400).json({ error: 'Date of birth is required.' });
+        }
+        const birthDate = new Date(date_of_birth);
+        if (isNaN(birthDate.getTime())) {
+            return res.status(400).json({ error: 'Invalid date of birth.' });
+        }
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        if (age < 18) {
+            return res.status(400).json({ error: 'Applicants must be at least 18 years of age to apply for vehicle finance.' });
+        }
+
+        // Email Validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !emailRegex.test(email.trim())) {
+            return res.status(400).json({ error: 'A valid email address is required.' });
+        }
+
+        // UK Phone Validation
+        const cleanedPhone = String(phone || '').replace(/[\s()-]/g, '');
+        if (!cleanedPhone || cleanedPhone.length < 10 || cleanedPhone.length > 14) {
+            return res.status(400).json({ error: 'A valid UK contact telephone number is required.' });
+        }
+
+        // Loan Requirements Validation
+        const borrowNum = Number(borrow_amount);
+        if (isNaN(borrowNum) || borrowNum < 1000 || borrowNum > 150000) {
+            return res.status(400).json({ error: 'Borrow amount must be between £1,000 and £150,000.' });
+        }
+        const termNum = parseInt(term_years, 10);
+        if (isNaN(termNum) || termNum < 1 || termNum > 7) {
+            return res.status(400).json({ error: 'Finance term must be between 1 and 7 years.' });
+        }
+
+        // Employment & Income Validation
+        if (!job_title || job_title.trim().length < 2) {
+            return res.status(400).json({ error: 'Job title is required.' });
+        }
+        if (!employer || employer.trim().length < 2) {
+            return res.status(400).json({ error: 'Employer name is required.' });
+        }
+        const incomeNum = Number(monthly_income);
+        if (isNaN(incomeNum) || incomeNum <= 0) {
+            return res.status(400).json({ error: 'A valid monthly net income is required.' });
+        }
+
+        // Address History Validation (at least 3 years = 36 months)
+        if (!Array.isArray(addresses) || addresses.length === 0) {
+            return res.status(400).json({ error: 'Current address is required.' });
+        }
+        let totalMonths = 0;
+        for (const addr of addresses) {
+            if (!addr.postcode || !addr.doorNumber || !addr.street) {
+                return res.status(400).json({ error: 'Please ensure all address fields (door number, street and postcode) are filled.' });
+            }
+            const y = parseInt(addr.years || 0, 10);
+            const mo = parseInt(addr.months || 0, 10);
+            totalMonths += (y * 12) + mo;
+        }
+        if (totalMonths < 36) {
+            return res.status(400).json({ error: `Three full years of address history are required (Currently provided: ${Math.floor(totalMonths / 12)} years ${totalMonths % 12} months). Please add previous addresses.` });
+        }
+
+        // Bank Details Validation
+        const cleanSortCode = String(bank_sort_code || '').replace(/\D/g, '');
+        if (cleanSortCode.length !== 6) {
+            return res.status(400).json({ error: 'Sort code must be exactly 6 digits.' });
+        }
+        const cleanAccountNumber = String(bank_account_number || '').replace(/\D/g, '');
+        if (cleanAccountNumber.length !== 8) {
+            return res.status(400).json({ error: 'Account number must be exactly 8 digits.' });
+        }
+
+        // Consent Validation
+        if (consent_given !== true && consent_given !== 'true') {
+            return res.status(400).json({ error: 'Explicit consent is required to process your finance application.' });
+        }
+
+        // --- Duplicate Prevention (Within 2 minutes) ---
+        const recentDuplicate = await db.query(
+            `SELECT reference_number, id FROM finance_applications 
+             WHERE email = $1 AND borrow_amount = $2 AND created_at > NOW() - INTERVAL '2 minutes'
+             LIMIT 1`,
+            [email.trim().toLowerCase(), borrowNum]
+        );
+        if (recentDuplicate.rows.length > 0) {
+            return res.json({
+                success: true,
+                referenceNumber: recentDuplicate.rows[0].reference_number,
+                message: 'Your application was already received and is being processed.',
+                isDuplicate: true
+            });
+        }
+
+        // --- Calculate Authoritative Loan Estimates ---
+        const rates = {
+            'Excellent': parseFloat(process.env.FINANCE_APR_EXCELLENT || '11.9'),
+            'Good': parseFloat(process.env.FINANCE_APR_GOOD || '12.9'),
+            'Fair': parseFloat(process.env.FINANCE_APR_FAIR || '13.9'),
+            'Poor': parseFloat(process.env.FINANCE_APR_POOR || '19.9'),
+            'Bad': parseFloat(process.env.FINANCE_APR_BAD || '19.9')
+        };
+        const apr = rates[credit_score] || rates['Good'];
+        const r = (apr / 100) / 12;
+        const n = termNum * 12;
+        const monthly = Math.round(borrowNum * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+        const totalRepayable = monthly * n;
+        const totalInterest = totalRepayable - borrowNum;
+
+        // --- Generate Unique Reference Number ---
+        const randomSuffix = Math.floor(100000 + Math.random() * 900000);
+        const referenceNumber = `VA-FIN-${randomSuffix}`;
+        const appId = 'fin-' + Date.now() + '-' + Math.random().toString(36).substr(2, 7);
+
+        // --- AES-256 Encryption of Bank Details ---
+        const sortCodeEncrypted = encrypt(cleanSortCode);
+        const accountEncrypted = encrypt(cleanAccountNumber);
+        const sortCodeMasked = maskSortCode(cleanSortCode);
+        const accountMasked = maskAccountNumber(cleanAccountNumber);
+
+        // --- Database Insert ---
+        const insertQuery = `
+            INSERT INTO finance_applications (
+                id, reference_number, status, borrow_amount, term_years, credit_score,
+                estimated_monthly, estimated_apr, total_repayable, total_interest,
+                full_name, date_of_birth, marital_status, addresses,
+                employment_status, job_title, employer, monthly_income,
+                email, phone, bank_sort_code_encrypted, bank_account_number_encrypted,
+                bank_sort_code_masked, bank_account_number_masked,
+                vehicle_id, vehicle_details, consent_given, created_at, updated_at
+            ) VALUES (
+                $1, $2, 'submitted', $3, $4, $5,
+                $6, $7, $8, $9,
+                $10, $11, $12, $13,
+                $14, $15, $16, $17,
+                $18, $19, $20, $21,
+                $22, $23,
+                $24, $25, true, NOW(), NOW()
+            ) RETURNING *;
+        `;
+
+        const values = [
+            appId,
+            referenceNumber,
+            borrowNum,
+            termNum,
+            credit_score,
+            monthly,
+            apr,
+            totalRepayable,
+            totalInterest,
+            full_name.trim(),
+            date_of_birth,
+            marital_status || 'Not specified',
+            JSON.stringify(addresses),
+            employment_status || 'Employed',
+            job_title.trim(),
+            employer.trim(),
+            incomeNum,
+            email.trim().toLowerCase(),
+            cleanedPhone,
+            sortCodeEncrypted,
+            accountEncrypted,
+            sortCodeMasked,
+            accountMasked,
+            vehicle_id || null,
+            vehicle_details ? JSON.stringify(vehicle_details) : null
+        ];
+
+        const dbResult = await db.query(insertQuery, values);
+        const savedApplication = dbResult.rows[0];
+
+        // Format application object for email templates
+        const emailPayload = {
+            ...savedApplication,
+            addresses: addresses,
+            borrow_amount: borrowNum,
+            term_years: termNum,
+            estimated_monthly: monthly,
+            estimated_apr: apr,
+            total_repayable: totalRepayable,
+            bank_sort_code_masked: sortCodeMasked,
+            bank_account_number_masked: accountMasked
+        };
+
+        // --- Trigger Automated 3-Email Workflow Asynchronously ---
+        sendFinanceApplicationEmails(emailPayload).catch(err => {
+            console.error('[Finance Application] Asynchronous email delivery failed:', err);
+        });
+
+        res.status(201).json({
+            success: true,
+            referenceNumber: referenceNumber,
+            id: appId,
+            message: 'Your finance application has been successfully received. A confirmation has been sent to your email.'
+        });
+
+    } catch (err) {
+        console.error('Error submitting finance application:', err);
+        res.status(500).json({ error: 'Failed to submit finance application. Please try again or contact us directly.' });
+    }
+});
+
+// 3. Get All Finance Applications (Admin view - masked bank details)
+app.get('/api/finance/applications', async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT 
+                id, reference_number, status, borrow_amount, term_years, credit_score,
+                estimated_monthly, estimated_apr, total_repayable, total_interest,
+                full_name, date_of_birth, marital_status, addresses,
+                employment_status, job_title, employer, monthly_income,
+                email, phone, bank_sort_code_masked, bank_account_number_masked,
+                vehicle_id, vehicle_details, consent_given, created_at, updated_at
+            FROM finance_applications 
+            ORDER BY created_at DESC
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching finance applications:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// 4. Get Specific Application with Decrypted Underwriting Info (Admin only)
+app.get('/api/finance/applications/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await db.query('SELECT * FROM finance_applications WHERE id = $1', [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Finance application not found' });
+        }
+        const appRecord = result.rows[0];
+
+        // Decrypt bank details for authorised underwriter review
+        const decryptedSortCode = decrypt(appRecord.bank_sort_code_encrypted);
+        const decryptedAccountNumber = decrypt(appRecord.bank_account_number_encrypted);
+
+        const safeRecord = {
+            ...appRecord,
+            bank_sort_code: decryptedSortCode,
+            bank_account_number: decryptedAccountNumber
+        };
+        delete safeRecord.bank_sort_code_encrypted;
+        delete safeRecord.bank_account_number_encrypted;
+
+        res.json(safeRecord);
+    } catch (err) {
+        console.error('Error fetching single finance application:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// 5. Update Finance Application Status
+app.patch('/api/finance/applications/:id/status', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        const validStatuses = ['submitted', 'under_review', 'approved', 'declined', 'completed'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ error: 'Invalid status value' });
+        }
+
+        const result = await db.query(
+            'UPDATE finance_applications SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+            [status, id]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Finance application not found' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error updating finance application status:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// 6. Delete Finance Application
+app.delete('/api/finance/applications/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await db.query('DELETE FROM finance_applications WHERE id = $1 RETURNING id', [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Finance application not found' });
+        }
+        res.json({ success: true, message: 'Finance application deleted' });
+    } catch (err) {
+        console.error('Error deleting finance application:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });

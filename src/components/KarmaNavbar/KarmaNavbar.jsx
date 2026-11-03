@@ -63,6 +63,7 @@ export default function KarmaNavbar() {
           <nav className="hidden lg:flex items-center space-x-8" aria-label="Desktop Navigation">
             {[
               { label: 'View Stock', path: '/buy' },
+              { label: 'Finance', path: '/finance' },
               { label: 'Sell Your Car', path: '/sell' },
               { label: 'Concierge', path: '/concierge' },
               { label: 'About Us', path: '/about' },
@@ -89,12 +90,6 @@ export default function KarmaNavbar() {
 
           {/* Right: Actions (Desktop) */}
           <div className="hidden lg:flex flex-1 justify-end items-center space-x-4">
-            <Link
-              to="/admin"
-              className="text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors mr-2"
-            >
-              Portal
-            </Link>
             <Link
               to="/buy"
               className="btn btn--primary btn--sm shadow-sm"
@@ -151,12 +146,12 @@ export default function KarmaNavbar() {
         <nav className="flex flex-col space-y-6 text-center" aria-label="Mobile Navigation">
           {[
             { label: 'View Stock', path: '/buy' },
+            { label: 'Vehicle Finance', path: '/finance' },
             { label: 'Sell Your Car', path: '/sell' },
             { label: 'Concierge Sourcing', path: '/concierge' },
             { label: 'About Us', path: '/about' },
             { label: 'Blog & News', path: '/blog' },
             { label: 'Contact Us', path: '/contact' },
-            { label: 'Admin Portal', path: '/admin' },
           ].map((link, index) => {
             const isActive = location.pathname === link.path;
             return (

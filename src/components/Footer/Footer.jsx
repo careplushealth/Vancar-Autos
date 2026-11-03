@@ -34,10 +34,10 @@ export default function Footer() {
                             <h4 className="footer__heading">Buying Options</h4>
                             <ul className="footer__list">
                                 <li><Link to="/buy">Search Used Stock</Link></li>
+                                <li><Link to="/finance">Vehicle Finance</Link></li>
                                 <li><Link to="/concierge">Vehicle Concierge</Link></li>
                                 <li><Link to="/sell">Value Your Vehicle</Link></li>
                                 <li><Link to="/about">Our Quality Standards</Link></li>
-                                <li><Link to="/buy">Affordable Used Cars</Link></li>
                                 <li><Link to="/contact">Part Exchange Enquiry</Link></li>
                             </ul>
                         </div>
@@ -49,7 +49,7 @@ export default function Footer() {
                                 <li><Link to="/blog">Dealership News</Link></li>
                                 <li><Link to="/contact">Get in Touch</Link></li>
                                 <li><Link to="/contact">Location & Directions</Link></li>
-                                <li><Link to="/admin">Staff Login</Link></li>
+                                <li><Link to="/admin">Admin Portal</Link></li>
                             </ul>
                         </div>
 
@@ -98,6 +98,7 @@ export default function Footer() {
                             <a href="#">Privacy Policy</a>
                             <a href="#">Terms & Conditions</a>
                             <a href="#">Cookie Policy</a>
+                            <Link to="/admin">Admin Portal</Link>
                         </div>
                     </div>
                 </div>

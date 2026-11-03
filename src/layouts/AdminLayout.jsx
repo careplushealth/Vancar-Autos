@@ -93,6 +93,10 @@ export default function AdminLayout() {
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
                         Enquiries
                     </NavLink>
+                    <NavLink to="/admin/finance-applications" onClick={closeMobileMenu} className={({ isActive }) => `admin-layout__link ${isActive ? 'admin-layout__link--active' : ''}`}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+                        Finance Applications
+                    </NavLink>
                     <NavLink to="/admin/banner-generator" onClick={closeMobileMenu} className={({ isActive }) => `admin-layout__link ${isActive ? 'admin-layout__link--active' : ''}`}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
                         Banner Generator

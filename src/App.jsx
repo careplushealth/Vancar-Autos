@@ -15,6 +15,7 @@ const Contact = lazy(() => import('./pages/Contact/Contact'));
 const Concierge = lazy(() => import('./pages/Concierge/Concierge'));
 const Blog = lazy(() => import('./pages/Blog/Blog'));
 const BlogArticle = lazy(() => import('./pages/BlogArticle/BlogArticle'));
+const Finance = lazy(() => import('./pages/Finance/Finance'));
 
 // Admin Pages (Code-split to keep public bundle light & fast)
 const Login = lazy(() => import('./pages/admin/Login/Login'));
@@ -28,6 +29,7 @@ const ExpenseTracker = lazy(() => import('./pages/admin/ExpenseTracker/ExpenseTr
 const GeneralExpenseTracker = lazy(() => import('./pages/admin/GeneralExpenseTracker/GeneralExpenseTracker'));
 const BusinessAnalytics = lazy(() => import('./pages/admin/BusinessAnalytics/BusinessAnalytics'));
 const Enquiries = lazy(() => import('./pages/admin/Enquiries/Enquiries'));
+const FinanceApplications = lazy(() => import('./pages/admin/FinanceApplications/FinanceApplications'));
 const BannerGenerator = lazy(() => import('./pages/admin/BannerGenerator/BannerGenerator'));
 const InvoiceGenerator = lazy(() => import('./pages/admin/InvoiceGenerator/InvoiceGenerator'));
 const DepositSlipGenerator = lazy(() => import('./pages/admin/DepositSlipGenerator/DepositSlipGenerator'));
@@ -92,6 +94,7 @@ const router = createBrowserRouter(
         <Route index element={<Home />} />
         <Route path="buy" element={<Buy />} />
         <Route path="buy/:id" element={<CarDetails />} />
+        <Route path="finance" element={<Finance />} />
         <Route path="sell" element={<Sell />} />
         <Route path="concierge" element={<Concierge />} />
         <Route path="about" element={<About />} />
@@ -119,6 +122,7 @@ const router = createBrowserRouter(
         <Route path="general-expenses" element={<GeneralExpenseTracker />} />
         <Route path="analytics" element={<BusinessAnalytics />} />
         <Route path="enquiries" element={<Enquiries />} />
+        <Route path="finance-applications" element={<FinanceApplications />} />
         <Route path="banner-generator" element={<BannerGenerator />} />
         <Route path="customers" element={<Customers />} />
         <Route path="sales" element={<SalesPlaceholder />} />

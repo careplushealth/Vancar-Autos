@@ -578,6 +578,102 @@ export async function updateInquiryStatus(id, status) {
     }
 }
 
+// === Finance Applications ===
+export async function getFinanceRates() {
+    try {
+        const response = await fetch(`${API_URL}/finance/rates`);
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (e) {
+        console.warn('Could not fetch rates from server, using defaults:', e);
+    }
+    return {
+        excellent: 11.9,
+        good: 12.9,
+        fair: 13.9,
+        poor: 19.9,
+        bad: 19.9,
+        representativeApr: 11.9
+    };
+}
+
+export async function submitFinanceApplication(applicationData) {
+    try {
+        const response = await fetch(`${API_URL}/finance/apply`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(applicationData)
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to submit finance application');
+        }
+        return data;
+    } catch (err) {
+        console.error('Error submitting finance application:', err);
+        throw err;
+    }
+}
+
+export async function getFinanceApplications() {
+    try {
+        const response = await fetch(`${API_URL}/finance/applications`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch finance applications');
+        }
+        return await response.json();
+    } catch (err) {
+        console.error('Error fetching finance applications:', err);
+        return [];
+    }
+}
+
+export async function getFinanceApplicationById(id) {
+    try {
+        const response = await fetch(`${API_URL}/finance/applications/${id}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch finance application details');
+        }
+        return await response.json();
+    } catch (err) {
+        console.error('Error fetching single finance application:', err);
+        throw err;
+    }
+}
+
+export async function updateFinanceApplicationStatus(id, status) {
+    try {
+        const response = await fetch(`${API_URL}/finance/applications/${id}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        if (!response.ok) {
+            throw new Error('Failed to update application status');
+        }
+        return await response.json();
+    } catch (err) {
+        console.error('Error updating finance application status:', err);
+        throw err;
+    }
+}
+
+export async function deleteFinanceApplication(id) {
+    try {
+        const response = await fetch(`${API_URL}/finance/applications/${id}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            throw new Error('Failed to delete finance application');
+        }
+        return await response.json();
+    } catch (err) {
+        console.error('Error deleting finance application:', err);
+        throw err;
+    }
+}
+
 export async function deleteInquiry(id) {
     try {
         const response = await fetch(`${API_URL}/contact-submissions/${id}`, {

@@ -54,12 +54,6 @@ export default function Header() {
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                     </Link>
-                    <Link to="/admin" className="header__action-icon" aria-label="Account">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                    </Link>
                 </div>
             </div>
 

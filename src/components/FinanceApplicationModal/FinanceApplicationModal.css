@@ -1,0 +1,498 @@
+/* Finance Application Modal */
+.finance-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.finance-modal {
+    background: #ffffff;
+    width: 100%;
+    max-width: 680px;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    overflow: hidden;
+    position: relative;
+    animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header */
+.finance-modal__header {
+    background: #0f172a;
+    color: #ffffff;
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 3px solid var(--color-accent, #55A01F);
+}
+
+.finance-modal__badge {
+    display: inline-block;
+    background: rgba(85, 160, 31, 0.2);
+    color: #7bc94a;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-bottom: 0.35rem;
+}
+
+.finance-modal__title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin: 0;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+}
+
+.finance-modal__subtitle {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin: 0.25rem 0 0 0;
+}
+
+.finance-modal__close-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.finance-modal__close-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Stepper */
+.finance-modal__stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.75rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.finance-modal__step-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.finance-modal__step-item--active {
+    opacity: 1;
+}
+
+.finance-modal__step-item--completed {
+    opacity: 0.9;
+}
+
+.finance-modal__step-circle {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.finance-modal__step-item--active .finance-modal__step-circle {
+    background: var(--color-accent, #55A01F);
+    color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(85, 160, 31, 0.2);
+}
+
+.finance-modal__step-item--completed .finance-modal__step-circle {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.finance-modal__step-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+@media (max-width: 640px) {
+    .finance-modal__step-label {
+        display: none;
+    }
+}
+
+/* Modal Body */
+.finance-modal__body {
+    padding: 1.5rem 1.75rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Finance Summary Bar */
+.finance-modal__finance-summary-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    background: #f1f5f9;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e2e8f0;
+}
+
+@media (max-width: 640px) {
+    .finance-modal__finance-summary-bar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.finance-modal__summary-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.finance-modal__summary-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.finance-modal__summary-val {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.finance-modal__summary-val--green {
+    color: var(--color-accent, #55A01F);
+}
+
+.finance-modal__step-heading {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 0.25rem 0;
+}
+
+.finance-modal__step-desc {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 0 0 1.25rem 0;
+}
+
+/* Address Cards */
+.finance-modal__address-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.finance-modal__address-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.finance-modal__address-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.finance-modal__address-status-pill {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-top: 0.5rem;
+}
+
+.finance-modal__address-status-pill--success {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.finance-modal__address-status-pill--warning {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+/* Bank Box */
+.finance-modal__bank-box {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-top: 1rem;
+}
+
+.finance-modal__bank-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 13px;
+    font-weight: 700;
+    color: #166534;
+}
+
+.finance-modal__bank-note {
+    font-size: 12px;
+    color: #15803d;
+    margin: 0.5rem 0 0 0;
+    line-height: 1.5;
+}
+
+/* Review Grid */
+.finance-modal__review-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+@media (max-width: 640px) {
+    .finance-modal__review-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.finance-modal__review-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.finance-modal__review-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 0.75rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.finance-modal__review-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 0.5rem;
+    color: #64748b;
+}
+
+.finance-modal__review-row strong {
+    color: #0f172a;
+}
+
+/* Consent Card */
+.finance-modal__consent-card {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.finance-modal__consent-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+}
+
+.finance-modal__checkbox {
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-accent, #55A01F);
+    cursor: pointer;
+}
+
+/* Alert Boxes */
+.finance-modal__alert {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.finance-modal__alert--warning {
+    background: #fefce8;
+    color: #854d0e;
+    border: 1px solid #fef08a;
+}
+
+.finance-modal__alert--error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+/* Footer Controls */
+.finance-modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.75rem;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Success View */
+.finance-modal__success {
+    padding: 2.5rem 2rem;
+    text-align: center;
+}
+
+.finance-modal__success-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #16a34a;
+    font-size: 32px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem auto;
+}
+
+.finance-modal__success-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 0.5rem 0;
+}
+
+.finance-modal__success-subtitle {
+    font-size: 0.95rem;
+    color: #64748b;
+    margin: 0 0 1.5rem 0;
+    max-width: 460px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.finance-modal__ref-box {
+    background: #f1f5f9;
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    display: inline-block;
+    min-width: 280px;
+}
+
+.finance-modal__ref-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.finance-modal__ref-number {
+    font-size: 1.6rem;
+    color: #0f172a;
+    font-family: monospace;
+    letter-spacing: 0.05em;
+}
+
+.finance-modal__next-steps {
+    text-align: left;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.finance-modal__next-steps h4 {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 1rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.finance-modal__next-step-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.finance-modal__next-step-item:last-child {
+    margin-bottom: 0;
+}
+
+.finance-modal__step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--color-accent, #55A01F);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.finance-modal__next-step-item strong {
+    font-size: 13px;
+    color: #0f172a;
+    display: block;
+    margin-bottom: 0.15rem;
+}
+
+.finance-modal__next-step-item p {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.4;
+}
