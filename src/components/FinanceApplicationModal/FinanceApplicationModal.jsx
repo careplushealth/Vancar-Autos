@@ -147,13 +147,22 @@ export default function FinanceApplicationModal({
 
     // Address list manipulation
     const handleAddressChange = (index, field, value) => {
-        const updated = [...formData.addresses];
-        updated[index] = { ...updated[index], [field]: value };
-        setFormData(prev => ({ ...prev, addresses: updated }));
+        setFormData(prev => {
+            const updated = [...prev.addresses];
+            updated[index] = { ...updated[index], [field]: value };
+            return { ...prev, addresses: updated };
+        });
 
-        if (errors[`address_${index}_${field}`]) {
-            setErrors(prev => ({ ...prev, [`address_${index}_${field}`]: null }));
-        }
+        setErrors(prev => {
+            const next = { ...prev };
+            delete next[`address_${index}_${field}`];
+            delete next[`address_${index}_doorNumber`];
+            delete next[`address_${index}_street`];
+            delete next[`address_${index}_town`];
+            delete next[`address_${index}_postcode`];
+            delete next.addressHistory;
+            return next;
+        });
     };
 
     const addPreviousAddress = () => {
@@ -200,16 +209,16 @@ export default function FinanceApplicationModal({
         } else if (currentStep === 2) {
             // Address History
             formData.addresses.forEach((addr, idx) => {
-                if (!addr.doorNumber.trim()) {
-                    newErrors[`address_${idx}_doorNumber`] = 'Door number or house name is required';
+                const door = (addr.doorNumber || '').trim();
+                const street = (addr.street || '').trim();
+
+                if (!street && !door) {
+                    newErrors[`address_${idx}_street`] = 'Street address is required';
                 }
-                if (!addr.street.trim()) {
-                    newErrors[`address_${idx}_street`] = 'Street name is required';
-                }
-                if (!addr.town.trim()) {
+                if (!addr.town || !addr.town.trim()) {
                     newErrors[`address_${idx}_town`] = 'Town / City is required';
                 }
-                if (!addr.postcode.trim()) {
+                if (!addr.postcode || !addr.postcode.trim()) {
                     newErrors[`address_${idx}_postcode`] = 'Postcode is required';
                 } else {
                     const ukPostcodeRegex = /^[A-Z]{1,2}[0-9][A-Z0-9]?\s?[0-9][A-Z]{2}$/i;
@@ -287,6 +296,27 @@ export default function FinanceApplicationModal({
         setIsSubmitting(true);
         setSubmitError(null);
 
+        // Sanitize address objects so doorNumber & street are always complete
+        const sanitizedAddresses = formData.addresses.map(a => {
+            let door = (a.doorNumber || '').trim();
+            let street = (a.street || '').trim();
+            if (!door && street) {
+                const parts = street.split(' ');
+                door = parts[0] || '1';
+                street = parts.length > 1 ? parts.slice(1).join(' ') : door;
+            } else if (door && !street) {
+                street = door;
+                door = door.split(' ')[0] || '1';
+            }
+            return {
+                ...a,
+                doorNumber: door,
+                street: street,
+                town: (a.town || '').trim(),
+                postcode: (a.postcode || '').trim().toUpperCase()
+            };
+        });
+
         try {
             const payload = {
                 borrow_amount: formData.borrowAmount,
@@ -295,7 +325,7 @@ export default function FinanceApplicationModal({
                 full_name: formData.fullName,
                 date_of_birth: formData.dateOfBirth,
                 marital_status: formData.maritalStatus,
-                addresses: formData.addresses,
+                addresses: sanitizedAddresses,
                 employment_status: formData.employmentStatus,
                 job_title: formData.jobTitle,
                 employer: formData.employer,
@@ -483,25 +513,35 @@ export default function FinanceApplicationModal({
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                                                 <div className="form-group">
-                                                    <label className="form-label text-xs font-semibold">House No. / Name & Street <span className="text-red-500">*</span></label>
+                                                    <label className="form-label text-xs font-semibold">House No. / Name or Unit</label>
                                                     <input
                                                         type="text"
-                                                        placeholder="e.g. Flat 4, 12 Elm Grove"
-                                                        className={`form-input ${errors[`address_${idx}_doorNumber`] || errors[`address_${idx}_street`] ? 'form-input--error' : ''}`}
-                                                        value={addr.doorNumber ? `${addr.doorNumber} ${addr.street}`.trim() : addr.street}
-                                                        onChange={e => {
-                                                            const parts = e.target.value.split(' ');
-                                                            const door = parts[0] || '';
-                                                            const street = parts.slice(1).join(' ') || door;
-                                                            handleAddressChange(idx, 'doorNumber', door);
-                                                            handleAddressChange(idx, 'street', street);
-                                                        }}
+                                                        placeholder="e.g. Unit 6D, 14, or Flat 4"
+                                                        className={`form-input ${errors[`address_${idx}_doorNumber`] ? 'form-input--error' : ''}`}
+                                                        value={addr.doorNumber}
+                                                        onChange={e => handleAddressChange(idx, 'doorNumber', e.target.value)}
                                                     />
-                                                    {(errors[`address_${idx}_doorNumber`] || errors[`address_${idx}_street`]) && (
-                                                        <span className="form-error">Address street is required</span>
+                                                    {errors[`address_${idx}_doorNumber`] && (
+                                                        <span className="form-error">{errors[`address_${idx}_doorNumber`]}</span>
                                                     )}
                                                 </div>
 
+                                                <div className="form-group">
+                                                    <label className="form-label text-xs font-semibold">Street Address <span className="text-red-500">*</span></label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="e.g. Midland Street or High Street"
+                                                        className={`form-input ${errors[`address_${idx}_street`] ? 'form-input--error' : ''}`}
+                                                        value={addr.street}
+                                                        onChange={e => handleAddressChange(idx, 'street', e.target.value)}
+                                                    />
+                                                    {errors[`address_${idx}_street`] && (
+                                                        <span className="form-error">{errors[`address_${idx}_street`]}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                                                 <div className="form-group">
                                                     <label className="form-label text-xs font-semibold">Town / City <span className="text-red-500">*</span></label>
                                                     <input
@@ -513,9 +553,7 @@ export default function FinanceApplicationModal({
                                                     />
                                                     {errors[`address_${idx}_town`] && <span className="form-error">{errors[`address_${idx}_town`]}</span>}
                                                 </div>
-                                            </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                                 <div className="form-group">
                                                     <label className="form-label text-xs font-semibold">Postcode <span className="text-red-500">*</span></label>
                                                     <input
@@ -527,7 +565,9 @@ export default function FinanceApplicationModal({
                                                     />
                                                     {errors[`address_${idx}_postcode`] && <span className="form-error">{errors[`address_${idx}_postcode`]}</span>}
                                                 </div>
+                                            </div>
 
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 <div className="form-group">
                                                     <label className="form-label text-xs font-semibold">Years at address</label>
                                                     <select
@@ -772,7 +812,7 @@ export default function FinanceApplicationModal({
                                             </div>
                                             <div className="finance-modal__review-row">
                                                 <span>Current Address:</span>
-                                                <span>{formData.addresses[0]?.doorNumber} {formData.addresses[0]?.street}, {formData.addresses[0]?.postcode}</span>
+                                                <span>{[formData.addresses[0]?.doorNumber, formData.addresses[0]?.street, formData.addresses[0]?.town, formData.addresses[0]?.postcode].filter(Boolean).join(', ')}</span>
                                             </div>
                                             <div className="finance-modal__review-row">
                                                 <span>Employment:</span>

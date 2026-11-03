@@ -717,8 +717,14 @@ app.post('/api/finance/apply', async (req, res) => {
         }
         let totalMonths = 0;
         for (const addr of addresses) {
-            if (!addr.postcode || !addr.doorNumber || !addr.street) {
-                return res.status(400).json({ error: 'Please ensure all address fields (door number, street and postcode) are filled.' });
+            if (!addr.doorNumber && addr.street) {
+                addr.doorNumber = (addr.street.trim().split(' ')[0]) || '1';
+            }
+            if (!addr.street && addr.doorNumber) {
+                addr.street = addr.doorNumber.trim();
+            }
+            if (!addr.postcode || !addr.street) {
+                return res.status(400).json({ error: 'Please ensure all address fields (street address and postcode) are filled.' });
             }
             const y = parseInt(addr.years || 0, 10);
             const mo = parseInt(addr.months || 0, 10);
