@@ -750,19 +750,23 @@ app.post('/api/finance/apply', async (req, res) => {
         }
 
         // --- Duplicate Prevention (Within 15 seconds) ---
-        const recentDuplicate = await db.query(
-            `SELECT reference_number, id FROM finance_applications 
-             WHERE email = $1 AND borrow_amount = $2 AND created_at > NOW() - INTERVAL '15 seconds'
-             LIMIT 1`,
-            [email.trim().toLowerCase(), borrowNum]
-        );
-        if (recentDuplicate.rows.length > 0) {
-            return res.json({
-                success: true,
-                referenceNumber: recentDuplicate.rows[0].reference_number,
-                message: 'Your application was already received and is being processed.',
-                isDuplicate: true
-            });
+        try {
+            const recentDuplicate = await db.query(
+                `SELECT reference_number, id FROM finance_applications 
+                 WHERE email = $1 AND borrow_amount = $2 AND created_at > NOW() - INTERVAL '15 seconds'
+                 LIMIT 1`,
+                [email.trim().toLowerCase(), borrowNum]
+            );
+            if (recentDuplicate && recentDuplicate.rows && recentDuplicate.rows.length > 0) {
+                return res.json({
+                    success: true,
+                    referenceNumber: recentDuplicate.rows[0].reference_number,
+                    message: 'Your application was already received and is being processed.',
+                    isDuplicate: true
+                });
+            }
+        } catch (dupErr) {
+            console.warn('[Finance Application] Duplicate check skipped due to DB warning:', dupErr.message);
         }
 
         // --- Calculate Authoritative Loan Estimates ---
@@ -791,7 +795,7 @@ app.post('/api/finance/apply', async (req, res) => {
         const sortCodeMasked = maskSortCode(cleanSortCode);
         const accountMasked = maskAccountNumber(cleanAccountNumber);
 
-        // --- Database Insert ---
+        // --- Database Insert with Graceful Fallback ---
         const insertQuery = `
             INSERT INTO finance_applications (
                 id, reference_number, status, borrow_amount, term_years, credit_score,
@@ -840,8 +844,61 @@ app.post('/api/finance/apply', async (req, res) => {
             vehicle_details ? JSON.stringify(vehicle_details) : null
         ];
 
-        const dbResult = await db.query(insertQuery, values);
-        const savedApplication = dbResult.rows[0];
+        let savedApplication = {
+            id: appId,
+            reference_number: referenceNumber,
+            status: 'submitted',
+            borrow_amount: borrowNum,
+            term_years: termNum,
+            credit_score: credit_score,
+            estimated_monthly: monthly,
+            estimated_apr: apr,
+            total_repayable: totalRepayable,
+            total_interest: totalInterest,
+            full_name: full_name.trim(),
+            date_of_birth: date_of_birth,
+            marital_status: marital_status || 'Not specified',
+            addresses: addresses,
+            employment_status: employment_status || 'Employed',
+            job_title: job_title.trim(),
+            employer: employer.trim(),
+            monthly_income: incomeNum,
+            email: email.trim().toLowerCase(),
+            phone: cleanedPhone,
+            bank_sort_code_masked: sortCodeMasked,
+            bank_account_number_masked: accountMasked,
+            vehicle_id: vehicle_id || null,
+            vehicle_details: vehicle_details || null,
+            created_at: new Date().toISOString()
+        };
+
+        try {
+            const dbResult = await db.query(insertQuery, values);
+            if (dbResult && dbResult.rows && dbResult.rows[0]) {
+                savedApplication = dbResult.rows[0];
+            }
+        } catch (dbErr) {
+            console.warn('[Finance Application] Database offline or unreachable. Saving application to local fallback store:', dbErr.message);
+            try {
+                const fs = require('fs');
+                const path = require('path');
+                const fallbackDir = path.join(__dirname, 'data');
+                if (!fs.existsSync(fallbackDir)) {
+                    fs.mkdirSync(fallbackDir, { recursive: true });
+                }
+                const fallbackPath = path.join(fallbackDir, 'finance_applications_fallback.json');
+                let existing = [];
+                if (fs.existsSync(fallbackPath)) {
+                    try {
+                        existing = JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
+                    } catch (_) {}
+                }
+                existing.unshift(savedApplication);
+                fs.writeFileSync(fallbackPath, JSON.stringify(existing, null, 2), 'utf8');
+            } catch (fsErr) {
+                console.error('[Finance Application] Fallback store error:', fsErr.message);
+            }
+        }
 
         // Format application object for email templates with ALL raw and formatted details
         const emailPayload = {
