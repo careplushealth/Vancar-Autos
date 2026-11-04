@@ -749,10 +749,10 @@ app.post('/api/finance/apply', async (req, res) => {
             return res.status(400).json({ error: 'Explicit consent is required to process your finance application.' });
         }
 
-        // --- Duplicate Prevention (Within 2 minutes) ---
+        // --- Duplicate Prevention (Within 15 seconds) ---
         const recentDuplicate = await db.query(
             `SELECT reference_number, id FROM finance_applications 
-             WHERE email = $1 AND borrow_amount = $2 AND created_at > NOW() - INTERVAL '2 minutes'
+             WHERE email = $1 AND borrow_amount = $2 AND created_at > NOW() - INTERVAL '15 seconds'
              LIMIT 1`,
             [email.trim().toLowerCase(), borrowNum]
         );

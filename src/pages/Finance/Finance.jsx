@@ -4,7 +4,11 @@ import { getFinanceRates } from '../../services/dataService';
 import FinanceApplicationModal from '../../components/FinanceApplicationModal/FinanceApplicationModal';
 import './Finance.css';
 
-const BORROW_PRESETS = [3000, 5000, 7500, 10000, 12500, 15000, 20000, 25000, 30000];
+// Full increments of £500 from £2,000 to £50,000 to stay 100% in sync with the slider
+const BORROW_OPTIONS = [];
+for (let a = 2000; a <= 50000; a += 500) {
+    BORROW_OPTIONS.push(a);
+}
 
 const TERM_OPTIONS = [
     { value: 1, label: '1 year (12 months)' },
@@ -40,6 +44,17 @@ export default function Finance() {
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    // Keep dropdown options 100% in sync with slider (includes any custom value)
+    const borrowDropdownOptions = useMemo(() => {
+        const num = Number(borrowAmount);
+        if (num && !BORROW_OPTIONS.includes(num)) {
+            const list = [...BORROW_OPTIONS, num];
+            list.sort((a, b) => a - b);
+            return list;
+        }
+        return BORROW_OPTIONS;
+    }, [borrowAmount]);
 
     // FAQ Accordion State (open question indices)
     const [openFaq, setOpenFaq] = useState([0]);
@@ -172,7 +187,7 @@ export default function Finance() {
                                                 }
                                             }}
                                         >
-                                            {BORROW_PRESETS.map(amount => (
+                                            {borrowDropdownOptions.map(amount => (
                                                 <option key={amount} value={amount}>
                                                     £{amount.toLocaleString('en-GB')}
                                                 </option>
