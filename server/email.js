@@ -4,6 +4,53 @@ const nodemailer = require('nodemailer');
 const STRICT_DMARC_DOMAINS = ['@gmail.com', '@googlemail.com', '@yahoo.', '@hotmail.', '@outlook.', '@icloud.'];
 
 /**
+ * Direct Brevo (formerly Sendinblue) API v3 Email Dispatch
+ * Free tier: 300 emails/day (9,000/month)
+ * Deliverability: Sends from Brevo's authenticated mail network with DKIM signing
+ */
+const sendViaBrevo = async ({ to, subject, html, text }) => {
+    const apiKey = process.env.BREVO_API_KEY;
+    if (!apiKey) return false;
+
+    const fromEmail = (process.env.BREVO_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || 'hellovancarautos@gmail.com').trim();
+    const fromName = process.env.BREVO_FROM_NAME || process.env.SENDGRID_FROM_NAME || 'Vancar Autos';
+    const replyToEmail = (process.env.REPLY_TO_EMAIL || 'hellovancarautos@gmail.com').trim();
+
+    const payload = {
+        sender: { name: fromName, email: fromEmail },
+        to: [{ email: to.trim() }],
+        replyTo: { name: fromName, email: replyToEmail },
+        subject: subject,
+        htmlContent: html,
+        textContent: text || subject
+    };
+
+    try {
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'api-key': apiKey.trim(),
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.status === 201 || response.ok) {
+            console.log(`[Brevo] Successfully dispatched email to: ${to}`);
+            return true;
+        } else {
+            const errBody = await response.text();
+            console.error(`[Brevo Error] Status ${response.status} sending to ${to}:`, errBody);
+            return false;
+        }
+    } catch (err) {
+        console.error(`[Brevo Connection Error] Failed sending to ${to}:`, err.message);
+        return false;
+    }
+};
+
+/**
  * Direct SendGrid API v3 Email Dispatch
  * Uses SendGrid's native REST API with deliverability optimizations
  */
@@ -140,7 +187,18 @@ const sendInquiryEmail = async (inquiry) => {
 
     const emailText = `NEW WEBSITE INQUIRY: ${inquiry.subject || 'General'}\n\nName: ${inquiry.name}\nEmail: ${inquiry.email}\nPhone: ${inquiry.phone || 'Not provided'}\n\nMessage:\n${inquiry.message || ''}${detailsText}`;
 
-    // 1. Try SendGrid first
+    // 1. Try Brevo first if configured
+    if (process.env.BREVO_API_KEY) {
+        const sent = await sendViaBrevo({
+            to: recipient,
+            subject: subject,
+            html: emailHtml,
+            text: emailText
+        });
+        if (sent) return true;
+    }
+
+    // 2. Try SendGrid next
     if (process.env.SENDGRID_API_KEY && process.env.EMAIL_PROVIDER !== 'smtp') {
         const sent = await sendViaSendGrid({
             to: recipient,
@@ -151,7 +209,7 @@ const sendInquiryEmail = async (inquiry) => {
         if (sent) return true;
     }
 
-    // 2. Try SMTP fallback
+    // 3. Try SMTP fallback
     const transporter = createTransporter();
     if (transporter) {
         try {
@@ -549,12 +607,12 @@ Registered in England and Wales (Company No: 16593644)`;
     const businessSubject = `New Finance Application [${app.reference_number}] - ${app.full_name}`;
     const customerSubject = `Your Vancar Autos Finance Application Confirmation [${app.reference_number}]`;
 
-    // 1. Dispatch via SendGrid API if SENDGRID_API_KEY is available and EMAIL_PROVIDER is not explicitly 'smtp'
-    if (process.env.SENDGRID_API_KEY && process.env.EMAIL_PROVIDER !== 'smtp') {
-        console.log('[Finance Email] Using SendGrid API for transactional email delivery...');
+    // 1. Dispatch via Brevo API if BREVO_API_KEY is available (Primary high-deliverability provider)
+    if (process.env.BREVO_API_KEY) {
+        console.log('[Finance Email] Using Brevo API for transactional email delivery...');
 
         // Email 1: First Business Email
-        results.business1 = await sendViaSendGrid({
+        results.business1 = await sendViaBrevo({
             to: businessRecipient1,
             subject: businessSubject,
             html: businessEmailHtml,
@@ -562,7 +620,7 @@ Registered in England and Wales (Company No: 16593644)`;
         });
 
         // Email 2: Second Business Email
-        results.business2 = await sendViaSendGrid({
+        results.business2 = await sendViaBrevo({
             to: businessRecipient2,
             subject: businessSubject,
             html: businessEmailHtml,
@@ -571,6 +629,43 @@ Registered in England and Wales (Company No: 16593644)`;
 
         // Email 3: Customer Confirmation Email
         if (app.email) {
+            results.customer = await sendViaBrevo({
+                to: app.email,
+                subject: customerSubject,
+                html: customerEmailHtml,
+                text: customerEmailText
+            });
+        }
+
+        console.log(`[Finance Email] Brevo delivery summary: Business1=${results.business1}, Business2=${results.business2}, Customer=${results.customer}`);
+    }
+
+    // 2. Dispatch via SendGrid API if SendGrid is configured and emails weren't dispatched by Brevo
+    if (process.env.SENDGRID_API_KEY && (!results.business1 || !results.business2 || (!results.customer && app.email)) && process.env.EMAIL_PROVIDER !== 'smtp') {
+        console.log('[Finance Email] Using SendGrid API for transactional email delivery...');
+
+        // Email 1: First Business Email
+        if (!results.business1) {
+            results.business1 = await sendViaSendGrid({
+                to: businessRecipient1,
+                subject: businessSubject,
+                html: businessEmailHtml,
+                text: businessEmailText
+            });
+        }
+
+        // Email 2: Second Business Email
+        if (!results.business2) {
+            results.business2 = await sendViaSendGrid({
+                to: businessRecipient2,
+                subject: businessSubject,
+                html: businessEmailHtml,
+                text: businessEmailText
+            });
+        }
+
+        // Email 3: Customer Confirmation Email
+        if (!results.customer && app.email) {
             results.customer = await sendViaSendGrid({
                 to: app.email,
                 subject: customerSubject,
@@ -582,7 +677,7 @@ Registered in England and Wales (Company No: 16593644)`;
         console.log(`[Finance Email] SendGrid delivery summary: Business1=${results.business1}, Business2=${results.business2}, Customer=${results.customer}`);
     }
 
-    // 2. Fallback to Nodemailer SMTP for any unsent emails (or as primary if EMAIL_PROVIDER === 'smtp')
+    // 3. Fallback to Nodemailer SMTP for any unsent emails (or as primary if EMAIL_PROVIDER === 'smtp')
     const transporter = createTransporter();
     if (transporter && (!results.business1 || !results.business2 || (!results.customer && app.email))) {
         console.log('[Finance Email] Executing SMTP dispatch for pending emails...');
