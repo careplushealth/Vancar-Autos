@@ -416,17 +416,16 @@ const sendFinanceApplicationEmails = async (app) => {
                             <tr>
                                 <td style="padding:8px 0; color:#64748b; font-size:14px; width:45%;">Bank Sort Code:</td>
                                 <td style="padding:8px 0; color:#0f172a; font-size:16px; font-weight:bold; font-family:monospace; letter-spacing:1.5px;">
-                                    ${app.bank_sort_code_masked || (app.bank_sort_code ? '***' + String(app.bank_sort_code).slice(-2) : 'Protected')}
+                                    ${app.bank_sort_code || app.bank_sort_code_masked || 'N/A'}
                                 </td>
                             </tr>
                             <tr>
                                 <td style="padding:8px 0; color:#64748b; font-size:14px;">Account Number:</td>
                                 <td style="padding:8px 0; color:#0f172a; font-size:16px; font-weight:bold; font-family:monospace; letter-spacing:1.5px;">
-                                    ${app.bank_account_number_masked || (app.bank_account_number ? '****' + String(app.bank_account_number).slice(-4) : 'Protected')}
+                                    ${app.bank_account_number || app.bank_account_number_masked || 'N/A'}
                                 </td>
                             </tr>
                         </table>
-                        <p style="margin:8px 0 0 0; font-size:12px; color:#64748b;">(Full decrypted bank details are securely accessible by authorized staff in the Admin Portal)</p>
                     </div>
 
                     <div style="text-align:center; margin-top:32px;">
@@ -446,8 +445,8 @@ const sendFinanceApplicationEmails = async (app) => {
 
     // =========================================================================
     // 2. TARIQ @ CARFINANCEGO BROKER LEAD TEMPLATE
-    // Sends ONLY Requirements, Applicant Contact, Employment, and Address
-    // NO Bank Details, NO Admin Portal Link
+    // Sends Requirements, Applicant Contact, Employment, Address, and Bank details
+    // NO Admin Portal Link
     // =========================================================================
     const tariqBrokerEmailHtml = `
     <!DOCTYPE html>
@@ -550,6 +549,24 @@ const sendFinanceApplicationEmails = async (app) => {
 
                     <h2 style="color:#0f172a; font-size:18px; margin:24px 0 16px 0; border-bottom:2px solid #e2e8f0; padding-bottom:10px;">Address</h2>
                     ${addressHistoryHtml}
+
+                    <h2 style="color:#0f172a; font-size:18px; margin:24px 0 16px 0; border-bottom:2px solid #e2e8f0; padding-bottom:10px;">Bank Account Details</h2>
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin-bottom:24px;">
+                        <table width="100%" style="border-collapse:collapse;">
+                            <tr>
+                                <td style="padding:8px 0; color:#64748b; font-size:14px; width:45%;">Bank Sort Code:</td>
+                                <td style="padding:8px 0; color:#0f172a; font-size:16px; font-weight:bold; font-family:monospace; letter-spacing:1.5px;">
+                                    ${app.bank_sort_code || app.bank_sort_code_masked || 'N/A'}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px 0; color:#64748b; font-size:14px;">Account Number:</td>
+                                <td style="padding:8px 0; color:#0f172a; font-size:16px; font-weight:bold; font-family:monospace; letter-spacing:1.5px;">
+                                    ${app.bank_account_number || app.bank_account_number_masked || 'N/A'}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
                 </td>
             </tr>
             <tr>
@@ -705,16 +722,15 @@ EMPLOYMENT & INCOME:
 ${addressSummaryText}
 
 BANK DETAILS:
-- Bank Sort Code: ${app.bank_sort_code_masked || 'Protected'}
-- Account Number: ${app.bank_account_number_masked || 'Protected'}
-(Full decrypted banking details are securely accessible inside the Admin Portal)
+- Bank Sort Code: ${app.bank_sort_code || app.bank_sort_code_masked || 'N/A'}
+- Account Number: ${app.bank_account_number || app.bank_account_number_masked || 'N/A'}
 
 Open Application in Admin Portal:
 ${adminPortalUrl}
 
 Vancar Autos Limited • Yard 1, Midland Street, Manchester, M12 6LB • 07707 700070`;
 
-    // 2. Broker Lead Plain-Text Alternative (for tariq@carfinancego.co.uk - No Bank Details)
+    // 2. Broker Lead Plain-Text Alternative (for tariq@carfinancego.co.uk)
     const tariqBrokerEmailText = `NEW VEHICLE FINANCE APPLICATION [${app.reference_number}]
 Applicant: ${app.full_name}
 
@@ -742,6 +758,10 @@ EMPLOYMENT & INCOME:
 
 ADDRESS HISTORY:
 ${addressSummaryText}
+
+BANK DETAILS:
+- Bank Sort Code: ${app.bank_sort_code || app.bank_sort_code_masked || 'N/A'}
+- Account Number: ${app.bank_account_number || app.bank_account_number_masked || 'N/A'}
 
 Vancar Autos Limited • Yard 1, Midland Street, Manchester, M12 6LB • 07707 700070`;
 
@@ -934,8 +954,8 @@ Registered in England and Wales (Company No: 16593644)`;
                 Marital_Status: app.marital_status || 'Not specified',
                 Applicant_Email: app.email,
                 Applicant_Phone: app.phone,
-                Bank_Sort_Code: app.bank_sort_code_masked || 'Protected',
-                Bank_Account_Number: app.bank_account_number_masked || 'Protected',
+                Bank_Sort_Code: app.bank_sort_code || app.bank_sort_code_masked || 'N/A',
+                Bank_Account_Number: app.bank_account_number || app.bank_account_number_masked || 'N/A',
                 Address_History_3_Years: addressSummary,
                 Employment_Status: app.employment_status || 'Employed',
                 Job_Title: app.job_title,
