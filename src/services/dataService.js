@@ -12,7 +12,7 @@ const DISTANCE_SALE_FORMS_KEY = 'vancar_distance_sale_forms';
 const CUSTOMERS_KEY = 'vancar_customers';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-const fetchWithTimeout = async (url, options = {}, timeoutMs = 6000) => {
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 25000) => {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -30,16 +30,23 @@ const syncNeon = (endpoint, method, data = null) => {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: data ? JSON.stringify(data) : null
-    }, 8000).catch(err => console.error("Neon DB Sync Error:", err));
+    }, 15000).catch(err => console.error("Neon DB Sync Error:", err));
 };
 
-export async function syncDataFromServer() {
+export async function syncDataFromServer(retryCount = 1) {
     try {
         // Fast lightweight sync: only fetch public-facing inventory (cars and blogs)
-        const [carsRes, blogsRes] = await Promise.all([
-            fetchWithTimeout(`${API_URL}/cars`, {}, 6000),
-            fetchWithTimeout(`${API_URL}/blogs`, {}, 6000)
+        // With 25s timeout to allow Render free tier containers to wake up from cold sleep
+        let [carsRes, blogsRes] = await Promise.all([
+            fetchWithTimeout(`${API_URL}/cars`, {}, 25000),
+            fetchWithTimeout(`${API_URL}/blogs`, {}, 25000)
         ]);
+
+        // If failed and retries remain, wait 3 seconds and retry once (handles waking container)
+        if (!carsRes.ok && retryCount > 0) {
+            await new Promise(r => setTimeout(r, 3000));
+            return syncDataFromServer(retryCount - 1);
+        }
 
         if (carsRes.ok) {
             const cars = await carsRes.json();

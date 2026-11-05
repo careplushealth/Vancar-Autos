@@ -8,15 +8,22 @@ export default function Login() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const result = await login(username, password);
-        if (result.success) {
-            navigate('/admin');
-        } else {
-            setError(result.error);
+        setError('');
+        setLoading(true);
+        try {
+            const result = await login(username, password);
+            if (result.success) {
+                navigate('/admin');
+            } else {
+                setError(result.error);
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -35,13 +42,15 @@ export default function Login() {
                     {error && <div className="admin-login__error">{error}</div>}
                     <div className="form-group">
                         <label className="form-label">Username</label>
-                        <input className="form-input" value={username} onChange={e => setUsername(e.target.value)} placeholder="admin" required />
+                        <input className="form-input" value={username} onChange={e => setUsername(e.target.value)} placeholder="admin" required disabled={loading} />
                     </div>
                     <div className="form-group">
                         <label className="form-label">Password</label>
-                        <input className="form-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="********" required />
+                        <input className="form-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="********" required disabled={loading} />
                     </div>
-                    <button type="submit" className="btn btn--primary btn--lg" style={{ width: '100%' }}>Sign In</button>
+                    <button type="submit" className="btn btn--primary btn--lg" style={{ width: '100%' }} disabled={loading}>
+                        {loading ? 'Connecting to Server...' : 'Sign In'}
+                    </button>
                 </form>
             </div>
         </div>

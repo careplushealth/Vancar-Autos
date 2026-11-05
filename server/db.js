@@ -2,8 +2,12 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 const { Pool } = require('pg');
 
+// Neon direct connection: strip '-pooler' to bypass Render PgBouncer / pooler connection failures
+const rawDbUrl = process.env.DATABASE_URL || '';
+const connectionString = rawDbUrl.replace('-pooler.', '.');
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
   ssl: {
     rejectUnauthorized: false
   }
