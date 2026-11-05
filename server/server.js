@@ -11,6 +11,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Incoming request logger for visibility in Render / server logs
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
 app.get('/', (req, res) => {
     res.json({ status: 'ok', message: 'Vancar Autos API is running' });
 });
@@ -1833,7 +1839,21 @@ process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception thrown:', err);
 });
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`API Backend running securely on port ${PORT}`);
+    console.log(`API Backend running securely on primary port ${PORT}`);
 });
+
+// Also bind to port 5001 if primary differs, ensuring backwards compatibility with Render reverse proxies
+if (Number(PORT) !== 5001) {
+    try {
+        const secondary = app.listen(5001, '0.0.0.0', () => {
+            console.log(`API Backend also listening on port 5001`);
+        });
+        secondary.on('error', (err) => {
+            console.log(`Port 5001 binding skipped (${err.message})`);
+        });
+    } catch (e) {
+        // ignore
+    }
+}
