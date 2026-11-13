@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
     getCars,
     getGarageInvoices,
@@ -38,6 +38,107 @@ const formatDateUK = (dateStr) => {
     }
 };
 
+// Render multi-line item description (line 1 regular, line 2+ italicized) to match reference invoice exactly
+const renderDescriptionLines = (desc) => {
+    if (!desc) return '—';
+    const lines = String(desc).split('\n');
+    return (
+        <div className="gig-doc-desc-block">
+            <div className="gig-doc-desc-main">{lines[0]}</div>
+            {lines.slice(1).map((line, idx) => (
+                <div key={idx} className="gig-doc-desc-sub">{line}</div>
+            ))}
+        </div>
+    );
+};
+
+// High-resolution UK Number Plate Canvas Generator for 100% Reliable HTML/PDF Rendering
+const generateUkPlateDataUrl = (registration) => {
+    if (typeof document === 'undefined') return '';
+    const regText = (registration || 'YR62XEJ').trim().toUpperCase() || 'YR62XEJ';
+
+    try {
+        const canvas = document.createElement('canvas');
+        const w = 320;
+        const h = 60;
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return '';
+
+        // Rounded yellow plate container
+        const r = 8;
+        ctx.beginPath();
+        ctx.moveTo(r, 0);
+        ctx.lineTo(w - r, 0);
+        ctx.quadraticCurveTo(w, 0, w, r);
+        ctx.lineTo(w, h - r);
+        ctx.quadraticCurveTo(w, h, w - r, h);
+        ctx.lineTo(r, h);
+        ctx.quadraticCurveTo(0, h, 0, h - r);
+        ctx.lineTo(0, r);
+        ctx.quadraticCurveTo(0, 0, r, 0);
+        ctx.closePath();
+
+        ctx.fillStyle = '#facc15';
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#ca8a04';
+        ctx.stroke();
+
+        // Blue GB euro badge on the left
+        ctx.save();
+        ctx.clip();
+
+        const badgeW = 44;
+        ctx.fillStyle = '#1d4ed8';
+        ctx.fillRect(0, 0, badgeW, h);
+
+        // Stars
+        ctx.fillStyle = '#facc15';
+        ctx.font = 'bold 9px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('★★★★', badgeW / 2, 17);
+
+        // GB text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 18px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('GB', badgeW / 2, 38);
+
+        ctx.restore();
+
+        // Registration Text
+        ctx.fillStyle = '#000000';
+        let fontSize = 32;
+        if (regText.length > 8) fontSize = 26;
+        if (regText.length > 10) fontSize = 22;
+
+        ctx.font = `900 ${fontSize}px "Arial Black", Arial, Helvetica, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const yellowCenterX = badgeW + ((w - badgeW) / 2);
+        ctx.fillText(regText, yellowCenterX, (h / 2) + 2);
+
+        return canvas.toDataURL('image/png');
+    } catch (err) {
+        console.error('Error generating UK plate image:', err);
+        return '';
+    }
+};
+
+// Default Customer details for VanCar Autos
+const DEFAULT_VANCAR_CUSTOMER = {
+    name: 'VanCar Autos',
+    address: 'Yard 1 Midland St, Manchester M12 6LB',
+    telephone: '',
+    mobile: '07386 533337',
+    email: ''
+};
+
 export default function GarageInvoiceGenerator() {
     const [invoicesList, setInvoicesList] = useState([]);
     const [carsList, setCarsList] = useState([]);
@@ -63,20 +164,10 @@ export default function GarageInvoiceGenerator() {
     // 1. Invoice Details
     const [invoiceNumber, setInvoiceNumber] = useState('');
     const [invoiceDate, setInvoiceDate] = useState(() => new Date().toISOString().slice(0, 10));
-    const [customerRef, setCustomerRef] = useState('');
-    const [vatNumber, setVatNumber] = useState('404320354');
-    const [jobNumber, setJobNumber] = useState('');
-    const [bookingDate, setBookingDate] = useState(() => new Date().toISOString().slice(0, 10));
     const [mileage, setMileage] = useState('');
 
-    // 2. Customer Details
-    const [customerDetails, setCustomerDetails] = useState({
-        name: '',
-        telephone: '',
-        mobile: '',
-        email: '',
-        address: ''
-    });
+    // 2. Customer Details (Pre-filled to VanCar Autos)
+    const [customerDetails, setCustomerDetails] = useState({ ...DEFAULT_VANCAR_CUSTOMER });
 
     // 3. Vehicle Details
     const [selectedCarId, setSelectedCarId] = useState('');
@@ -90,6 +181,12 @@ export default function GarageInvoiceGenerator() {
         year: '',
         mileage: ''
     });
+
+    // UK Yellow Number Plate Base64 PNG - 100% reliable in both preview and PDF capture
+    const plateDataUrl = useMemo(
+        () => generateUkPlateDataUrl(vehicleDetails.registration),
+        [vehicleDetails.registration]
+    );
 
     // 4. Labour Section
     const [labourItems, setLabourItems] = useState([
@@ -134,10 +231,7 @@ export default function GarageInvoiceGenerator() {
         imageData: ''
     });
 
-    // 7. Invoice Totals & VAT Rate
-    const [vatRate, setVatRate] = useState(20); // Default 20% UK rate, editable
-
-    // 8. CRITICAL: Additional Empty Field at the Very End
+    // 7. CRITICAL: Additional Empty Field at the Very End
     // Blank label, blank value, no placeholder
     const [bottomCustomField, setBottomCustomField] = useState('');
 
@@ -226,18 +320,18 @@ export default function GarageInvoiceGenerator() {
         setCurrentInvoiceId(inv.id);
         setInvoiceNumber(inv.invoice_number || '');
         setInvoiceDate(inv.invoice_date || new Date().toISOString().slice(0, 10));
-        setCustomerRef(inv.customer_ref || '');
-        setVatNumber(inv.vat_number || '404320354');
-        setJobNumber(inv.job_number || '');
-        setBookingDate(inv.booking_date || new Date().toISOString().slice(0, 10));
         setMileage(inv.mileage || inv.vehicle_details?.mileage || '');
 
+        const rawName = inv.customer_details?.name;
+        const isLegacyMrSattar = !rawName || rawName === 'Mr SATTAR' || rawName.trim() === '';
         setCustomerDetails({
-            name: inv.customer_details?.name || '',
-            telephone: inv.customer_details?.telephone || '',
-            mobile: inv.customer_details?.mobile || '',
+            name: isLegacyMrSattar ? DEFAULT_VANCAR_CUSTOMER.name : rawName,
+            telephone: '',
+            mobile: (isLegacyMrSattar || inv.customer_details?.mobile === '07581423424' || !inv.customer_details?.mobile)
+                ? DEFAULT_VANCAR_CUSTOMER.mobile
+                : inv.customer_details.mobile,
             email: inv.customer_details?.email || '',
-            address: inv.customer_details?.address || ''
+            address: inv.customer_details?.address || DEFAULT_VANCAR_CUSTOMER.address
         });
 
         setVehicleDetails({
@@ -291,7 +385,6 @@ export default function GarageInvoiceGenerator() {
             });
         }
 
-        setVatRate(inv.vat_rate !== undefined ? parseFloat(inv.vat_rate) : 20);
         setBottomCustomField(inv.bottom_custom_field || '');
     };
 
@@ -302,19 +395,9 @@ export default function GarageInvoiceGenerator() {
         setCurrentInvoiceId(null);
         setInvoiceNumber(newInvNum);
         setInvoiceDate(todayStr);
-        setCustomerRef('');
-        setVatNumber('404320354');
-        setJobNumber(`JB-${Math.floor(100000 + Math.random() * 900000)}`);
-        setBookingDate(todayStr);
         setMileage('');
 
-        setCustomerDetails({
-            name: '',
-            telephone: '',
-            mobile: '',
-            email: '',
-            address: ''
-        });
+        setCustomerDetails({ ...DEFAULT_VANCAR_CUSTOMER });
 
         setSelectedCarId('');
         setVehicleDetails({
@@ -342,7 +425,6 @@ export default function GarageInvoiceGenerator() {
             imageData: ''
         });
 
-        setVatRate(20);
         setBottomCustomField('');
         setViewMode('form');
         showToast(`Created new invoice draft: ${newInvNum}`);
@@ -373,27 +455,22 @@ export default function GarageInvoiceGenerator() {
 
     // --- Calculations ---
     // Labour Line Totals & Subtotal
-    const labourTotalExVat = labourItems.reduce((sum, item) => {
+    const labourTotal = labourItems.reduce((sum, item) => {
         const qty = parseFloat(item.quantity) || 0;
         const price = parseFloat(item.unitPrice) || 0;
         return sum + (qty * price);
     }, 0);
 
     // Products Line Totals & Subtotal
-    const productsTotalExVat = productItems.reduce((sum, item) => {
+    const productsTotal = productItems.reduce((sum, item) => {
         const qty = parseFloat(item.quantity) || 0;
         const price = parseFloat(item.unitPrice) || 0;
         return sum + (qty * price);
     }, 0);
 
-    // Subtotal = Labour Total + Products Total
-    const subtotal = labourTotalExVat + productsTotalExVat;
-
-    // VAT = Subtotal × VAT Rate
-    const vatAmount = subtotal * ((parseFloat(vatRate) || 0) / 100);
-
-    // Total Including VAT = Subtotal + VAT
-    const totalIncVat = subtotal + vatAmount;
+    // Subtotal = Labour Total + Products Total (Garage is not VAT registered, so Total = Subtotal)
+    const subtotal = labourTotal + productsTotal;
+    const totalAmount = subtotal;
 
     // --- Labour Actions ---
     const handleAddLabourRow = () => {
@@ -461,17 +538,16 @@ export default function GarageInvoiceGenerator() {
             id: currentInvoiceId || undefined,
             invoice_number: invoiceNumber.trim() || generateGarageInvoiceNumber(),
             invoice_date: invoiceDate,
-            customer_ref: customerRef.trim(),
-            vat_number: vatNumber.trim(),
-            job_number: jobNumber.trim(),
-            booking_date: bookingDate,
-            mileage: mileage.trim() || vehicleDetails.mileage.trim(),
+            customer_ref: '',
+            vat_number: '',
+            job_number: '',
+            booking_date: '',
+            mileage: vehicleDetails.mileage.trim(),
             customer_details: {
                 ...customerDetails
             },
             vehicle_details: {
-                ...vehicleDetails,
-                mileage: mileage.trim() || vehicleDetails.mileage.trim()
+                ...vehicleDetails
             },
             labour_items: labourItems.map(l => ({
                 id: l.id,
@@ -490,11 +566,12 @@ export default function GarageInvoiceGenerator() {
             garage_stamp: {
                 ...garageStamp
             },
-            vat_rate: parseFloat(vatRate) || 0,
+            vat_rate: 0,
             bottom_custom_field: bottomCustomField,
             subtotal: subtotal,
-            vat_amount: vatAmount,
-            total_inc_vat: totalIncVat
+            vat_amount: 0,
+            total_inc_vat: totalAmount,
+            total: totalAmount
         };
 
         let saved;
@@ -660,7 +737,7 @@ export default function GarageInvoiceGenerator() {
                     {/* Header */}
                     <div className="gig-doc-top">
                         <div className="gig-doc-top-left">
-                            <span className="gig-doc-top-inv-title">INVOICE NO: {invoiceNumber || 'MWJ101512'}</span>
+                            <span className="gig-doc-top-inv-title">Invoice No: {invoiceNumber || 'MWJ101512'}</span>
                             <span className="gig-doc-top-inv-copy">CUSTOMER COPY</span>
                         </div>
                         <div className="gig-doc-top-right">
@@ -670,15 +747,19 @@ export default function GarageInvoiceGenerator() {
                         </div>
                     </div>
 
-                    {/* Invoice Details Bar: Invoice No & Invoice Date only */}
-                    <div className="gig-doc-meta-bar">
-                        <div className="gig-doc-meta-bar-item">
-                            <span className="gig-doc-meta-label">Invoice No:</span>
-                            <span className="gig-doc-meta-val">{invoiceNumber || '—'}</span>
+                    {/* Metadata Grid (Invoice No & Invoice Date only) */}
+                    <div className="gig-doc-meta-grid">
+                        <div className="gig-doc-meta-col">
+                            <div className="gig-doc-meta-row">
+                                <span className="gig-doc-meta-label">Invoice No:</span>
+                                <span className="gig-doc-meta-val">{invoiceNumber || 'MWJ101512'}</span>
+                            </div>
                         </div>
-                        <div className="gig-doc-meta-bar-item">
-                            <span className="gig-doc-meta-label">Invoice Date:</span>
-                            <span className="gig-doc-meta-val">{formatDateUK(invoiceDate)}</span>
+                        <div className="gig-doc-meta-col">
+                            <div className="gig-doc-meta-row">
+                                <span className="gig-doc-meta-label">Invoice Date:</span>
+                                <span className="gig-doc-meta-val">{formatDateUK(invoiceDate)}</span>
+                            </div>
                         </div>
                     </div>
 
@@ -688,23 +769,19 @@ export default function GarageInvoiceGenerator() {
                         <div className="gig-doc-cust-col">
                             <h2 className="gig-doc-section-heading">Invoice To</h2>
                             <div className="gig-doc-cust-info">
-                                <div className="gig-doc-cust-name">{customerDetails.name || '—'}</div>
-                                {customerDetails.address && (
-                                    <div style={{ whiteSpace: 'pre-line', color: '#374151', marginBottom: '4px' }}>
-                                        {customerDetails.address}
+                                <div className="gig-doc-cust-name">{customerDetails.name || DEFAULT_VANCAR_CUSTOMER.name}</div>
+                                {(customerDetails.address || DEFAULT_VANCAR_CUSTOMER.address) && (
+                                    <div style={{ whiteSpace: 'pre-line', color: '#111827', marginBottom: '4px' }}>
+                                        {customerDetails.address || DEFAULT_VANCAR_CUSTOMER.address}
                                     </div>
                                 )}
                                 <div className="gig-doc-veh-item">
-                                    <span className="gig-doc-veh-label">Telephone:</span>
-                                    <span className="gig-doc-veh-val">{customerDetails.telephone || '—'}</span>
-                                </div>
-                                <div className="gig-doc-veh-item">
                                     <span className="gig-doc-veh-label">Mobile:</span>
-                                    <span className="gig-doc-veh-val">{customerDetails.mobile || '—'}</span>
+                                    <span className="gig-doc-veh-val">{customerDetails.mobile || DEFAULT_VANCAR_CUSTOMER.mobile}</span>
                                 </div>
                                 <div className="gig-doc-veh-item">
                                     <span className="gig-doc-veh-label">Email:</span>
-                                    <span className="gig-doc-veh-val" style={{ textTransform: 'none' }}>{customerDetails.email || '—'}</span>
+                                    <span className="gig-doc-veh-val" style={{ textTransform: 'none' }}>{customerDetails.email || ''}</span>
                                 </div>
                             </div>
                         </div>
@@ -714,43 +791,54 @@ export default function GarageInvoiceGenerator() {
                             <h2 className="gig-doc-section-heading">Vehicle Information</h2>
                             {/* UK Yellow Number Plate */}
                             <div className="gig-doc-plate-container">
-                                <div className="gig-doc-plate">
-                                    <div className="gig-doc-plate-badge">
-                                        <span className="gig-doc-plate-stars">★★★★</span>
-                                        <span className="gig-doc-plate-country">GB</span>
+                                {plateDataUrl ? (
+                                    <img
+                                        src={plateDataUrl}
+                                        alt={(vehicleDetails.registration || 'YR62XEJ').trim()}
+                                        className="gig-doc-plate-img"
+                                    />
+                                ) : (
+                                    <div
+                                        style={{
+                                            display: 'inline-block',
+                                            backgroundColor: '#facc15',
+                                            border: '1.5px solid #ca8a04',
+                                            borderRadius: '4px',
+                                            height: '30px',
+                                            lineHeight: '30px',
+                                            padding: '0 8px',
+                                            fontWeight: '900',
+                                            fontSize: '13pt',
+                                            color: '#000000'
+                                        }}
+                                    >
+                                        {(vehicleDetails.registration || '').trim() || 'YR62XEJ'}
                                     </div>
-                                    <span className="gig-doc-plate-reg">
-                                        {vehicleDetails.registration || 'YR62XEJ'}
-                                    </span>
-                                </div>
+                                )}
                             </div>
 
                             <div className="gig-doc-veh-details">
                                 <div className="gig-doc-veh-item">
                                     <span className="gig-doc-veh-label">Make/Model:</span>
                                     <span className="gig-doc-veh-val">
-                                        {vehicleDetails.make || vehicleDetails.model ? `${vehicleDetails.make} ${vehicleDetails.model}`.trim() : '—'}
+                                        {vehicleDetails.make || vehicleDetails.model ? `${vehicleDetails.make} ${vehicleDetails.model}`.trim() : 'JAGUAR XF'}
                                     </span>
                                 </div>
                                 <div className="gig-doc-veh-item">
                                     <span className="gig-doc-veh-label">Body Type:</span>
-                                    <span className="gig-doc-veh-val">{vehicleDetails.bodyType || '—'}</span>
+                                    <span className="gig-doc-veh-val">{vehicleDetails.bodyType || 'SALOON'}</span>
                                 </div>
                                 <div className="gig-doc-veh-item">
                                     <span className="gig-doc-veh-label">Engine Size:</span>
-                                    <span className="gig-doc-veh-val">{vehicleDetails.engineSize || '—'}</span>
+                                    <span className="gig-doc-veh-val">{vehicleDetails.engineSize || '2.2L (2179cc)'}</span>
                                 </div>
                                 <div className="gig-doc-veh-item">
                                     <span className="gig-doc-veh-label">Fuel Type:</span>
-                                    <span className="gig-doc-veh-val">{vehicleDetails.fuelType || '—'}</span>
+                                    <span className="gig-doc-veh-val">{vehicleDetails.fuelType || 'DIESEL'}</span>
                                 </div>
                                 <div className="gig-doc-veh-item">
                                     <span className="gig-doc-veh-label">Manufacture:</span>
-                                    <span className="gig-doc-veh-val">{vehicleDetails.year || '—'}</span>
-                                </div>
-                                <div className="gig-doc-veh-item">
-                                    <span className="gig-doc-veh-label">Mileage:</span>
-                                    <span className="gig-doc-veh-val">{vehicleDetails.mileage || mileage || '—'}</span>
+                                    <span className="gig-doc-veh-val">{vehicleDetails.year || '2012'}</span>
                                 </div>
                             </div>
                         </div>
@@ -766,7 +854,7 @@ export default function GarageInvoiceGenerator() {
                                     <th style={{ width: '42%' }}>Description</th>
                                     <th style={{ width: '12%' }} className="gig-text-center">Quantity</th>
                                     <th style={{ width: '14%' }} className="gig-text-right">Unit Price</th>
-                                    <th style={{ width: '14%' }} className="gig-text-right">Total (ex. VAT)</th>
+                                    <th style={{ width: '14%' }} className="gig-text-right">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -782,7 +870,7 @@ export default function GarageInvoiceGenerator() {
                                         return (
                                             <tr key={item.id || idx}>
                                                 <td style={{ fontWeight: 600 }}>{item.code || '—'}</td>
-                                                <td style={{ whiteSpace: 'pre-line' }}>{item.description || '—'}</td>
+                                                <td>{renderDescriptionLines(item.description)}</td>
                                                 <td className="gig-text-center">{(parseFloat(item.quantity) || 0).toFixed(2)}</td>
                                                 <td className="gig-text-right">{formatGBP(item.unitPrice)}</td>
                                                 <td className="gig-text-right" style={{ fontWeight: 600 }}>{formatGBP(lineTotal)}</td>
@@ -793,7 +881,7 @@ export default function GarageInvoiceGenerator() {
                             </tbody>
                         </table>
                         <div className="gig-doc-subtotal-line">
-                            Labour Total Ex Vat: {formatGBP(labourTotalExVat)}
+                            Labour Total: {formatGBP(labourTotal)}
                         </div>
                     </div>
 
@@ -807,7 +895,7 @@ export default function GarageInvoiceGenerator() {
                                     <th style={{ width: '42%' }}>Description</th>
                                     <th style={{ width: '12%' }} className="gig-text-center">Quantity</th>
                                     <th style={{ width: '14%' }} className="gig-text-right">Unit Price</th>
-                                    <th style={{ width: '14%' }} className="gig-text-right">Total (ex. VAT)</th>
+                                    <th style={{ width: '14%' }} className="gig-text-right">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -823,7 +911,7 @@ export default function GarageInvoiceGenerator() {
                                         return (
                                             <tr key={item.id || idx}>
                                                 <td style={{ fontWeight: 600 }}>{item.productNumber || '—'}</td>
-                                                <td style={{ whiteSpace: 'pre-line' }}>{item.description || '—'}</td>
+                                                <td>{renderDescriptionLines(item.description)}</td>
                                                 <td className="gig-text-center">{parseFloat(item.quantity) || 0}</td>
                                                 <td className="gig-text-right">{formatGBP(item.unitPrice)}</td>
                                                 <td className="gig-text-right" style={{ fontWeight: 600 }}>{formatGBP(lineTotal)}</td>
@@ -834,7 +922,7 @@ export default function GarageInvoiceGenerator() {
                             </tbody>
                         </table>
                         <div className="gig-doc-subtotal-line">
-                            Products Total Ex Vat: {formatGBP(productsTotalExVat)}
+                            Products Total: {formatGBP(productsTotal)}
                         </div>
                     </div>
 
@@ -847,7 +935,7 @@ export default function GarageInvoiceGenerator() {
                             </div>
                         </div>
 
-                        {/* Invoice Totals Summary Block */}
+                        {/* Invoice Totals Summary Block (Non-VAT Registered Garage) */}
                         <div className="gig-doc-totals-block">
                             <table className="gig-doc-totals-table">
                                 <tbody>
@@ -856,12 +944,8 @@ export default function GarageInvoiceGenerator() {
                                         <td className="gig-total-val">{formatGBP(subtotal)}</td>
                                     </tr>
                                     <tr>
-                                        <td className="gig-total-label">VAT:</td>
-                                        <td className="gig-total-val">{formatGBP(vatAmount)}</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="gig-total-label gig-doc-grand-total">Total (inc. VAT):</td>
-                                        <td className="gig-total-val gig-doc-grand-total">{formatGBP(totalIncVat)}</td>
+                                        <td className="gig-total-label gig-doc-grand-total">Total:</td>
+                                        <td className="gig-total-val gig-doc-grand-total">{formatGBP(totalAmount)}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -971,8 +1055,8 @@ export default function GarageInvoiceGenerator() {
                                     <th>Customer</th>
                                     <th>Vehicle</th>
                                     <th>Registration</th>
-                                    <th>Subtotal (ex. VAT)</th>
-                                    <th>Total (inc. VAT)</th>
+                                    <th>Subtotal</th>
+                                    <th>Total</th>
                                     <th style={{ textAlign: 'right' }}>Actions</th>
                                 </tr>
                             </thead>
@@ -1008,9 +1092,9 @@ export default function GarageInvoiceGenerator() {
                                                     {inv.vehicle_details?.registration || '—'}
                                                 </span>
                                             </td>
-                                            <td>{formatGBP(inv.subtotal)}</td>
+                                            <td>{formatGBP(inv.subtotal || inv.total)}</td>
                                             <td style={{ fontWeight: 700, color: '#0f172a' }}>
-                                                {formatGBP(inv.total_inc_vat)}
+                                                {formatGBP(inv.total ?? inv.total_inc_vat ?? inv.subtotal)}
                                             </td>
                                             <td style={{ textAlign: 'right' }}>
                                                 <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
@@ -1109,29 +1193,19 @@ export default function GarageInvoiceGenerator() {
                                     <input
                                         type="text"
                                         className="gig-input"
-                                        placeholder="e.g. Mr SATTAR"
+                                        placeholder="e.g. VanCar Autos"
                                         value={customerDetails.name}
                                         onChange={(e) => setCustomerDetails({ ...customerDetails, name: e.target.value })}
                                     />
                                 </div>
 
-                                <div className="gig-form-grid-3">
-                                    <div className="gig-form-group">
-                                        <label className="gig-label">Telephone</label>
-                                        <input
-                                            type="text"
-                                            className="gig-input"
-                                            placeholder="e.g. 0161 000 0000"
-                                            value={customerDetails.telephone}
-                                            onChange={(e) => setCustomerDetails({ ...customerDetails, telephone: e.target.value })}
-                                        />
-                                    </div>
+                                <div className="gig-form-grid-2">
                                     <div className="gig-form-group">
                                         <label className="gig-label">Mobile</label>
                                         <input
                                             type="text"
                                             className="gig-input"
-                                            placeholder="e.g. 07581423424"
+                                            placeholder="e.g. 07386 533337"
                                             value={customerDetails.mobile}
                                             onChange={(e) => setCustomerDetails({ ...customerDetails, mobile: e.target.value })}
                                         />
@@ -1152,7 +1226,7 @@ export default function GarageInvoiceGenerator() {
                                     <label className="gig-label">Customer Address</label>
                                     <textarea
                                         className="gig-textarea"
-                                        placeholder="Enter street address, city, postcode..."
+                                        placeholder="e.g. Yard 1 Midland St, Manchester M12 6LB"
                                         value={customerDetails.address}
                                         onChange={(e) => setCustomerDetails({ ...customerDetails, address: e.target.value })}
                                     />
@@ -1356,7 +1430,7 @@ export default function GarageInvoiceGenerator() {
                                         ＋ Add Labour Entry
                                     </button>
                                     <div className="gig-subtotal-indicator">
-                                        Labour Subtotal Ex VAT: {formatGBP(labourTotalExVat)}
+                                        Labour Subtotal: {formatGBP(labourTotal)}
                                     </div>
                                 </div>
                             </div>
@@ -1438,7 +1512,7 @@ export default function GarageInvoiceGenerator() {
                                         ＋ Add Product
                                     </button>
                                     <div className="gig-subtotal-indicator">
-                                        Products Subtotal Ex VAT: {formatGBP(productsTotalExVat)}
+                                        Products Subtotal: {formatGBP(productsTotal)}
                                     </div>
                                 </div>
                             </div>
@@ -1519,50 +1593,27 @@ export default function GarageInvoiceGenerator() {
                                 )}
                             </div>
 
-                            {/* Section 7: Invoice Totals & VAT */}
+                            {/* Section 7: Invoice Totals */}
                             <div className="gig-section">
                                 <h2 className="gig-section-title">7. Invoice Totals</h2>
 
                                 <div className="gig-totals-summary-card">
                                     <div className="gig-total-row">
-                                        <span>Labour Total Ex VAT:</span>
-                                        <strong>{formatGBP(labourTotalExVat)}</strong>
+                                        <span>Labour Total:</span>
+                                        <strong>{formatGBP(labourTotal)}</strong>
                                     </div>
                                     <div className="gig-total-row">
-                                        <span>Products Total Ex VAT:</span>
-                                        <strong>{formatGBP(productsTotalExVat)}</strong>
+                                        <span>Products Total:</span>
+                                        <strong>{formatGBP(productsTotal)}</strong>
                                     </div>
                                     <div className="gig-total-row" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.4rem' }}>
-                                        <span style={{ fontWeight: 600 }}>Subtotal (Ex VAT):</span>
+                                        <span style={{ fontWeight: 600 }}>Subtotal:</span>
                                         <strong>{formatGBP(subtotal)}</strong>
                                     </div>
 
-                                    <div className="gig-total-row" style={{ alignItems: 'center' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <span>VAT Rate:</span>
-                                            <input
-                                                type="number"
-                                                step="0.5"
-                                                min="0"
-                                                max="100"
-                                                value={vatRate}
-                                                onChange={(e) => setVatRate(e.target.value)}
-                                                style={{
-                                                    width: '65px',
-                                                    padding: '0.25rem 0.5rem',
-                                                    border: '1px solid #cbd5e1',
-                                                    borderRadius: '4px',
-                                                    fontSize: '0.875rem'
-                                                }}
-                                            />
-                                            <span>%</span>
-                                        </div>
-                                        <strong>{formatGBP(vatAmount)}</strong>
-                                    </div>
-
                                     <div className="gig-total-row gig-total-row--strong">
-                                        <span>Total Including VAT:</span>
-                                        <span style={{ color: '#166534' }}>{formatGBP(totalIncVat)}</span>
+                                        <span>Total:</span>
+                                        <span style={{ color: '#166534' }}>{formatGBP(totalAmount)}</span>
                                     </div>
                                 </div>
                             </div>

@@ -847,7 +847,9 @@ export async function syncAutoTraderStock() {
             try {
                 const errData = await response.json();
                 if (errData && errData.error) errorMsg = errData.error;
-            } catch (_) {}
+            } catch {
+                // ignore json parse error
+            }
             throw new Error(errorMsg);
         }
         const data = await response.json();
@@ -929,17 +931,17 @@ const INITIAL_SAMPLE_GARAGE_INVOICE = {
     id: 'sample-garage-inv-1',
     invoice_number: 'MWJ101512',
     invoice_date: '2023-08-15',
-    customer_ref: 'CR-7821',
-    vat_number: '404320354',
-    job_number: 'MWJ102518',
-    booking_date: '2023-08-15',
+    customer_ref: '',
+    vat_number: '',
+    job_number: '',
+    booking_date: '',
     mileage: '84598',
     customer_details: {
-        name: 'Mr SATTAR',
+        name: 'VanCar Autos',
         telephone: '',
-        mobile: '07581423424',
+        mobile: '07386 533337',
         email: '',
-        address: ''
+        address: 'Yard 1 Midland St, Manchester M12 6LB'
     },
     vehicle_details: {
         registration: 'YR62XEJ',
@@ -983,14 +985,39 @@ const INITIAL_SAMPLE_GARAGE_INVOICE = {
             unit_price: 95.36
         }
     ],
-    vat_rate: 20,
+    subtotal: 316.71,
+    vat_amount: 0,
+    total: 316.71,
+    total_inc_vat: 316.71,
+    vat_rate: 0,
     bottom_custom_field: '',
     created_at: '2023-08-15T10:00:00.000Z',
     updated_at: '2023-08-15T10:00:00.000Z'
 };
 
 export function getGarageInvoices() {
-    return initData(GARAGE_INVOICES_KEY, [INITIAL_SAMPLE_GARAGE_INVOICE]);
+    const list = initData(GARAGE_INVOICES_KEY, [INITIAL_SAMPLE_GARAGE_INVOICE]);
+    let modified = false;
+    const sanitized = list.map(inv => {
+        if (!inv.customer_details || inv.customer_details.name === 'Mr SATTAR' || !inv.customer_details.name) {
+            modified = true;
+            return {
+                ...inv,
+                customer_details: {
+                    ...inv.customer_details,
+                    name: 'VanCar Autos',
+                    telephone: '',
+                    mobile: (inv.customer_details?.mobile === '07581423424' || !inv.customer_details?.mobile) ? '07386 533337' : inv.customer_details.mobile,
+                    address: inv.customer_details?.address || 'Yard 1 Midland St, Manchester M12 6LB'
+                }
+            };
+        }
+        return inv;
+    });
+    if (modified) {
+        saveData(GARAGE_INVOICES_KEY, sanitized);
+    }
+    return sanitized;
 }
 
 export function getGarageInvoiceById(id) {
