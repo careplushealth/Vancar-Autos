@@ -9,6 +9,7 @@ const GENERAL_EXPENSES_KEY = 'vancar_general_expenses';
 const INVOICES_KEY = 'vancar_invoices';
 const DEPOSIT_SLIPS_KEY = 'vancar_deposit_slips';
 const DISTANCE_SALE_FORMS_KEY = 'vancar_distance_sale_forms';
+const GARAGE_INVOICES_KEY = 'vancar_garage_invoices';
 const CUSTOMERS_KEY = 'vancar_customers';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -74,12 +75,13 @@ export async function syncDataFromServer(retryCount = 1) {
 
 export async function syncAdminDataFromServer() {
     try {
-        const [expensesRes, invoicesRes, generalExpensesRes, depositSlipsRes, customersRes] = await Promise.all([
+        const [expensesRes, invoicesRes, generalExpensesRes, depositSlipsRes, customersRes, garageInvoicesRes] = await Promise.all([
             fetchWithTimeout(`${API_URL}/vehicle-expenses`, {}, 10000),
             fetchWithTimeout(`${API_URL}/invoices`, {}, 10000),
             fetchWithTimeout(`${API_URL}/general-expenses`, {}, 10000),
             fetchWithTimeout(`${API_URL}/deposit-slips`, {}, 10000),
-            fetchWithTimeout(`${API_URL}/customers`, {}, 10000)
+            fetchWithTimeout(`${API_URL}/customers`, {}, 10000),
+            fetchWithTimeout(`${API_URL}/garage-invoices`, {}, 10000)
         ]);
 
         if (expensesRes && expensesRes.ok) {
@@ -101,6 +103,10 @@ export async function syncAdminDataFromServer() {
         if (customersRes && customersRes.ok) {
             const customers = await customersRes.json();
             if (Array.isArray(customers)) saveData(CUSTOMERS_KEY, customers);
+        }
+        if (garageInvoicesRes && garageInvoicesRes.ok) {
+            const gInvoices = await garageInvoicesRes.json();
+            if (Array.isArray(gInvoices)) saveData(GARAGE_INVOICES_KEY, gInvoices);
         }
     } catch (err) {
         console.error("Admin data sync notice:", err);
@@ -910,6 +916,139 @@ export function deleteDepositSlip(id) {
     const slips = getDepositSlips().filter(s => s.id !== id);
     saveData(DEPOSIT_SLIPS_KEY, slips);
     syncNeon(`/deposit-slips/${id}`, 'DELETE');
+}
+
+// === Garage Invoices (Crystal Shine Motors Ltd) ===
+export const DEFAULT_GARAGE_BUSINESS = {
+    name: 'Crystal Shine Motors Ltd',
+    address: 'Unit 2, Smithfield Enterprise Estate, 5 Whitworth St E, Openshaw, Manchester, M11 2NQ',
+    telephone: '0161 637 8850'
+};
+
+const INITIAL_SAMPLE_GARAGE_INVOICE = {
+    id: 'sample-garage-inv-1',
+    invoice_number: 'MWJ101512',
+    invoice_date: '2023-08-15',
+    customer_ref: 'CR-7821',
+    vat_number: '404320354',
+    job_number: 'MWJ102518',
+    booking_date: '2023-08-15',
+    mileage: '84598',
+    customer_details: {
+        name: 'Mr SATTAR',
+        telephone: '',
+        mobile: '07581423424',
+        email: '',
+        address: ''
+    },
+    vehicle_details: {
+        registration: 'YR62XEJ',
+        make: 'JAGUAR',
+        model: 'XF',
+        body_type: 'SALOON',
+        engine_size: '2.2L (2179cc)',
+        fuel_type: 'DIESEL',
+        manufacture_year: '2012',
+        mileage: '84598'
+    },
+    labour_items: [
+        {
+            id: 'lab-1',
+            code: 'LAB1',
+            description: 'Standard Labour\nO/S/F SUSPENSION ARM TOP',
+            quantity: 1.00,
+            unit_price: 62.00
+        },
+        {
+            id: 'lab-2',
+            code: 'LAB1',
+            description: 'Standard Labour\nN/S/F SUSPENSION ARM TOP',
+            quantity: 1.00,
+            unit_price: 63.00
+        }
+    ],
+    product_items: [
+        {
+            id: 'prod-1',
+            product_number: '615630269',
+            description: 'SUSPENSION ARM (FR AXLE) UPP LH -\nS-TYPE 99-09 / XF 08- (FROM M45255)',
+            quantity: 1,
+            unit_price: 96.35
+        },
+        {
+            id: 'prod-2',
+            product_number: '615630279',
+            description: 'SUSPENSION ARM (FR AXLE) UPP RH -\nS-TYPE 99-09 / XF 08- (FROM M45255)',
+            quantity: 1,
+            unit_price: 95.36
+        }
+    ],
+    vat_rate: 20,
+    bottom_custom_field: '',
+    created_at: '2023-08-15T10:00:00.000Z',
+    updated_at: '2023-08-15T10:00:00.000Z'
+};
+
+export function getGarageInvoices() {
+    return initData(GARAGE_INVOICES_KEY, [INITIAL_SAMPLE_GARAGE_INVOICE]);
+}
+
+export function getGarageInvoiceById(id) {
+    const invoices = getGarageInvoices();
+    return invoices.find(inv => inv.id === id) || null;
+}
+
+export function generateGarageInvoiceNumber() {
+    const invoices = getGarageInvoices();
+    const prefix = `MWJ`;
+    
+    const existingNumbers = invoices
+        .map(i => i.invoice_number || '')
+        .filter(n => n.startsWith(prefix))
+        .map(n => parseInt(n.replace(prefix, ''), 10))
+        .filter(n => !isNaN(n));
+    
+    const maxNum = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 101512;
+    const nextNum = maxNum + 1;
+    return `${prefix}${nextNum}`;
+}
+
+export function createGarageInvoice(invoiceData) {
+    const invoices = getGarageInvoices();
+    const nowStr = new Date().toISOString();
+    const newInvoice = {
+        ...invoiceData,
+        id: invoiceData.id || generateId(),
+        invoice_number: invoiceData.invoice_number || generateGarageInvoiceNumber(),
+        created_at: nowStr,
+        updated_at: nowStr
+    };
+    invoices.unshift(newInvoice);
+    saveData(GARAGE_INVOICES_KEY, invoices);
+    syncNeon('/garage-invoices', 'POST', newInvoice);
+    return newInvoice;
+}
+
+export function updateGarageInvoice(id, invoiceData) {
+    const invoices = getGarageInvoices();
+    const idx = invoices.findIndex(i => i.id === id);
+    if (idx === -1) return null;
+    const nowStr = new Date().toISOString();
+    invoices[idx] = {
+        ...invoices[idx],
+        ...invoiceData,
+        id,
+        updated_at: nowStr
+    };
+    saveData(GARAGE_INVOICES_KEY, invoices);
+    syncNeon(`/garage-invoices/${id}`, 'PUT', invoices[idx]);
+    return invoices[idx];
+}
+
+export function deleteGarageInvoice(id) {
+    const invoices = getGarageInvoices().filter(i => i.id !== id);
+    saveData(GARAGE_INVOICES_KEY, invoices);
+    syncNeon(`/garage-invoices/${id}`, 'DELETE');
 }
 
 // === Distance Sale Right to Cancel Forms ===

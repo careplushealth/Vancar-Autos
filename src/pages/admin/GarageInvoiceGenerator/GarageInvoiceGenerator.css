@@ -1,0 +1,1287 @@
+/* Garage Invoice Generator Styles - Vancar Autos Admin Portal */
+
+.gig-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 1.25rem 1.5rem;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+/* Header */
+.gig-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.gig-header-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 0.25rem 0;
+}
+
+.gig-header-subtitle {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin: 0;
+}
+
+.gig-header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* View Mode Toggles (Split / Full Editor / Preview) */
+.gig-layout-mode-toggles {
+    display: flex;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    gap: 3px;
+}
+
+.gig-layout-toggle-btn {
+    border: none;
+    background: transparent;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.gig-layout-toggle-btn:hover {
+    color: #0f172a;
+}
+
+.gig-layout-toggle-btn--active {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Card Container */
+.gig-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* List View Table Controls */
+.gig-table-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.gig-search-input {
+    max-width: 420px;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.gig-search-input:focus {
+    outline: none;
+    border-color: #55A01F;
+    background: #ffffff;
+}
+
+.gig-count-badge {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+}
+
+.gig-table-scroll {
+    overflow-x: auto;
+}
+
+.gig-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.gig-table th {
+    background: #f8fafc;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.gig-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+    vertical-align: middle;
+}
+
+.gig-table tr:hover td {
+    background: #f8fafc;
+}
+
+.gig-badge {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+.gig-badge--yellow-plate {
+    background: #facc15;
+    color: #000000;
+    border: 1px solid #ca8a04;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.gig-badge--inv {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+/* SLIDEABLE RESIZABLE SPLIT LAYOUT */
+.gig-split-layout {
+    display: flex;
+    width: 100%;
+    align-items: flex-start;
+    gap: 0;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.gig-split-layout--dragging {
+    user-select: none;
+    cursor: col-resize !important;
+}
+
+.gig-split-layout--dragging * {
+    user-select: none !important;
+    pointer-events: none !important;
+}
+
+.gig-split-layout--dragging .gig-splitter-bar {
+    pointer-events: auto !important;
+}
+
+/* Form Column */
+.gig-form-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+    min-width: 320px;
+    padding-right: 1rem;
+    box-sizing: border-box;
+}
+
+.gig-split-layout--full-form .gig-form-column {
+    width: 100% !important;
+    padding-right: 0 !important;
+}
+
+/* Preview Column */
+.gig-preview-column {
+    position: sticky;
+    top: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 320px;
+    padding-left: 1rem;
+    box-sizing: border-box;
+}
+
+.gig-split-layout--full-preview .gig-preview-column {
+    width: 100% !important;
+    padding-left: 0 !important;
+}
+
+/* INTERACTIVE DRAGGABLE SPLITTER DIVIDER */
+.gig-splitter-bar {
+    width: 24px;
+    margin: 0 -4px;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: col-resize;
+    position: relative;
+    z-index: 30;
+    user-select: none;
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+}
+
+.gig-splitter-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    background: #cbd5e1;
+    transform: translateX(-50%);
+    transition: all 0.15s ease;
+}
+
+.gig-splitter-bar:hover::before,
+.gig-splitter-bar--dragging::before {
+    background: #55A01F;
+    width: 4px;
+    box-shadow: 0 0 8px rgba(85, 160, 31, 0.4);
+}
+
+.gig-splitter-handle {
+    position: sticky;
+    top: 35vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: #0f172a;
+    color: #ffffff;
+    border-radius: 20px;
+    padding: 7px 4px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    border: 1px solid #334155;
+    z-index: 35;
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.gig-splitter-bar:hover .gig-splitter-handle,
+.gig-splitter-bar--dragging .gig-splitter-handle {
+    background: #55A01F;
+    border-color: #55A01F;
+    transform: scale(1.1);
+}
+
+.gig-splitter-grip {
+    font-size: 11px;
+    line-height: 1;
+    letter-spacing: -1px;
+    color: #cbd5e1;
+    cursor: col-resize;
+}
+
+.gig-splitter-arrow-btn {
+    border: none;
+    background: transparent;
+    color: #ffffff;
+    font-size: 8px;
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 50%;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+}
+
+.gig-splitter-arrow-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Sections inside Form */
+.gig-section {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1.35rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.gig-section-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 0.5rem;
+}
+
+.gig-section-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: #64748b;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+
+.gig-form-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.gig-form-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 1rem;
+}
+
+.gig-form-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 1rem;
+}
+
+.gig-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+}
+
+.gig-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    white-space: nowrap;
+}
+
+.gig-input,
+.gig-select,
+.gig-textarea {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #0f172a;
+    background: #ffffff;
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+}
+
+.gig-input:focus,
+.gig-select:focus,
+.gig-textarea:focus {
+    outline: none;
+    border-color: #55A01F;
+    box-shadow: 0 0 0 2px rgba(85, 160, 31, 0.15);
+}
+
+.gig-textarea {
+    resize: vertical;
+    min-height: 60px;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+/* Quick Fill Bar */
+.gig-quickfill-box {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.gig-quickfill-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* RESPONSIVE WIDE ITEMS TABLE */
+.gig-items-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 0.85rem;
+    background: #ffffff;
+}
+
+.gig-items-form-table {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+}
+
+.gig-items-form-table th {
+    background: #f8fafc;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.825rem;
+    font-weight: 700;
+    color: #475569;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.gig-items-form-table td {
+    padding: 0.55rem 0.65rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+    background: #ffffff;
+}
+
+/* Fixed comfortable column widths */
+.gig-col-code {
+    width: 140px;
+    min-width: 120px;
+}
+
+.gig-col-desc {
+    min-width: 230px;
+}
+
+.gig-col-qty {
+    width: 95px;
+    min-width: 85px;
+}
+
+.gig-col-price {
+    width: 135px;
+    min-width: 120px;
+}
+
+.gig-col-action {
+    width: 44px;
+    min-width: 44px;
+    text-align: center;
+}
+
+.gig-items-form-table td input[type="text"],
+.gig-items-form-table td input[type="number"],
+.gig-items-form-table td textarea {
+    padding: 0.55rem 0.65rem;
+    font-size: 0.875rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    width: 100%;
+    box-sizing: border-box;
+    background: #ffffff;
+}
+
+.gig-items-form-table td input:focus,
+.gig-items-form-table td textarea:focus {
+    border-color: #55A01F;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(85, 160, 31, 0.12);
+}
+
+.gig-items-form-table td textarea {
+    min-height: 48px;
+    line-height: 1.35;
+    resize: vertical;
+}
+
+.gig-items-form-table td input[type="number"] {
+    text-align: right;
+    font-weight: 600;
+}
+
+.gig-btn-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px dashed #86efac;
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.gig-btn-add:hover {
+    background: #dcfce7;
+    border-color: #4ade80;
+}
+
+.gig-btn-remove {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+}
+
+.gig-btn-remove:hover {
+    background: #fee2e2;
+}
+
+.gig-subtotal-indicator {
+    text-align: right;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #0f172a;
+    padding: 0.5rem 0;
+}
+
+/* Garage Stamp Section in Form */
+.gig-stamp-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.65rem;
+    margin-bottom: 0.85rem;
+}
+
+.gig-stamp-option-card {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.65rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+    background: #f8fafc;
+}
+
+.gig-stamp-option-card:hover {
+    border-color: #cbd5e1;
+    background: #ffffff;
+}
+
+.gig-stamp-option-card--active {
+    border-color: #55A01F;
+    background: #f0fdf4;
+    box-shadow: 0 0 0 1px #55A01F;
+}
+
+.gig-stamp-option-icon {
+    font-size: 1.25rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.gig-stamp-option-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0f172a;
+    display: block;
+}
+
+.gig-stamp-option-desc {
+    font-size: 0.7rem;
+    color: #64748b;
+    display: block;
+    margin-top: 0.15rem;
+}
+
+/* Totals Summary Form Card */
+.gig-totals-summary-card {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.gig-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+    color: #334155;
+}
+
+.gig-total-row--strong {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    border-top: 2px solid #cbd5e1;
+    padding-top: 0.65rem;
+    margin-top: 0.25rem;
+}
+
+/* Empty Field at the Very End Section */
+.gig-empty-field-section {
+    background: #ffffff;
+    border: 1px dashed #94a3b8;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.gig-empty-textarea {
+    width: 100%;
+    min-height: 70px;
+    padding: 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+/* PREVIEW CONTROLS & DOCUMENT */
+.gig-preview-controls {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 0.65rem 1rem;
+    border-radius: 8px 8px 0 0;
+    box-sizing: border-box;
+    font-size: 0.85rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.gig-zoom-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.gig-zoom-btn {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #ffffff;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.15s ease;
+}
+
+.gig-zoom-btn:hover {
+    background: #334155;
+}
+
+.gig-zoom-btn--active {
+    background: #55A01F;
+    border-color: #55A01F;
+    color: #ffffff;
+}
+
+.gig-document-wrapper {
+    width: 100%;
+    overflow: auto;
+    background: #64748b;
+    padding: 1.5rem 1rem;
+    border-radius: 0 0 8px 8px;
+    display: flex;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 520px;
+    transition: all 0.2s ease;
+}
+
+/* Exact A4 Document Styling */
+.gig-document {
+    width: 210mm;
+    min-height: 295mm;
+    max-height: 295mm;
+    background: #ffffff;
+    color: #111827;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 9pt;
+    line-height: 1.35;
+    padding: 10mm 12mm;
+    box-sizing: border-box;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    transform-origin: top center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+/* Invoice Header in Document */
+.gig-doc-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    border-bottom: 2px solid #cbd5e1;
+}
+
+.gig-doc-top-left {
+    display: flex;
+    flex-direction: column;
+}
+
+.gig-doc-top-inv-title {
+    font-size: 13pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.gig-doc-top-inv-copy {
+    font-size: 9pt;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 1.5px;
+    margin-top: 3px;
+}
+
+.gig-doc-top-right {
+    text-align: right;
+    max-width: 60%;
+}
+
+.gig-doc-business-name {
+    font-size: 16pt;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 3px 0;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.gig-doc-business-addr {
+    font-size: 8.5pt;
+    color: #374151;
+    line-height: 1.3;
+    margin: 0;
+}
+
+.gig-doc-business-tel {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #111827;
+    margin: 3px 0 0 0;
+}
+
+/* Metadata Bar (Invoice No & Invoice Date only) */
+.gig-doc-meta-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px 16px;
+    margin-bottom: 16px;
+    font-size: 9.5pt;
+}
+
+.gig-doc-meta-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gig-doc-meta-label {
+    color: #475569;
+    font-weight: 700;
+}
+
+.gig-doc-meta-val {
+    color: #0f172a;
+    font-weight: 800;
+}
+
+/* Customer & Vehicle 2-Column Section */
+.gig-doc-mid-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    border-bottom: 1.5px solid #e2e8f0;
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+}
+
+.gig-doc-cust-col {
+    width: 48%;
+}
+
+.gig-doc-veh-col {
+    width: 48%;
+}
+
+.gig-doc-section-heading {
+    font-size: 9.5pt;
+    font-weight: 800;
+    color: #1e293b;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    background: #e2e8f0;
+    border-left: 4px solid #334155;
+    margin: 0 0 8px 0;
+    letter-spacing: 0.5px;
+}
+
+.gig-doc-cust-info {
+    font-size: 9pt;
+    line-height: 1.5;
+    padding: 0 4px;
+}
+
+.gig-doc-cust-name {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 10.5pt;
+    margin-bottom: 2px;
+}
+
+/* Registration Plate */
+.gig-doc-plate-container {
+    margin-bottom: 8px;
+}
+
+.gig-doc-plate {
+    display: inline-flex;
+    align-items: center;
+    background: #facc15;
+    border: 2px solid #ca8a04;
+    border-radius: 5px;
+    padding: 4px 10px;
+    gap: 8px;
+    height: 36px;
+    box-sizing: border-box;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.gig-doc-plate-badge {
+    background: #1d4ed8;
+    color: #ffffff;
+    height: 100%;
+    padding: 2px 4px;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    line-height: 1.1;
+}
+
+.gig-doc-plate-stars {
+    font-size: 4.5pt;
+    color: #facc15;
+    line-height: 1;
+    letter-spacing: 0.5px;
+}
+
+.gig-doc-plate-country {
+    font-size: 7pt;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1;
+}
+
+.gig-doc-plate-reg {
+    padding: 0 4px;
+    font-size: 14pt;
+    font-weight: 900;
+    color: #000000;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: monospace, sans-serif;
+}
+
+.gig-doc-veh-details {
+    font-size: 8.5pt;
+    line-height: 1.45;
+}
+
+.gig-doc-veh-item {
+    display: flex;
+    margin-bottom: 2px;
+}
+
+.gig-doc-veh-label {
+    width: 105px;
+    color: #475569;
+    font-weight: 600;
+}
+
+.gig-doc-veh-val {
+    flex: 1;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* Tables in Document */
+.gig-doc-table-section {
+    margin-bottom: 14px;
+}
+
+.gig-doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+}
+
+.gig-doc-table th {
+    background: #f1f5f9;
+    border-top: 1px solid #cbd5e1;
+    border-bottom: 2px solid #cbd5e1;
+    padding: 7px 10px;
+    font-weight: 700;
+    color: #475569;
+    text-align: left;
+}
+
+.gig-doc-table th.gig-text-right {
+    text-align: right;
+}
+
+.gig-doc-table th.gig-text-center {
+    text-align: center;
+}
+
+.gig-doc-table td {
+    padding: 9px 10px;
+    vertical-align: top;
+    color: #1e293b;
+    border-bottom: 1px solid #e2e8f0;
+    line-height: 1.45;
+}
+
+.gig-doc-table td.gig-text-right {
+    text-align: right;
+}
+
+.gig-doc-table td.gig-text-center {
+    text-align: center;
+}
+
+.gig-doc-subtotal-line {
+    text-align: right;
+    font-weight: 700;
+    font-size: 9.5pt;
+    color: #0f172a;
+    padding: 6px 10px;
+}
+
+/* Bottom Row with Garage Stamp on Left & Totals on Right */
+.gig-doc-bottom-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1.5px solid #e2e8f0;
+    gap: 1.25rem;
+}
+
+/* Official Garage Stamp Box */
+.gig-doc-stamp-container {
+    width: 250px;
+    max-width: 250px;
+}
+
+.gig-doc-stamp-box {
+    border: 2px dashed #94a3b8;
+    border-radius: 6px;
+    padding: 6px;
+    min-height: 85px;
+    height: 85px;
+    width: 250px;
+    background: #ffffff;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.gig-doc-stamp-blank-inner {
+    width: 100%;
+    height: 100%;
+}
+
+.gig-doc-stamp-header {
+    font-size: 7.5pt;
+    font-weight: 800;
+    color: #475569;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+}
+
+.gig-doc-stamp-digital {
+    border: 2px solid #166534;
+    border-radius: 6px;
+    padding: 6px 10px;
+    background: #f0fdf4;
+    color: #166534;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.gig-doc-stamp-digital-title {
+    font-size: 8.5pt;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.gig-doc-stamp-digital-sub {
+    font-size: 6.5pt;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-top: 2px;
+    line-height: 1.2;
+}
+
+.gig-doc-stamp-custom-text {
+    font-size: 8pt;
+    color: #1e293b;
+    font-weight: 600;
+    white-space: pre-line;
+    line-height: 1.35;
+    text-align: center;
+}
+
+.gig-doc-stamp-img {
+    max-height: 70px;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* Totals Summary Block */
+.gig-doc-totals-block {
+    width: 240px;
+}
+
+.gig-doc-totals-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+}
+
+.gig-doc-totals-table td {
+    padding: 2.5px 6px;
+}
+
+.gig-doc-totals-table .gig-total-label {
+    text-align: right;
+    color: #475569;
+    font-weight: 600;
+}
+
+.gig-doc-totals-table .gig-total-val {
+    text-align: right;
+    font-weight: 600;
+    width: 85px;
+    color: #0f172a;
+}
+
+.gig-doc-grand-total {
+    font-size: 11pt !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    border-top: 2px solid #0f172a !important;
+    border-bottom: 3px double #0f172a !important;
+    padding: 5px 6px 3px 6px !important;
+}
+
+/* Empty field at the very end in printable document */
+.gig-doc-empty-field {
+    min-height: 32px;
+    padding: 6px 10px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 4px;
+    font-size: 8.5pt;
+    line-height: 1.3;
+    white-space: pre-wrap;
+    color: #1f2937;
+    margin-top: 10px;
+    box-sizing: border-box;
+}
+
+/* Notification Toast */
+.gig-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 0.85rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-left: 4px solid #55A01F;
+    animation: gigFadeIn 0.2s ease;
+}
+
+@keyframes gigFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Modal View */
+.gig-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 1rem;
+}
+
+.gig-modal-content {
+    background: #ffffff;
+    border-radius: 12px;
+    max-width: 900px;
+    width: 100%;
+    max-height: 94vh;
+    overflow-y: auto;
+    padding: 1.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* PRINT MEDIA QUERIES (100% Guaranteed 1-Page Output) */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+
+    html, body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: #000000 !important;
+        overflow: hidden !important;
+        height: 100% !important;
+        max-height: 297mm !important;
+    }
+
+    .admin-layout__sidebar,
+    .admin-mobile-bar,
+    .admin-mobile-backdrop,
+    .gig-header,
+    .gig-form-column,
+    .gig-splitter-bar,
+    .gig-preview-controls,
+    .gig-toast,
+    .gig-table-controls,
+    .gig-list-view,
+    #gig-pdf-capture-container,
+    .no-print {
+        display: none !important;
+    }
+
+    .gig-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .gig-split-layout {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .gig-preview-column {
+        position: static !important;
+        width: 100% !important;
+        padding: 0 !important;
+    }
+
+    .gig-document-wrapper {
+        background: transparent !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+
+    .gig-document {
+        width: 210mm !important;
+        max-height: 295mm !important;
+        height: 295mm !important;
+        transform: none !important;
+        box-shadow: none !important;
+        padding: 10mm 12mm !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+        overflow: hidden !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .gig-doc-stamp-box {
+        border: 1.5px dashed #64748b !important;
+        background: #ffffff !important;
+    }
+
+    .gig-doc-empty-field {
+        border: 1px dashed #94a3b8 !important;
+    }
+}

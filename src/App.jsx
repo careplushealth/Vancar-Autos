@@ -32,6 +32,7 @@ const Enquiries = lazy(() => import('./pages/admin/Enquiries/Enquiries'));
 const FinanceApplications = lazy(() => import('./pages/admin/FinanceApplications/FinanceApplications'));
 const BannerGenerator = lazy(() => import('./pages/admin/BannerGenerator/BannerGenerator'));
 const InvoiceGenerator = lazy(() => import('./pages/admin/InvoiceGenerator/InvoiceGenerator'));
+const GarageInvoiceGenerator = lazy(() => import('./pages/admin/GarageInvoiceGenerator/GarageInvoiceGenerator'));
 const DepositSlipGenerator = lazy(() => import('./pages/admin/DepositSlipGenerator/DepositSlipGenerator'));
 const DistanceSaleGenerator = lazy(() => import('./pages/admin/DistanceSaleGenerator/DistanceSaleGenerator'));
 const Customers = lazy(() => import('./pages/admin/Customers/Customers'));
@@ -127,6 +128,7 @@ const router = createBrowserRouter(
         <Route path="customers" element={<Customers />} />
         <Route path="sales" element={<SalesPlaceholder />} />
         <Route path="invoices" element={<InvoiceGenerator />} />
+        <Route path="garage-invoices" element={<GarageInvoiceGenerator />} />
         <Route path="deposit-slips" element={<DepositSlipGenerator />} />
         <Route path="distance-sale" element={<DistanceSaleGenerator />} />
         <Route path="settings" element={<Settings />} />
