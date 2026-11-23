@@ -153,13 +153,44 @@ const initDB = async () => {
         await db.query(`
             CREATE TABLE IF NOT EXISTS invoices (
                 id VARCHAR(50) PRIMARY KEY,
-                invoice_number VARCHAR(50) UNIQUE NOT NULL,
+                invoice_number VARCHAR(50) NOT NULL,
                 invoice_date VARCHAR(50) NOT NULL,
                 due_date VARCHAR(50) NOT NULL,
                 customer_details JSONB NOT NULL,
                 vehicle_details JSONB NOT NULL,
                 sale_details JSONB NOT NULL,
                 notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        await db.query(`
+            ALTER TABLE invoices DROP CONSTRAINT IF EXISTS invoices_invoice_number_key;
+        `);
+
+        // Create garage_invoices table
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS garage_invoices (
+                id VARCHAR(50) PRIMARY KEY,
+                invoice_number VARCHAR(50) NOT NULL,
+                invoice_date VARCHAR(50) NOT NULL,
+                customer_ref VARCHAR(100),
+                vat_number VARCHAR(100),
+                job_number VARCHAR(100),
+                booking_date VARCHAR(50),
+                mileage VARCHAR(50),
+                customer_details JSONB NOT NULL,
+                vehicle_details JSONB NOT NULL,
+                labour_items JSONB,
+                product_items JSONB,
+                garage_stamp JSONB,
+                vat_rate NUMERIC DEFAULT 0,
+                bottom_custom_field TEXT,
+                subtotal NUMERIC DEFAULT 0,
+                vat_amount NUMERIC DEFAULT 0,
+                total_inc_vat NUMERIC DEFAULT 0,
+                total NUMERIC DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -1068,7 +1099,10 @@ app.post('/api/invoices', async (req, res) => {
     try {
         const result = await db.query(
             `INSERT INTO invoices (id, invoice_number, invoice_date, due_date, customer_details, vehicle_details, sale_details, notes, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()) RETURNING *`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+             ON CONFLICT (id) DO UPDATE 
+             SET invoice_number=$2, invoice_date=$3, due_date=$4, customer_details=$5, vehicle_details=$6, sale_details=$7, notes=$8, updated_at=NOW()
+             RETURNING *`,
             [id, invoice_number, invoice_date, due_date, JSON.stringify(customer_details), JSON.stringify(vehicle_details), JSON.stringify(sale_details), formattedNotes]
         );
         res.json(result.rows[0]);
@@ -1101,6 +1135,102 @@ app.delete('/api/invoices/:id', async (req, res) => {
     try {
         await db.query('DELETE FROM invoices WHERE id=$1', [id]);
         res.json({ message: 'Invoice deleted successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// --- GARAGE INVOICES API ---
+
+app.get('/api/garage-invoices', async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM garage_invoices ORDER BY created_at DESC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/garage-invoices', async (req, res) => {
+    const {
+        id, invoice_number, invoice_date, customer_ref, vat_number, job_number,
+        booking_date, mileage, customer_details, vehicle_details, labour_items,
+        product_items, garage_stamp, vat_rate, bottom_custom_field, subtotal,
+        vat_amount, total_inc_vat, total
+    } = req.body;
+
+    try {
+        const result = await db.query(
+            `INSERT INTO garage_invoices (
+                id, invoice_number, invoice_date, customer_ref, vat_number, job_number,
+                booking_date, mileage, customer_details, vehicle_details, labour_items,
+                product_items, garage_stamp, vat_rate, bottom_custom_field, subtotal,
+                vat_amount, total_inc_vat, total, created_at, updated_at
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW(), NOW()
+            )
+            ON CONFLICT (id) DO UPDATE 
+            SET invoice_number=$2, invoice_date=$3, customer_ref=$4, vat_number=$5, job_number=$6,
+                booking_date=$7, mileage=$8, customer_details=$9, vehicle_details=$10, labour_items=$11,
+                product_items=$12, garage_stamp=$13, vat_rate=$14, bottom_custom_field=$15, subtotal=$16,
+                vat_amount=$17, total_inc_vat=$18, total=$19, updated_at=NOW()
+            RETURNING *`,
+            [
+                id, invoice_number, invoice_date, customer_ref || '', vat_number || '', job_number || '',
+                booking_date || '', mileage || '', JSON.stringify(customer_details || {}),
+                JSON.stringify(vehicle_details || {}), JSON.stringify(labour_items || []),
+                JSON.stringify(product_items || []), JSON.stringify(garage_stamp || {}),
+                vat_rate || 0, bottom_custom_field || '', subtotal || 0,
+                vat_amount || 0, total_inc_vat || 0, total || 0
+            ]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.put('/api/garage-invoices/:id', async (req, res) => {
+    const { id } = req.params;
+    const {
+        invoice_number, invoice_date, customer_ref, vat_number, job_number,
+        booking_date, mileage, customer_details, vehicle_details, labour_items,
+        product_items, garage_stamp, vat_rate, bottom_custom_field, subtotal,
+        vat_amount, total_inc_vat, total
+    } = req.body;
+
+    try {
+        const result = await db.query(
+            `UPDATE garage_invoices 
+             SET invoice_number=$1, invoice_date=$2, customer_ref=$3, vat_number=$4, job_number=$5,
+                 booking_date=$6, mileage=$7, customer_details=$8, vehicle_details=$9, labour_items=$10,
+                 product_items=$11, garage_stamp=$12, vat_rate=$13, bottom_custom_field=$14, subtotal=$15,
+                 vat_amount=$16, total_inc_vat=$17, total=$18, updated_at=NOW()
+             WHERE id=$19 RETURNING *`,
+            [
+                invoice_number, invoice_date, customer_ref || '', vat_number || '', job_number || '',
+                booking_date || '', mileage || '', JSON.stringify(customer_details || {}),
+                JSON.stringify(vehicle_details || {}), JSON.stringify(labour_items || []),
+                JSON.stringify(product_items || []), JSON.stringify(garage_stamp || {}),
+                vat_rate || 0, bottom_custom_field || '', subtotal || 0,
+                vat_amount || 0, total_inc_vat || 0, total || 0, id
+            ]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.delete('/api/garage-invoices/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.query('DELETE FROM garage_invoices WHERE id=$1', [id]);
+        res.json({ message: 'Garage invoice deleted successfully' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });

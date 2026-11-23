@@ -6,7 +6,8 @@ import {
     updateGarageInvoice,
     deleteGarageInvoice,
     generateGarageInvoiceNumber,
-    DEFAULT_GARAGE_BUSINESS
+    DEFAULT_GARAGE_BUSINESS,
+    syncAdminDataFromServer
 } from '../../../services/dataService';
 import { normalizeMake } from '../../../utils/makeUtils';
 import './GarageInvoiceGenerator.css';
@@ -240,18 +241,46 @@ export default function GarageInvoiceGenerator() {
     const splitContainerRef = useRef(null);
     const previewWrapperRef = useRef(null);
 
-    // Initial load
+    // Initial load & sync
     useEffect(() => {
+        syncAdminDataFromServer();
+
         const storedInvoices = getGarageInvoices() || [];
         setInvoicesList(storedInvoices);
         setCarsList(getCars() || []);
 
-        // If invoices exist, load the first one by default for immediate preview
-        if (storedInvoices.length > 0) {
+        const params = new URLSearchParams(window.location.search);
+        const targetId = params.get('id');
+        const isNew = params.get('new');
+        const autoDownload = params.get('download');
+
+        if (isNew === '1') {
+            handleCreateNewInvoice();
+        } else if (targetId) {
+            const found = storedInvoices.find(i => i.id === targetId);
+            if (found) {
+                loadInvoiceIntoForm(found);
+                if (autoDownload === '1') {
+                    setTimeout(() => {
+                        handleDownloadPDF();
+                    }, 600);
+                }
+            } else if (storedInvoices.length > 0) {
+                loadInvoiceIntoForm(storedInvoices[0]);
+            }
+        } else if (storedInvoices.length > 0) {
             loadInvoiceIntoForm(storedInvoices[0]);
         } else {
             handleCreateNewInvoice();
         }
+
+        const handleUpdate = () => {
+            const updated = getGarageInvoices() || [];
+            setInvoicesList(updated);
+            setCarsList(getCars() || []);
+        };
+        window.addEventListener('vancar_data_updated', handleUpdate);
+        return () => window.removeEventListener('vancar_data_updated', handleUpdate);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 

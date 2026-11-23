@@ -1,5 +1,18 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { getCars, getInvoices, createInvoice, updateInvoice, deleteInvoice, syncDataFromServer } from '../../../services/dataService';
+import { useNavigate } from 'react-router-dom';
+import {
+    getCars,
+    getInvoices,
+    createInvoice,
+    updateInvoice,
+    deleteInvoice,
+    getGarageInvoices,
+    deleteGarageInvoice,
+    getDepositSlips,
+    deleteDepositSlip,
+    syncDataFromServer,
+    syncAdminDataFromServer
+} from '../../../services/dataService';
 import './InvoiceGenerator.css';
 
 const formatMakeModelTitleCase = (makeStr, modelStr) => {
@@ -66,7 +79,11 @@ const parseInvoiceNotes = (rawNotes) => {
 };
 
 export default function InvoiceGenerator() {
-    const [invoicesList, setInvoicesList] = useState([]);
+    const navigate = useNavigate();
+    const [salesInvoicesList, setSalesInvoicesList] = useState([]);
+    const [garageInvoicesList, setGarageInvoicesList] = useState([]);
+    const [depositSlipsList, setDepositSlipsList] = useState([]);
+    const [invoiceTypeTab, setInvoiceTypeTab] = useState('all'); // 'all', 'sales', 'garage', 'deposit'
     const [carsList, setCarsList] = useState([]);
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'form'
     const [selectedCarId, setSelectedCarId] = useState('');
@@ -131,20 +148,26 @@ export default function InvoiceGenerator() {
 
     // Load database resources and sync with server
     useEffect(() => {
+        syncAdminDataFromServer();
         syncDataFromServer().then(() => {
-            setCarsList(getCars());
+            setCarsList(getCars() || []);
         });
         const handleUpdate = () => {
-            setInvoicesList(getInvoices());
-            setCarsList(getCars());
+            setSalesInvoicesList(getInvoices() || []);
+            setGarageInvoicesList(getGarageInvoices() || []);
+            setDepositSlipsList(getDepositSlips() || []);
+            setCarsList(getCars() || []);
         };
+        handleUpdate();
         window.addEventListener('vancar_data_updated', handleUpdate);
         return () => window.removeEventListener('vancar_data_updated', handleUpdate);
     }, []);
 
     useEffect(() => {
-        setInvoicesList(getInvoices());
-        setCarsList(getCars());
+        setSalesInvoicesList(getInvoices() || []);
+        setGarageInvoicesList(getGarageInvoices() || []);
+        setDepositSlipsList(getDepositSlips() || []);
+        setCarsList(getCars() || []);
     }, [viewMode]);
 
     // Handle calculation of totals
@@ -202,10 +225,10 @@ export default function InvoiceGenerator() {
 
     // Auto-generate invoice number
     const generateNextInvoiceNumber = () => {
-        if (!invoicesList || invoicesList.length === 0) {
+        if (!salesInvoicesList || salesInvoicesList.length === 0) {
             return 'INV-000001';
         }
-        const numbers = invoicesList
+        const numbers = salesInvoicesList
             .map(inv => {
                 const match = inv.invoice_number?.match(/INV-(\d+)/);
                 return match ? parseInt(match[1], 10) : 0;
@@ -351,82 +374,93 @@ export default function InvoiceGenerator() {
     };
 
     // Save invoice to database
-    const handleSaveInvoice = () => {
-        if (!customerDetails.name.trim()) {
-            alert('Please enter a Customer Name.');
-            return;
+    const handleSaveInvoice = (switchToList = true) => {
+        const custName = (customerDetails.name || '').trim() || 'Valued Customer';
+        
+        // Email is optional, but if entered validate basic format
+        if (customerDetails.email && customerDetails.email.trim()) {
+            const emailRegex = /^\S+@\S+\.\S+$/;
+            if (!emailRegex.test(customerDetails.email.trim())) {
+                alert('Please enter a valid Customer Email address or leave it blank.');
+                return null;
+            }
         }
-        if (!customerDetails.email || !customerDetails.email.trim()) {
-            alert('Customer Email is mandatory. Please enter a valid email address.');
-            return;
-        }
-        const emailRegex = /^\S+@\S+\.\S+$/;
-        if (!emailRegex.test(customerDetails.email.trim())) {
-            alert('Please enter a valid Customer Email address (e.g. customer@example.com).');
-            return;
-        }
-        if (!saleDetails.invoiceNumber.trim()) {
-            alert('Please enter an Invoice Number.');
-            return;
-        }
+        
+        const invNum = (saleDetails.invoiceNumber || '').trim() || generateNextInvoiceNumber();
 
         const invoiceData = {
-            invoice_number: saleDetails.invoiceNumber,
-            invoice_date: saleDetails.invoiceDate,
-            due_date: saleDetails.dueDate,
-            customer_details: customerDetails,
+            invoice_number: invNum,
+            invoice_date: saleDetails.invoiceDate || new Date().toISOString().split('T')[0],
+            due_date: saleDetails.dueDate || new Date().toISOString().split('T')[0],
+            customer_details: {
+                ...customerDetails,
+                name: custName
+            },
             vehicle_details: vehicleDetails,
             sale_details: {
-                cashPrice: saleDetails.cashPrice,
+                cashPrice: saleDetails.cashPrice || 0,
                 deliveryFee: saleDetails.deliveryFee || 0,
-                deposit: saleDetails.deposit,
-                partExchange: saleDetails.partExchange,
-                settlementFigure: saleDetails.settlementFigure,
-                financeAmount: saleDetails.financeAmount,
-                balanceDue: saleDetails.balanceDue
+                deposit: saleDetails.deposit || 0,
+                partExchange: saleDetails.partExchange || 0,
+                settlementFigure: saleDetails.settlementFigure || 0,
+                financeAmount: saleDetails.financeAmount || 0,
+                balanceDue: saleDetails.balanceDue || 0
             },
             notes: notes,
             authorised_signature: authorisedSignature
         };
         localStorage.setItem('vancar_default_signature', authorisedSignature);
 
+        let saved;
         if (currentInvoiceId) {
-            updateInvoice(currentInvoiceId, invoiceData);
+            saved = updateInvoice(currentInvoiceId, invoiceData);
         } else {
-            createInvoice(invoiceData);
+            saved = createInvoice(invoiceData);
+            if (saved?.id) {
+                setCurrentInvoiceId(saved.id);
+            }
         }
 
-        setViewMode('list');
+        setSalesInvoicesList(getInvoices() || []);
+
+        if (switchToList) {
+            setViewMode('list');
+        }
+        return saved;
+    };
+
+    // Print Invoice
+    const handlePrintInvoice = () => {
+        const saved = handleSaveInvoice(false);
+        if (!saved) return;
+        window.print();
     };
 
     // Delete invoice
     const handleDeleteInvoice = (id) => {
         if (window.confirm('Are you sure you want to delete this invoice record?')) {
             deleteInvoice(id);
-            setInvoicesList(getInvoices());
+            setSalesInvoicesList(getInvoices() || []);
         }
     };
 
     // Download PDF from clean un-scaled off-screen HTML block using html2pdf.js loaded from CDN
     const handleDownloadPDF = (invoiceToDownload = null) => {
-        const invoiceData = invoiceToDownload || {
-            invoice_number: saleDetails.invoiceNumber,
-            invoice_date: saleDetails.invoiceDate,
-            due_date: saleDetails.dueDate,
-            customer_details: customerDetails,
-            vehicle_details: vehicleDetails,
-            sale_details: {
-                cashPrice: saleDetails.cashPrice,
-                deliveryFee: saleDetails.deliveryFee || 0,
-                deposit: saleDetails.deposit,
-                partExchange: saleDetails.partExchange,
-                settlementFigure: saleDetails.settlementFigure,
-                financeAmount: saleDetails.financeAmount,
-                balanceDue: saleDetails.balanceDue
-            },
-            notes: notes,
-            authorised_signature: authorisedSignature
-        };
+        let invoiceData = invoiceToDownload;
+        if (!invoiceData) {
+            // When user clicks "Download PDF" in live preview editor, auto-save the invoice
+            invoiceData = handleSaveInvoice(false);
+            if (!invoiceData) return;
+        }
+
+        if (invoiceData._sourceType === 'garage') {
+            navigate(`/admin/garage-invoices?id=${invoiceData.id}&download=1`);
+            return;
+        }
+        if (invoiceData._sourceType === 'deposit') {
+            navigate(`/admin/deposit-slips?id=${invoiceData.id}`);
+            return;
+        }
 
         const tempDiv = document.createElement('div');
         tempDiv.id = 'temp-pdf-render-container';
@@ -692,27 +726,138 @@ export default function InvoiceGenerator() {
         }
     };
 
+    // Unified Invoices from all generators (Vehicle Sales, Garage Repairs, Deposits)
+    const unifiedInvoices = useMemo(() => {
+        const sales = (salesInvoicesList || []).map(inv => ({
+            ...inv,
+            _sourceType: 'sales',
+            _typeLabel: 'Vehicle Sale',
+            _number: inv.invoice_number || 'INV-UNKNOWN',
+            _date: inv.invoice_date || '',
+            _customerName: inv.customer_details?.name || 'Walk-in Customer',
+            _customerPhone: inv.customer_details?.phone || '',
+            _customerEmail: inv.customer_details?.email || '',
+            _vehicle: `${inv.vehicle_details?.year || ''} ${inv.vehicle_details?.make || ''} ${inv.vehicle_details?.model || ''}`.trim() || 'Vehicle',
+            _reg: (inv.vehicle_details?.registration || '').toUpperCase(),
+            _make: inv.vehicle_details?.make || '',
+            _model: inv.vehicle_details?.model || '',
+            _total: parseFloat(inv.sale_details?.cashPrice || inv.sale_details?.balanceDue || 0),
+            _balanceDue: parseFloat(inv.sale_details?.balanceDue || 0),
+            _raw: inv
+        }));
+
+        const garage = (garageInvoicesList || []).map(inv => ({
+            ...inv,
+            _sourceType: 'garage',
+            _typeLabel: 'Garage Repair',
+            _number: inv.invoice_number || 'MWJ-UNKNOWN',
+            _date: inv.invoice_date || '',
+            _customerName: inv.customer_details?.name || 'Customer',
+            _customerPhone: inv.customer_details?.mobile || inv.customer_details?.telephone || '',
+            _customerEmail: '',
+            _vehicle: `${inv.vehicle_details?.year || ''} ${inv.vehicle_details?.make || ''} ${inv.vehicle_details?.model || ''}`.trim() || 'Vehicle Service',
+            _reg: (inv.vehicle_details?.registration || '').toUpperCase(),
+            _make: inv.vehicle_details?.make || '',
+            _model: inv.vehicle_details?.model || '',
+            _total: parseFloat(inv.total || inv.total_inc_vat || inv.subtotal || 0),
+            _balanceDue: 0,
+            _raw: inv
+        }));
+
+        const deposits = (depositSlipsList || []).map(slip => ({
+            ...slip,
+            _sourceType: 'deposit',
+            _typeLabel: 'Deposit Slip',
+            _number: slip.receipt_number || 'DEP-UNKNOWN',
+            _date: slip.receipt_date || '',
+            _customerName: slip.buyer_details?.name || 'Buyer',
+            _customerPhone: slip.buyer_details?.tel || '',
+            _customerEmail: '',
+            _vehicle: `${slip.vehicle_details?.make || ''} ${slip.vehicle_details?.model || ''}`.trim() || 'Vehicle Reservation',
+            _reg: (slip.vehicle_details?.registration || '').toUpperCase(),
+            _make: slip.vehicle_details?.make || '',
+            _model: slip.vehicle_details?.model || '',
+            _total: parseFloat(slip.deposit_details?.depositAmount || 0),
+            _balanceDue: parseFloat(slip.deposit_details?.remainingBalance || 0),
+            _raw: slip
+        }));
+
+        return [...sales, ...garage, ...deposits].sort((a, b) => {
+            const dateA = new Date(a._date || a.created_at || 0).getTime();
+            const dateB = new Date(b._date || b.created_at || 0).getTime();
+            return dateB - dateA;
+        });
+    }, [salesInvoicesList, garageInvoicesList, depositSlipsList]);
+
+    // Action handlers for unified invoices list
+    const handleDownloadUnifiedPDF = (inv) => {
+        if (inv._sourceType === 'garage') {
+            navigate(`/admin/garage-invoices?id=${inv.id}&download=1`);
+        } else if (inv._sourceType === 'deposit') {
+            navigate(`/admin/deposit-slips?id=${inv.id}`);
+        } else {
+            handleDownloadPDF(inv._raw || inv);
+        }
+    };
+
+    const handleEditUnified = (inv) => {
+        if (inv._sourceType === 'garage') {
+            navigate(`/admin/garage-invoices?id=${inv.id}`);
+        } else if (inv._sourceType === 'deposit') {
+            navigate(`/admin/deposit-slips?id=${inv.id}`);
+        } else {
+            handleEditTrigger(inv._raw || inv);
+        }
+    };
+
+    const handleDeleteUnified = (inv) => {
+        const typeName = inv._typeLabel || 'Invoice';
+        const num = inv._number || inv.invoice_number || '';
+        if (window.confirm(`Are you sure you want to delete ${typeName} "${num}"?`)) {
+            if (inv._sourceType === 'garage') {
+                deleteGarageInvoice(inv.id);
+            } else if (inv._sourceType === 'deposit') {
+                deleteDepositSlip(inv.id);
+            } else {
+                deleteInvoice(inv.id);
+            }
+            setSalesInvoicesList(getInvoices() || []);
+            setGarageInvoicesList(getGarageInvoices() || []);
+            setDepositSlipsList(getDepositSlips() || []);
+        }
+    };
+
+    const handleDuplicateUnified = (inv) => {
+        if (inv._sourceType === 'garage') {
+            navigate(`/admin/garage-invoices?id=${inv.id}`);
+        } else if (inv._sourceType === 'deposit') {
+            navigate(`/admin/deposit-slips?id=${inv.id}`);
+        } else {
+            handleDuplicateTrigger(inv._raw || inv);
+        }
+    };
+
     // Unique makes and models for invoice filters
     const invoiceMakes = useMemo(() => {
         const set = new Set();
-        invoicesList.forEach(inv => {
-            const m = inv.vehicle_details?.make?.trim();
+        unifiedInvoices.forEach(inv => {
+            const m = inv._make?.trim();
             if (m) set.add(m);
         });
         return Array.from(set).sort();
-    }, [invoicesList]);
+    }, [unifiedInvoices]);
 
     const invoiceModels = useMemo(() => {
         const set = new Set();
-        invoicesList.forEach(inv => {
-            const m = inv.vehicle_details?.make?.trim();
-            const mdl = inv.vehicle_details?.model?.trim();
+        unifiedInvoices.forEach(inv => {
+            const m = inv._make?.trim();
+            const mdl = inv._model?.trim();
             if (filterMake === 'All' || (m && m.toLowerCase() === filterMake.toLowerCase())) {
                 if (mdl) set.add(mdl);
             }
         });
         return Array.from(set).sort();
-    }, [invoicesList, filterMake]);
+    }, [unifiedInvoices, filterMake]);
 
     const handleMakeFilterChange = (make) => {
         setFilterMake(make);
@@ -725,44 +870,50 @@ export default function InvoiceGenerator() {
         setFilterModel('All');
         setFilterPaymentStatus('All');
         setFilterDatePreset('all');
+        setInvoiceTypeTab('all');
     };
 
     // Filter invoices list
     const filteredInvoices = useMemo(() => {
-        return invoicesList.filter(inv => {
+        return unifiedInvoices.filter(inv => {
+            if (invoiceTypeTab !== 'all' && inv._sourceType !== invoiceTypeTab) {
+                return false;
+            }
+
             const q = searchQuery.toLowerCase().trim();
             if (q) {
-                const number = inv.invoice_number?.toLowerCase() || '';
-                const name = inv.customer_details?.name?.toLowerCase() || '';
-                const email = inv.customer_details?.email?.toLowerCase() || '';
-                const phone = inv.customer_details?.phone?.toLowerCase() || '';
-                const reg = inv.vehicle_details?.registration?.toLowerCase() || '';
-                const make = inv.vehicle_details?.make?.toLowerCase() || '';
-                const model = inv.vehicle_details?.model?.toLowerCase() || '';
+                const number = (inv._number || '').toLowerCase();
+                const name = (inv._customerName || '').toLowerCase();
+                const email = (inv._customerEmail || '').toLowerCase();
+                const phone = (inv._customerPhone || '').toLowerCase();
+                const reg = (inv._reg || '').toLowerCase();
+                const make = (inv._make || '').toLowerCase();
+                const model = (inv._model || '').toLowerCase();
+                const veh = (inv._vehicle || '').toLowerCase();
 
-                if (!number.includes(q) && !name.includes(q) && !email.includes(q) && !phone.includes(q) && !reg.includes(q) && !make.includes(q) && !model.includes(q)) {
+                if (!number.includes(q) && !name.includes(q) && !email.includes(q) && !phone.includes(q) && !reg.includes(q) && !make.includes(q) && !model.includes(q) && !veh.includes(q)) {
                     return false;
                 }
             }
 
             if (filterMake !== 'All') {
-                const m = inv.vehicle_details?.make || '';
+                const m = inv._make || '';
                 if (m.toLowerCase() !== filterMake.toLowerCase()) return false;
             }
 
             if (filterModel !== 'All') {
-                const mdl = inv.vehicle_details?.model || '';
+                const mdl = inv._model || '';
                 if (mdl.toLowerCase() !== filterModel.toLowerCase()) return false;
             }
 
             if (filterPaymentStatus !== 'All') {
-                const balance = parseFloat(inv.sale_details?.balanceDue) || 0;
+                const balance = inv._balanceDue || 0;
                 if (filterPaymentStatus === 'paid' && balance > 0) return false;
                 if (filterPaymentStatus === 'unpaid' && balance <= 0) return false;
             }
 
-            if (filterDatePreset !== 'all' && inv.invoice_date) {
-                const invDate = new Date(inv.invoice_date);
+            if (filterDatePreset !== 'all' && inv._date) {
+                const invDate = new Date(inv._date);
                 const now = new Date();
                 if (filterDatePreset === '30days') {
                     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -776,30 +927,84 @@ export default function InvoiceGenerator() {
 
             return true;
         });
-    }, [invoicesList, searchQuery, filterMake, filterModel, filterPaymentStatus, filterDatePreset]);
+    }, [unifiedInvoices, invoiceTypeTab, searchQuery, filterMake, filterModel, filterPaymentStatus, filterDatePreset]);
 
     const formattedMakeModel = formatMakeModelTitleCase(vehicleDetails.make, vehicleDetails.model);
     const formattedReg = (vehicleDetails.registration || '').toUpperCase();
 
     return (
         <div className="invoice-generator bg-slate-50 min-h-screen">
-            <header className="invoice-generator__header mb-8 flex justify-between items-center">
+            <header className="invoice-generator__header mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                 <div>
                     <h1 className="invoice-generator__title text-2xl font-bold text-slate-800">Invoice Manager</h1>
                     <p className="invoice-generator__subtitle text-slate-500 text-sm">
-                        Create, search, duplicate, and download professional sales invoices.
+                        Create, search, manage, and download invoices and receipts across all generators.
                     </p>
                 </div>
                 {viewMode === 'list' && (
-                    <button onClick={handleCreateNewTrigger} className="btn btn--primary py-2.5 px-5 text-sm flex items-center gap-2">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                        New Invoice
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button onClick={handleCreateNewTrigger} className="btn btn--primary py-2 px-3.5 text-xs flex items-center gap-1.5 shadow-sm">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                            New Sales Invoice
+                        </button>
+                        <button onClick={() => navigate('/admin/garage-invoices?new=1')} className="btn btn--secondary py-2 px-3.5 text-xs flex items-center gap-1.5 shadow-sm">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                            New Garage Invoice
+                        </button>
+                        <button onClick={() => navigate('/admin/deposit-slips')} className="btn btn--outline py-2 px-3 text-xs flex items-center gap-1.5 text-slate-700 bg-white shadow-sm hover:bg-slate-50">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                            Deposit Slip
+                        </button>
+                    </div>
                 )}
             </header>
 
             {viewMode === 'list' ? (
                 <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm overflow-hidden max-w-full">
+                    {/* Invoice Generator Tabs */}
+                    <div className="flex flex-wrap items-center gap-2 mb-5 pb-3 border-b border-slate-100">
+                        <button
+                            type="button"
+                            onClick={() => setInvoiceTypeTab('all')}
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${invoiceTypeTab === 'all' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        >
+                            All Invoices
+                            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${invoiceTypeTab === 'all' ? 'bg-slate-700 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                                {unifiedInvoices.length}
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setInvoiceTypeTab('sales')}
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${invoiceTypeTab === 'sales' ? 'bg-blue-600 text-white shadow-sm' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}`}
+                        >
+                            🚗 Vehicle Sales
+                            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${invoiceTypeTab === 'sales' ? 'bg-blue-700 text-white' : 'bg-blue-200 text-blue-800'}`}>
+                                {salesInvoicesList.length}
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setInvoiceTypeTab('garage')}
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${invoiceTypeTab === 'garage' ? 'bg-purple-600 text-white shadow-sm' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'}`}
+                        >
+                            🔧 Garage Repairs
+                            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${invoiceTypeTab === 'garage' ? 'bg-purple-700 text-white' : 'bg-purple-200 text-purple-800'}`}>
+                                {garageInvoicesList.length}
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setInvoiceTypeTab('deposit')}
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${invoiceTypeTab === 'deposit' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
+                        >
+                            📋 Deposit Slips
+                            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${invoiceTypeTab === 'deposit' ? 'bg-emerald-700 text-white' : 'bg-emerald-200 text-emerald-800'}`}>
+                                {depositSlipsList.length}
+                            </span>
+                        </button>
+                    </div>
+
                     {/* Search & Multi-Filters Bar */}
                     <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200/80 mb-6 flex flex-col gap-3">
                         <div className="search-box-wrapper relative">
@@ -871,7 +1076,7 @@ export default function InvoiceGenerator() {
                                 </select>
                             </div>
 
-                            {(searchQuery || filterMake !== 'All' || filterModel !== 'All' || filterPaymentStatus !== 'All' || filterDatePreset !== 'all') && (
+                            {(searchQuery || filterMake !== 'All' || filterModel !== 'All' || filterPaymentStatus !== 'All' || filterDatePreset !== 'all' || invoiceTypeTab !== 'all') && (
                                 <button
                                     onClick={handleResetInvoiceFilters}
                                     className="btn btn--sm btn--outline text-xs py-1.5 px-3 ml-auto text-slate-600 hover:text-slate-900 border-slate-300"
@@ -883,7 +1088,7 @@ export default function InvoiceGenerator() {
 
                         <div className="text-xs text-slate-500 pt-1 flex justify-between items-center">
                             <span>
-                                Showing <strong>{filteredInvoices.length}</strong> of <strong>{invoicesList.length}</strong> invoices
+                                Showing <strong>{filteredInvoices.length}</strong> of <strong>{unifiedInvoices.length}</strong> invoices & receipts
                             </span>
                         </div>
                     </div>
@@ -894,43 +1099,81 @@ export default function InvoiceGenerator() {
                                 <thead>
                                     <tr>
                                         <th>Invoice #</th>
+                                        <th>Type</th>
                                         <th>Customer</th>
                                         <th>Vehicle</th>
                                         <th>Reg No</th>
                                         <th>Date</th>
-                                        <th>Due Date</th>
-                                        <th>Balance Due</th>
+                                        <th>Amount / Balance</th>
                                         <th style={{ textAlign: 'right' }}>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filteredInvoices.map((inv) => (
-                                        <tr key={inv.id}>
-                                            <td className="font-bold text-slate-800">{inv.invoice_number}</td>
-                                            <td>{inv.customer_details.name}</td>
-                                            <td>
-                                                {inv.vehicle_details.year} {inv.vehicle_details.make} {inv.vehicle_details.model}
+                                        <tr key={`${inv._sourceType}-${inv.id}`}>
+                                            <td className="font-bold text-slate-800">
+                                                <span className="font-mono text-xs">{inv._number}</span>
                                             </td>
                                             <td>
-                                                <span className="badge badge--reg bg-yellow-400/20 text-slate-800 px-2 py-0.5 rounded font-mono text-xs font-semibold uppercase border border-yellow-400">
-                                                    {inv.vehicle_details.registration || 'N/A'}
-                                                </span>
+                                                {inv._sourceType === 'sales' && (
+                                                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
+                                                        🚗 Sale
+                                                    </span>
+                                                )}
+                                                {inv._sourceType === 'garage' && (
+                                                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap">
+                                                        🔧 Garage
+                                                    </span>
+                                                )}
+                                                {inv._sourceType === 'deposit' && (
+                                                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                                                        📋 Deposit
+                                                    </span>
+                                                )}
                                             </td>
-                                            <td>{inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString('en-GB') : '-'}</td>
-                                            <td>{inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-GB') : '-'}</td>
-                                            <td className="font-bold text-slate-900">£{(inv.sale_details.balanceDue || 0).toLocaleString('en-GB', { minimumFractionDigits: 2 })}</td>
+                                            <td>
+                                                <div className="font-medium text-slate-800">{inv._customerName}</div>
+                                                {(inv._customerPhone || inv._customerEmail) && (
+                                                    <div className="text-[11px] text-slate-400">{inv._customerPhone || inv._customerEmail}</div>
+                                                )}
+                                            </td>
+                                            <td>{inv._vehicle}</td>
+                                            <td>
+                                                {inv._reg ? (
+                                                    <span className="badge badge--reg bg-yellow-400/20 text-slate-800 px-2 py-0.5 rounded font-mono text-xs font-semibold uppercase border border-yellow-400">
+                                                        {inv._reg}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-slate-400 text-xs">—</span>
+                                                )}
+                                            </td>
+                                            <td>{inv._date ? new Date(inv._date).toLocaleDateString('en-GB') : '-'}</td>
+                                            <td>
+                                                <div className="font-bold text-slate-900">£{(inv._total || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                                {inv._sourceType === 'sales' && (
+                                                    <div className="text-[10px] text-slate-500">
+                                                        {inv._balanceDue > 0 ? (
+                                                            <span className="text-amber-600 font-semibold">Bal: £{inv._balanceDue.toLocaleString('en-GB', { minimumFractionDigits: 2 })}</span>
+                                                        ) : (
+                                                            <span className="text-green-600 font-semibold">Paid in Full</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </td>
                                             <td style={{ textAlign: 'right' }}>
                                                 <div className="flex justify-end gap-1.5">
-                                                    <button onClick={() => handleDownloadPDF(inv)} className="btn btn--icon bg-blue-50 text-blue-600 border-none hover:bg-blue-100 p-2" title="Download PDF">
+                                                    <button onClick={() => handleDownloadUnifiedPDF(inv)} className="btn btn--icon bg-blue-50 text-blue-600 border-none hover:bg-blue-100 p-2" title="Download PDF / Preview">
                                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                                                     </button>
-                                                    <button onClick={() => handleEditTrigger(inv)} className="btn btn--icon bg-slate-50 text-slate-700 border-none hover:bg-slate-100 p-2" title="Edit">
+                                                    <button onClick={() => handleEditUnified(inv)} className="btn btn--icon bg-slate-50 text-slate-700 border-none hover:bg-slate-100 p-2" title="Edit">
                                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                                                     </button>
-                                                    <button onClick={() => handleDuplicateTrigger(inv)} className="btn btn--icon bg-slate-50 text-slate-700 border-none hover:bg-slate-100 p-2" title="Duplicate">
-                                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
-                                                    </button>
-                                                    <button onClick={() => handleDeleteInvoice(inv.id)} className="btn btn--icon bg-red-50 text-red-600 border-none hover:bg-red-100 p-2" title="Delete">
+                                                    {inv._sourceType === 'sales' && (
+                                                        <button onClick={() => handleDuplicateUnified(inv)} className="btn btn--icon bg-slate-50 text-slate-700 border-none hover:bg-slate-100 p-2" title="Duplicate">
+                                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                                                        </button>
+                                                    )}
+                                                    <button onClick={() => handleDeleteUnified(inv)} className="btn btn--icon bg-red-50 text-red-600 border-none hover:bg-red-100 p-2" title="Delete">
                                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
                                                     </button>
                                                 </div>
@@ -944,8 +1187,11 @@ export default function InvoiceGenerator() {
                         <div className="text-center py-12 text-slate-500">
                             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-3 text-slate-300"><rect x="4" y="2" width="16" height="20" rx="2" ry="2" /><line x1="9" y1="9" x2="15" y2="9" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="13" y2="17" /></svg>
                             <h3 className="font-bold text-slate-800 text-sm mb-1">No Invoices Found</h3>
-                            <p className="text-xs mb-4">You haven't generated any invoices or search filter yielded no results.</p>
-                            <button onClick={handleCreateNewTrigger} className="btn btn--primary py-2 px-4 text-xs">Create New Invoice</button>
+                            <p className="text-xs mb-4">No invoices match your selected generator tab or filter criteria.</p>
+                            <div className="flex justify-center gap-2">
+                                <button onClick={handleCreateNewTrigger} className="btn btn--primary py-2 px-4 text-xs">New Sales Invoice</button>
+                                <button onClick={() => navigate('/admin/garage-invoices?new=1')} className="btn btn--secondary py-2 px-4 text-xs">New Garage Invoice</button>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -1039,14 +1285,13 @@ export default function InvoiceGenerator() {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Customer Email <span className="text-red-500">*</span></label>
+                                    <label className="form-label">Customer Email <span className="text-slate-400 text-xs font-normal">(Optional)</span></label>
                                     <input 
                                         type="email" 
                                         className="form-input" 
                                         value={customerDetails.email} 
                                         onChange={(e) => setCustomerDetails(prev => ({ ...prev, email: e.target.value }))}
-                                        placeholder="e.g. john@example.com"
-                                        required
+                                        placeholder="e.g. john@example.com (Optional)"
                                     />
                                 </div>
                             </div>
@@ -1381,10 +1626,16 @@ export default function InvoiceGenerator() {
                                     <span className="font-mono w-10 text-right">{zoomPercent}%</span>
                                 </div>
                             </div>
-                            <button onClick={() => handleDownloadPDF(null)} className="btn btn--secondary py-2 px-4 text-xs flex items-center gap-1.5 self-start sm:self-center">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                                Download PDF
-                            </button>
+                            <div className="flex items-center gap-2 self-start sm:self-center">
+                                <button onClick={handlePrintInvoice} className="btn btn--outline py-2 px-3 text-xs flex items-center gap-1.5 bg-white text-slate-700 hover:bg-slate-50">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
+                                    Print
+                                </button>
+                                <button onClick={() => handleDownloadPDF(null)} className="btn btn--secondary py-2 px-4 text-xs flex items-center gap-1.5">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                                    Download PDF
+                                </button>
+                            </div>
                         </div>
 
                         <div ref={containerRef} className="invoice-generator__preview-container bg-slate-900 rounded-2xl overflow-hidden flex justify-center shadow-inner border border-slate-950">

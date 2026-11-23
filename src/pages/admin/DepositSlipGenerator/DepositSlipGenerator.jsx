@@ -73,8 +73,25 @@ export default function DepositSlipGenerator() {
     const [slipToDelete, setSlipToDelete] = useState(null);
 
     useEffect(() => {
-        setSlipsList(getDepositSlips() || []);
+        const slips = getDepositSlips() || [];
+        setSlipsList(slips);
         setCarsList(getCars() || []);
+
+        const params = new URLSearchParams(window.location.search);
+        const targetId = params.get('id');
+        if (targetId) {
+            const found = slips.find(s => s.id === targetId);
+            if (found) {
+                handleEditSlip(found);
+            }
+        }
+
+        const handleUpdate = () => {
+            setSlipsList(getDepositSlips() || []);
+            setCarsList(getCars() || []);
+        };
+        window.addEventListener('vancar_data_updated', handleUpdate);
+        return () => window.removeEventListener('vancar_data_updated', handleUpdate);
     }, [viewMode]);
 
     // Handle Signature Canvas drawing

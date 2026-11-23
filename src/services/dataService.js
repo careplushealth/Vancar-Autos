@@ -86,27 +86,57 @@ export async function syncAdminDataFromServer() {
 
         if (expensesRes && expensesRes.ok) {
             const expenses = await expensesRes.json();
-            if (Array.isArray(expenses)) saveData(EXPENSES_KEY, expenses);
+            if (Array.isArray(expenses)) {
+                saveData(EXPENSES_KEY, expenses);
+                window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: EXPENSES_KEY } }));
+            }
         }
         if (invoicesRes && invoicesRes.ok) {
             const invoices = await invoicesRes.json();
-            if (Array.isArray(invoices)) saveData(INVOICES_KEY, invoices);
+            if (Array.isArray(invoices)) {
+                const localInvoices = initData(INVOICES_KEY, []);
+                const map = new Map(localInvoices.map(i => [i.id, i]));
+                invoices.forEach(i => map.set(i.id, i));
+                const merged = Array.from(map.values()).sort((a, b) => new Date(b.created_at || b.invoice_date || 0) - new Date(a.created_at || a.invoice_date || 0));
+                saveData(INVOICES_KEY, merged);
+                window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: INVOICES_KEY } }));
+            }
         }
         if (generalExpensesRes && generalExpensesRes.ok) {
             const generalExpenses = await generalExpensesRes.json();
-            if (Array.isArray(generalExpenses)) saveData(GENERAL_EXPENSES_KEY, generalExpenses);
+            if (Array.isArray(generalExpenses)) {
+                saveData(GENERAL_EXPENSES_KEY, generalExpenses);
+                window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: GENERAL_EXPENSES_KEY } }));
+            }
         }
         if (depositSlipsRes && depositSlipsRes.ok) {
             const depositSlips = await depositSlipsRes.json();
-            if (Array.isArray(depositSlips)) saveData(DEPOSIT_SLIPS_KEY, depositSlips);
+            if (Array.isArray(depositSlips)) {
+                const localSlips = initData(DEPOSIT_SLIPS_KEY, []);
+                const map = new Map(localSlips.map(s => [s.id, s]));
+                depositSlips.forEach(s => map.set(s.id, s));
+                const merged = Array.from(map.values()).sort((a, b) => new Date(b.created_at || b.receipt_date || 0) - new Date(a.created_at || a.receipt_date || 0));
+                saveData(DEPOSIT_SLIPS_KEY, merged);
+                window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: DEPOSIT_SLIPS_KEY } }));
+            }
         }
         if (customersRes && customersRes.ok) {
             const customers = await customersRes.json();
-            if (Array.isArray(customers)) saveData(CUSTOMERS_KEY, customers);
+            if (Array.isArray(customers)) {
+                saveData(CUSTOMERS_KEY, customers);
+                window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: CUSTOMERS_KEY } }));
+            }
         }
         if (garageInvoicesRes && garageInvoicesRes.ok) {
             const gInvoices = await garageInvoicesRes.json();
-            if (Array.isArray(gInvoices)) saveData(GARAGE_INVOICES_KEY, gInvoices);
+            if (Array.isArray(gInvoices)) {
+                const localGInvoices = initData(GARAGE_INVOICES_KEY, []);
+                const map = new Map(localGInvoices.map(i => [i.id, i]));
+                gInvoices.forEach(i => map.set(i.id, i));
+                const merged = Array.from(map.values()).sort((a, b) => new Date(b.created_at || b.invoice_date || 0) - new Date(a.created_at || a.invoice_date || 0));
+                saveData(GARAGE_INVOICES_KEY, merged);
+                window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: GARAGE_INVOICES_KEY } }));
+            }
         }
     } catch (err) {
         console.error("Admin data sync notice:", err);
@@ -724,6 +754,7 @@ export function createInvoice(invoiceData) {
     invoices.push(newInvoice);
     saveData(INVOICES_KEY, invoices);
     syncNeon('/invoices', 'POST', newInvoice);
+    window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: INVOICES_KEY } }));
 
     // Automatically record / update customer in Customer Directory
     if (newInvoice.customer_details && newInvoice.customer_details.name) {
@@ -763,6 +794,7 @@ export function updateInvoice(id, invoiceData) {
     };
     saveData(INVOICES_KEY, invoices);
     syncNeon(`/invoices/${id}`, 'PUT', invoices[idx]);
+    window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: INVOICES_KEY } }));
 
     // Automatically record / update customer in Customer Directory
     if (invoices[idx].customer_details && invoices[idx].customer_details.name) {
@@ -793,6 +825,7 @@ export function deleteInvoice(id) {
     const invoices = getInvoices().filter(inv => inv.id !== id);
     saveData(INVOICES_KEY, invoices);
     syncNeon(`/invoices/${id}`, 'DELETE');
+    window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: INVOICES_KEY } }));
 }
 
 // === Auto Trader API Services ===
@@ -895,6 +928,7 @@ export function createDepositSlip(data) {
     slips.unshift(newSlip);
     saveData(DEPOSIT_SLIPS_KEY, slips);
     syncNeon('/deposit-slips', 'POST', newSlip);
+    window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: DEPOSIT_SLIPS_KEY } }));
     return newSlip;
 }
 
@@ -911,6 +945,7 @@ export function updateDepositSlip(id, data) {
     };
     saveData(DEPOSIT_SLIPS_KEY, slips);
     syncNeon(`/deposit-slips/${id}`, 'PUT', slips[idx]);
+    window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: DEPOSIT_SLIPS_KEY } }));
     return slips[idx];
 }
 
@@ -918,6 +953,7 @@ export function deleteDepositSlip(id) {
     const slips = getDepositSlips().filter(s => s.id !== id);
     saveData(DEPOSIT_SLIPS_KEY, slips);
     syncNeon(`/deposit-slips/${id}`, 'DELETE');
+    window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: DEPOSIT_SLIPS_KEY } }));
 }
 
 // === Garage Invoices (Crystal Shine Motors Ltd) ===
@@ -1053,6 +1089,7 @@ export function createGarageInvoice(invoiceData) {
     invoices.unshift(newInvoice);
     saveData(GARAGE_INVOICES_KEY, invoices);
     syncNeon('/garage-invoices', 'POST', newInvoice);
+    window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: GARAGE_INVOICES_KEY } }));
     return newInvoice;
 }
 
@@ -1069,6 +1106,7 @@ export function updateGarageInvoice(id, invoiceData) {
     };
     saveData(GARAGE_INVOICES_KEY, invoices);
     syncNeon(`/garage-invoices/${id}`, 'PUT', invoices[idx]);
+    window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: GARAGE_INVOICES_KEY } }));
     return invoices[idx];
 }
 
@@ -1076,6 +1114,7 @@ export function deleteGarageInvoice(id) {
     const invoices = getGarageInvoices().filter(i => i.id !== id);
     saveData(GARAGE_INVOICES_KEY, invoices);
     syncNeon(`/garage-invoices/${id}`, 'DELETE');
+    window.dispatchEvent(new CustomEvent('vancar_data_updated', { detail: { key: GARAGE_INVOICES_KEY } }));
 }
 
 // === Distance Sale Right to Cancel Forms ===
